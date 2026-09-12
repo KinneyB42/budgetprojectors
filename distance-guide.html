@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Distance Guide — Budget Projectors</title>
+  <meta name="description" content="Throw-distance calculator: find the right projector placement for your screen size, or the right screen size for your room.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="wordmark" href="index.html">Budget Projectors</a>
+    <div><button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button></div>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="buying-guides.html">Buying Guides</a>
+      <a href="current-deals.html">Current Deals</a>
+      <a href="recommended-setups.html">Recommended Setups</a>
+      <a href="distance-guide.html" class="active">Distance Guide</a>
+      <a href="book-a-consultation.html">Book a Consultation</a>
+      <a href="about.html">About</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero hero--slim">
+  <img src="assets/projector.jpg" alt="Compact portable projector close-up">
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <p class="label">Distance Guide</p>
+    <h1>Throw-Distance Calculator</h1>
+    <p class="lede">Every projector throws a specific image size from a specific distance — that's the throw ratio. Get this wrong and your dream 120-inch screen becomes a 90-inch compromise. Run the numbers before you buy.</p>
+
+    <div class="calc">
+      <div class="calc__tabs" role="tablist">
+        <button class="calc__tab active" data-panel="panel-size" role="tab">Screen Size &rarr; Distance</button>
+        <button class="calc__tab" data-panel="panel-dist" role="tab">Distance &rarr; Screen Size</button>
+      </div>
+
+      <div class="calc__panel active" id="panel-size">
+        <label for="calc-size">Screen size (diagonal, inches)</label>
+        <input type="number" id="calc-size" min="20" max="300" step="1" placeholder="e.g. 100" inputmode="decimal">
+        <p class="calc__hint">Common sizes: 80&Prime;, 100&Prime;, 120&Prime;. Assumes a 16:9 screen.</p>
+        <div class="calc__result" id="calc-size-result" aria-live="polite"></div>
+      </div>
+
+      <div class="calc__panel" id="panel-dist">
+        <label for="calc-dist">Projector distance from screen (feet)</label>
+        <input type="number" id="calc-dist" min="2" max="40" step="0.5" placeholder="e.g. 10" inputmode="decimal">
+        <p class="calc__hint">Measure from the projector lens to the wall or screen. Assumes a 16:9 screen.</p>
+        <div class="calc__result" id="calc-dist-result" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div class="prose" style="margin-top: 56px;">
+      <h3>How throw ratio works</h3>
+      <p>A projector's throw ratio (for example, 1.2x–1.5x) is the multiplier between image width and distance: a 1.5x throw needs 1.5 feet of distance for every foot of image width. Zoom lenses give you a range, which is why the calculator shows one. The calculator above uses the common 1.2x–1.5x span — always confirm your exact model's spec sheet for the precise figure.</p>
+
+      <h3>Quick reference (typical 1.2x–1.5x throw, 16:9)</h3>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Screen Size</th><th>Throw Distance</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>80&Prime; diagonal</td><td>7.0 – 8.7 ft</td></tr>
+          <tr><td>100&Prime; diagonal</td><td>8.7 – 10.9 ft</td></tr>
+          <tr><td>120&Prime; diagonal</td><td>10.5 – 13.1 ft</td></tr>
+          <tr><td>150&Prime; diagonal</td><td>13.1 – 16.3 ft</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Seating distance matters too</h3>
+      <p>As a rule of thumb, sit about 1.5 to 2.5 times the screen width away. Too close and you'll see pixels and crane your neck; too far and you lose the cinematic feel. For a 100-inch screen (about 7.3 ft wide), that's roughly 11–18 ft of seating distance.</p>
+
+      <p>Odd room shape, short throw, or mounting constraints? <a href="book-a-consultation.html">Book a consultation</a> and we'll map your room properly.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="index.html">Home</a>
+      <a href="buying-guides.html">Buying Guides</a>
+      <a href="current-deals.html">Current Deals</a>
+      <a href="recommended-setups.html">Recommended Setups</a>
+      <a href="distance-guide.html">Distance Guide</a>
+      <a href="book-a-consultation.html">Book a Consultation</a>
+      <a href="about.html">About</a>
+    </nav>
+    <p>As an affiliate partner with Amazon, eBay, BenQ, JMGO, Nothing Projector, XGIMI, and B&amp;H Photo Video, we may earn a commission on qualifying purchases.</p>
+    <p>&copy; 2026 Brandon Kinney</p>
+    <p>All trademarks are the property of their respective owners.</p>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
