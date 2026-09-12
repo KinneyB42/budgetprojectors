@@ -143,6 +143,8 @@ h3 { font-size: 22px; margin-bottom: 12px; }
   flex-direction: column;
 }
 .card img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.card__icon { width: 100%; aspect-ratio: 16 / 10; display: flex; align-items: center; justify-content: center; background: var(--navy); color: var(--white); }
+.card__icon svg { width: 88px; height: 88px; }
 .card__body { padding: 30px 28px 34px; display: flex; flex-direction: column; flex: 1; }
 .card__body .label { margin-bottom: 12px; }
 .card__body h3 { font-size: 21px; }
