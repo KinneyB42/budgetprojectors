@@ -655,19 +655,21 @@
         }
         txt(sx, yc, fz, fname + ' · ' + fmt(o.seat, 1) + ' ft', 11);
       }
-      // floor lamp next to the screen; glows when the lights are on
+      // floor lamp in the back corner: green when the lights are on, red when off
       if (hasScreen && !o.outdoor) {
-        var lx = 1.1, ly = Math.min(yc + sw / 2 + 1.9, W - 0.8);
-        if (scene === 'day') {
+        var lx = L - 1.3, ly = W - 1.3;
+        var lampOn = lightsOn;
+        var lampColor = lampOn ? '#3fae5a' : '#c0392b';
+        if (lampOn && scene !== 'sun') {
           poly([[lx - 2.2, ly - 2.2, 0.03], [lx + 2.2, ly - 2.2, 0.03], [lx + 2.2, ly + 2.2, 0.03], [lx - 2.2, ly + 2.2, 0.03]], '#ffdf9e', { opacity: 0.20 });
         }
         box(lx, ly, 0.1, 0.7, 0.7, 0.2, pal.stand[0], pal.stand[1], pal.stand[2]); // base
         box(lx, ly, 2.4, 0.18, 0.18, 4.6, pal.stand[0], pal.stand[1], pal.stand[2]); // pole
         poly([[lx - 0.75, ly, 5.3], [lx + 0.75, ly, 5.3], [lx + 0.45, ly, 4.35], [lx - 0.45, ly, 4.35]],
-          scene === 'day' || scene === 'sun' ? '#f2e3bb' : '#3a4358', { stroke: pal.label, 'stroke-width': 1 }); // shade
-        if (scene === 'day') {
+          lampColor, { stroke: pal.label, 'stroke-width': 1 }); // shade
+        if (lampOn && scene !== 'sun') {
           var lc = P(lx, ly, 4.8);
-          el('ellipse', { cx: lc[0].toFixed(1), cy: lc[1].toFixed(1), rx: 34, ry: 40, fill: '#ffdf9e', opacity: 0.55, filter: 'url(#calc-glow)' });
+          el('ellipse', { cx: lc[0].toFixed(1), cy: lc[1].toFixed(1), rx: 34, ry: 40, fill: '#bff0c8', opacity: 0.55, filter: 'url(#calc-glow)' });
         }
         txt(lx, ly, 6.1, 'lamp', 11);
       }
