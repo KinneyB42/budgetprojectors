@@ -133,7 +133,10 @@
 
       <div class="calc__viz-head">
         <span class="calc__viz-title">Room preview</span>
-        <button type="button" class="calc__chip" id="calc-lights-toggle" aria-pressed="true">Lights: On</button>
+        <div class="calc__viz-toggles">
+          <button type="button" class="calc__chip" id="calc-lights-toggle" aria-pressed="true">Lights: On</button>
+          <button type="button" class="calc__chip" id="calc-sun-toggle" aria-pressed="false">Sunlight: Off</button>
+        </div>
       </div>
       <div class="calc__viz">
         <svg id="calc-svg" viewBox="0 0 660 440" role="img" aria-label="3D room visualization"></svg>

@@ -289,8 +289,10 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__viz { border: 1px solid var(--line); background: var(--white); margin: 0 0 22px; }
 .calc__viz svg { display: block; width: 100%; height: auto; }
 .calc__viz text { font-family: var(--sans); }
-.calc__viz-head { display: flex; justify-content: space-between; align-items: center; margin: 22px 0 10px; }
+.calc__viz-head { display: flex; justify-content: space-between; align-items: center; margin: 22px 0 10px; flex-wrap: wrap; gap: 8px; }
 .calc__viz-title { font-size: 12.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--navy); }
+.calc__viz-toggles .calc__chip { margin: 0 0 0 8px; }
+.calc__viz-toggles .calc__chip:first-child { margin-left: 0; }
 .calc__golf { margin-bottom: 6px; }
 .calc select {
   width: 100%;

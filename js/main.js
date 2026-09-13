@@ -250,6 +250,18 @@
     });
   }
 
+  /* ---------- Sunlight toggle: warm daytime scene + ALR advice ---------- */
+  var sunOn = false;
+  var sunToggle = document.getElementById('calc-sun-toggle');
+  if (sunToggle) {
+    sunToggle.addEventListener('click', function () {
+      sunOn = !sunOn;
+      sunToggle.textContent = sunOn ? 'Sunlight: On' : 'Sunlight: Off';
+      sunToggle.setAttribute('aria-pressed', sunOn ? 'true' : 'false');
+      recalc();
+    });
+  }
+
   [lenInput, widInput, ceilInput, sizeInput, seatInput].forEach(function (el) {
     if (el) el.addEventListener('input', recalc);
   });
@@ -335,6 +347,8 @@
 
     var bits = [];
     bits.push('Screen: ' + scrLabel + '.');
+    if (sunOn) bits.push('With sunlight in the room, use an ALR (ambient light rejecting) screen. ' +
+      'A standard white screen washes out in daylight, while an ALR screen preserves contrast and brightness.');
     if (arWarn) bits.push(arWarn);
     bits.push('Reference seating: ' + fmt(dClose, 1) + '–' + fmt(dFarV, 1) +
       ' ft from the screen (30–36&deg; viewing angle, SMPTE/THX guidance).');
@@ -384,17 +398,23 @@
     var VW = 660, VH = 440, pad = 34;
     var L = o.L, W = o.W, H = o.H;
 
-    // Day/night palette for the lights switch.
-    var pal = lightsOn ? {
-      bg: null, floor: o.outdoor ? '#e9e4d4' : '#efe9dc', wallA: '#e3dccb', wallB: '#d8d0bc',
-      beam: NAVY, coneOp: 0.055, zone: NAVY, zoneOp: 0.10,
-      proj: ['#24406e', NAVY, '#081a38'], seat: ['#9aa5bd', '#7c88a3', '#6b7690'],
-      label: MUTED, stand: ['#8a8474', '#7a7466', '#6e695c']
-    } : {
+    // Palette: sunlight wins over the lights switch.
+    var scene = sunOn ? 'sun' : (lightsOn ? 'day' : 'night');
+    var pal = scene === 'night' ? {
       bg: '#0e1320', floor: o.outdoor ? '#1c2233' : '#1a2133', wallA: '#232c44', wallB: '#1d2438',
       beam: '#d6e4ff', coneOp: 0.22, zone: '#ffffff', zoneOp: 0.13,
       proj: ['#3b5a94', '#24406e', '#16294d'], seat: ['#5c6a8c', '#4a5878', '#3d4a66'],
       label: '#aab4c8', stand: ['#5a5f73', '#4c5165', '#424757']
+    } : scene === 'sun' ? {
+      bg: null, floor: o.outdoor ? '#f0e6cc' : '#f5ecd9', wallA: '#f9f1de', wallB: '#f0e3c6',
+      beam: NAVY, coneOp: 0.04, zone: NAVY, zoneOp: 0.08,
+      proj: ['#24406e', NAVY, '#081a38'], seat: ['#b09a72', '#9d8660', '#8a7452'],
+      label: '#7a6a4f', stand: ['#8a8474', '#7a7466', '#6e695c']
+    } : {
+      bg: null, floor: o.outdoor ? '#e9e4d4' : '#efe9dc', wallA: '#e3dccb', wallB: '#d8d0bc',
+      beam: NAVY, coneOp: 0.055, zone: NAVY, zoneOp: 0.10,
+      proj: ['#24406e', NAVY, '#081a38'], seat: ['#9aa5bd', '#7c88a3', '#6b7690'],
+      label: MUTED, stand: ['#8a8474', '#7a7466', '#6e695c']
     };
 
     function raw(x, y, z) { return [(y - x) * 0.8660254, (x + y) * 0.5 - z]; }
@@ -434,7 +454,7 @@
 
     // Floor and walls
     if (pal.bg) el('rect', { x: 0, y: 0, width: VW, height: VH, fill: pal.bg });
-    if (!lightsOn) {
+    if (!lightsOn && scene === 'night') {
       var defs = el('defs', {});
       var filt = document.createElementNS(NS, 'filter');
       filt.setAttribute('id', 'calc-glow');
@@ -449,6 +469,14 @@
       poly([[0,0,0],[0,W,0],[0,W,H],[0,0,H]], pal.wallA); // screen wall (x=0)
       poly([[0,0,0],[L,0,0],[L,0,H],[0,0,H]], pal.wallB); // side wall (y=0)
     }
+    if (scene === 'sun' && H > 0) {
+      // slanted sunbeams falling from the side wall
+      for (var b = 0; b < 3; b++) {
+        var bx = L * (0.22 + b * 0.2);
+        poly([[bx, 0, H], [bx + 2.4, 0, H], [bx + 0.6, 0, 0], [bx - 1.8, 0, 0]], '#ffd76a', { opacity: 0.12 });
+      }
+      txt(L * 0.52, 0.25, H - 0.7, 'sunlight', 11);
+    }
     txt(L / 2, -0.6, 0, fmt(L, 0) + ' ft', 12);
     txt(-0.6, W / 2, 0, fmt(W, 0) + ' ft', 12);
 
@@ -462,7 +490,7 @@
       zc = z0 + sh / 2;
       var yA = yc - sw / 2, yB = yc + sw / 2;
       // screen (with a glow when the lights are off)
-      if (!lightsOn) {
+      if (scene === 'night') {
         poly([[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]], '#bcd0ff', { opacity: 0.5, filter: 'url(#calc-glow)' });
       }
       poly([[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]], '#ffffff', { stroke: NAVY, 'stroke-width': 2 });
