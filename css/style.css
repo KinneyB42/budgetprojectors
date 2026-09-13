@@ -233,6 +233,52 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__result.show { display: block; }
 .calc__result strong { font-family: var(--serif); font-size: 26px; color: var(--navy); display: block; margin-bottom: 6px; }
 .calc__result span { font-size: 14.5px; color: var(--muted); }
+.calc input[type="text"] {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  margin-bottom: 6px;
+}
+.calc__model { margin-bottom: 30px; }
+.calc__suggest { border: 1px solid var(--line); border-top: 0; max-height: 264px; overflow-y: auto; background: var(--white); margin-bottom: 6px; }
+.calc__suggest button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--white);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 16px;
+  font-family: var(--sans);
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.calc__suggest button:last-child { border-bottom: 0; }
+.calc__suggest button:hover, .calc__suggest button:focus { background: var(--panel); }
+.calc__suggest .calc__suggest-brand { color: var(--muted); font-size: 13px; margin-right: 8px; }
+.calc__featured { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 4px; }
+.calc__featured-label { font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.calc__chip {
+  background: transparent;
+  border: 1px solid var(--navy);
+  color: var(--navy);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+.calc__chip:hover, .calc__chip.chosen { background: var(--navy); color: var(--white); }
+.calc__selected { font-size: 15px; font-weight: 600; color: var(--navy); margin: 12px 0 4px; }
+.calc__linkbtn { background: none; border: 0; padding: 0; color: var(--navy); text-decoration: underline; font-size: inherit; cursor: pointer; font-family: inherit; }
+.calc__manual { margin-top: 14px; }
+.calc__manual-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 560px) { .calc__manual-row { grid-template-columns: 1fr; } }
 
 .ref-table { width: 100%; border-collapse: collapse; margin-top: 28px; font-size: 15px; }
 .ref-table th, .ref-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); }

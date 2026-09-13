@@ -39,6 +39,32 @@
     <p class="lede">Every projector throws a specific image size from a specific distance — that's the throw ratio. Get this wrong and your dream 120-inch screen becomes a 90-inch compromise. Run the numbers before you buy.</p>
 
     <div class="calc">
+      <div class="calc__model">
+        <label for="calc-model">Projector model</label>
+        <input type="text" id="calc-model" placeholder="Start typing your model&hellip;" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="calc-suggest">
+        <div class="calc__suggest" id="calc-suggest" role="listbox" hidden></div>
+        <div class="calc__featured">
+          <span class="calc__featured-label">Featured</span>
+          <button type="button" class="calc__chip" data-model="JMGO IRIS ULTRA">JMGO IRIS ULTRA</button>
+          <button type="button" class="calc__chip" data-model="JMGO IRIS ULTRA MAX">JMGO IRIS ULTRA MAX</button>
+        </div>
+        <p class="calc__selected" id="calc-selected" hidden></p>
+        <p class="calc__hint" id="calc-model-hint">Search <span id="calc-model-count"></span> recommended models. Can&rsquo;t find yours? <button type="button" class="calc__linkbtn" id="calc-manual-toggle">Enter the throw ratio manually</button>.</p>
+        <div class="calc__manual" id="calc-manual" hidden>
+          <div class="calc__manual-row">
+            <div>
+              <label for="calc-ratio-min">Throw ratio (min)</label>
+              <input type="number" id="calc-ratio-min" step="0.01" min="0.1" placeholder="e.g. 1.2" inputmode="decimal">
+            </div>
+            <div>
+              <label for="calc-ratio-max">Throw ratio (max)</label>
+              <input type="number" id="calc-ratio-max" step="0.01" min="0.1" placeholder="e.g. 1.5" inputmode="decimal">
+            </div>
+          </div>
+          <p class="calc__hint">Use the same number in both boxes if your projector has no optical zoom. You&rsquo;ll find the throw ratio on the manufacturer&rsquo;s spec sheet.</p>
+        </div>
+      </div>
+
       <div class="calc__tabs" role="tablist">
         <button class="calc__tab active" data-panel="panel-size" role="tab">Screen Size &rarr; Distance</button>
         <button class="calc__tab" data-panel="panel-dist" role="tab">Distance &rarr; Screen Size</button>
@@ -61,7 +87,7 @@
 
     <div class="prose" style="margin-top: 56px;">
       <h3>How throw ratio works</h3>
-      <p>A projector's throw ratio (for example, 1.2x–1.5x) is the multiplier between image width and distance: a 1.5x throw needs 1.5 feet of distance for every foot of image width. Zoom lenses give you a range, which is why the calculator shows one. The calculator above uses the common 1.2x–1.5x span — always confirm your exact model's spec sheet for the precise figure.</p>
+      <p>A projector's throw ratio (for example, 1.2x–1.5x) is the multiplier between image width and distance: a 1.5x throw needs 1.5 feet of distance for every foot of image width. Zoom lenses give you a range, which is why the calculator shows one. The calculator above uses your exact model's published throw ratio — pick it from the list and the math is done for you.</p>
 
       <h3>Quick reference (typical 1.2x–1.5x throw, 16:9)</h3>
       <table class="ref-table">
@@ -101,6 +127,7 @@
   </div>
 </footer>
 
+<script src="js/throw-data.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
