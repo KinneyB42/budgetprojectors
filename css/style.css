@@ -279,6 +279,7 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__manual { margin-top: 14px; }
 .calc__manual-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media (max-width: 560px) { .calc__manual-row { grid-template-columns: 1fr; } }
+.calc__disclaimer { font-size: 13.5px; color: var(--muted); max-width: 720px; margin-top: 18px; line-height: 1.6; }
 
 .ref-table { width: 100%; border-collapse: collapse; margin-top: 28px; font-size: 15px; }
 .ref-table th, .ref-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); }
