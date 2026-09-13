@@ -65,24 +65,49 @@
         </div>
       </div>
 
-      <div class="calc__tabs" role="tablist">
-        <button class="calc__tab active" data-panel="panel-size" role="tab">Screen Size &rarr; Distance</button>
-        <button class="calc__tab" data-panel="panel-dist" role="tab">Distance &rarr; Screen Size</button>
+      <div class="calc__room">
+        <label>Room type</label>
+        <div class="calc__chips" id="calc-roomtype">
+          <button type="button" class="calc__chip chosen" data-room="living">Living Room</button>
+          <button type="button" class="calc__chip" data-room="bedroom">Bedroom</button>
+          <button type="button" class="calc__chip" data-room="dedicated">Dedicated Space</button>
+          <button type="button" class="calc__chip" data-room="garage">Garage</button>
+          <button type="button" class="calc__chip" data-room="outdoors">Outdoors</button>
+        </div>
+        <div class="calc__dims" id="calc-dims">
+          <div>
+            <label for="calc-room-len">Room length (ft)</label>
+            <input type="number" id="calc-room-len" min="6" max="100" step="0.5" inputmode="decimal">
+          </div>
+          <div>
+            <label for="calc-room-wid">Room width (ft)</label>
+            <input type="number" id="calc-room-wid" min="6" max="100" step="0.5" inputmode="decimal">
+          </div>
+          <div>
+            <label for="calc-room-ceil">Ceiling height (ft)</label>
+            <input type="number" id="calc-room-ceil" min="7" max="30" step="0.5" inputmode="decimal">
+          </div>
+        </div>
+        <p class="calc__hint" id="calc-room-tip"></p>
       </div>
 
-      <div class="calc__panel active" id="panel-size">
-        <label for="calc-size">Screen size (diagonal, inches)</label>
-        <input type="number" id="calc-size" min="20" max="300" step="1" placeholder="e.g. 100" inputmode="decimal">
-        <p class="calc__hint">Common sizes: 80&Prime;, 100&Prime;, 120&Prime;. Assumes a 16:9 screen.</p>
-        <div class="calc__result" id="calc-size-result" aria-live="polite"></div>
+      <div class="calc__plan">
+        <div>
+          <label for="calc-size">Screen size (diagonal, inches)</label>
+          <input type="number" id="calc-size" min="20" max="300" step="1" placeholder="e.g. 100" inputmode="decimal">
+        </div>
+        <div>
+          <label for="calc-seat">Seating distance (ft)</label>
+          <input type="number" id="calc-seat" min="2" max="60" step="0.5" placeholder="e.g. 10" inputmode="decimal">
+        </div>
+      </div>
+      <p class="calc__hint">Screen math assumes 16:9. Seating is measured from the screen.</p>
+
+      <div class="calc__viz">
+        <svg id="calc-svg" viewBox="0 0 660 440" role="img" aria-label="3D room visualization"></svg>
       </div>
 
-      <div class="calc__panel" id="panel-dist">
-        <label for="calc-dist">Projector distance from screen (feet)</label>
-        <input type="number" id="calc-dist" min="2" max="40" step="0.5" placeholder="e.g. 10" inputmode="decimal">
-        <p class="calc__hint">Measure from the projector lens to the wall or screen. Assumes a 16:9 screen.</p>
-        <div class="calc__result" id="calc-dist-result" aria-live="polite"></div>
-      </div>
+      <div class="calc__result show" id="calc-plan-result" aria-live="polite"></div>
     </div>
     <p class="calc__disclaimer">This calculator is an estimation tool. Throw distances are based on published manufacturer specifications and standard 16:9 screen math, and actual placement can vary with zoom position, lens shift, and mounting. Measure your room before buying or mounting, and refer to the manufacturer&rsquo;s specifications for further information.</p>
 
