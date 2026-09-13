@@ -190,7 +190,6 @@
 
   /* ---------- Golf simulator mode ---------- */
   var golfMode = false;
-  var golfToggle = document.getElementById('calc-golf-toggle');
   var golfWrap = document.getElementById('calc-golf-wrap');
   var diagWrap = document.getElementById('calc-diag-wrap');
   var wInput = document.getElementById('calc-screen-w');
@@ -223,20 +222,24 @@
     hInput.value = fmt(w * parseFloat(parts[1], 10) / parseFloat(parts[0], 10), 1);
   }
 
-  if (golfToggle) {
-    golfToggle.addEventListener('click', function () {
-      golfMode = !golfMode;
-      golfToggle.classList.toggle('chosen', golfMode);
-      golfToggle.setAttribute('aria-pressed', golfMode ? 'true' : 'false');
-      if (golfWrap) golfWrap.hidden = !golfMode;
-      if (diagWrap) diagWrap.style.display = golfMode ? 'none' : '';
-      var seatLabel = document.getElementById('calc-seat-label');
-      if (seatLabel) seatLabel.textContent = golfMode ? 'Hitting distance from screen (ft)' : 'Seating distance (ft)';
-      var vizTitle = document.getElementById('calc-viz-title');
-      if (vizTitle) vizTitle.textContent = golfMode ? 'Simulator preview' : 'Room preview';
-      recalc();
+  function setGolfMode(on) {
+    golfMode = on;
+    document.querySelectorAll('#calc-golf-chips .calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', (c.getAttribute('data-golf') === 'yes') === on);
     });
+    if (golfWrap) golfWrap.hidden = !on;
+    if (diagWrap) diagWrap.style.display = on ? 'none' : '';
+    var seatLabel = document.getElementById('calc-seat-label');
+    if (seatLabel) seatLabel.textContent = on ? 'Hitting distance from screen (ft)' : 'Seating distance (ft)';
+    var vizTitle = document.getElementById('calc-viz-title');
+    if (vizTitle) vizTitle.textContent = on ? 'Simulator preview' : 'Room preview';
+    recalc();
   }
+  document.querySelectorAll('#calc-golf-chips .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      setGolfMode(chip.getAttribute('data-golf') === 'yes');
+    });
+  });
 
   /* ---------- Golf-sim projector placement ---------- */
   var placement = 'ceiling';
