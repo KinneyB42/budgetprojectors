@@ -141,7 +141,11 @@
       <div class="calc__plan">
         <div id="calc-diag-wrap">
           <label for="calc-size">Screen size (diagonal, inches)</label>
-          <input type="number" id="calc-size" min="20" max="300" step="1" placeholder="e.g. 100" inputmode="decimal">
+          <div class="calc__slider-row">
+            <input type="range" id="calc-size" min="0" max="300" step="1" value="100">
+            <span class="calc__slider-val" id="calc-size-val">100&Prime;</span>
+          </div>
+          <div class="calc__slider-ends"><span>0&Prime;</span><span>300&Prime;</span></div>
         </div>
         <div>
           <label for="calc-seat" id="calc-seat-label">Seating distance (ft)</label>

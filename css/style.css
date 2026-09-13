@@ -289,6 +289,10 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 @media (max-width: 560px) { .calc__dims { grid-template-columns: 1fr; } }
 .calc__plan { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 6px; }
 @media (max-width: 560px) { .calc__plan { grid-template-columns: 1fr; } }
+.calc__slider-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.calc__slider-row input[type="range"] { flex: 1; accent-color: var(--navy); height: 32px; }
+.calc__slider-val { font-size: 20px; font-weight: 700; color: var(--navy); min-width: 68px; text-align: right; }
+.calc__slider-ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 2px; padding-right: 80px; }
 .calc__viz { border: 1px solid var(--line); background: var(--white); margin: 0 0 22px; }
 .calc__viz svg { display: block; width: 100%; height: auto; }
 .calc__viz text { font-family: var(--sans); }

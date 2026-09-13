@@ -294,9 +294,17 @@
     });
   }
 
-  [lenInput, widInput, ceilInput, sizeInput, seatInput].forEach(function (el) {
+  var sizeVal = document.getElementById('calc-size-val');
+  function syncSizeVal() {
+    if (sizeInput && sizeVal) sizeVal.textContent = sizeInput.value + '″';
+  }
+  [lenInput, widInput, ceilInput, seatInput].forEach(function (el) {
     if (el) el.addEventListener('input', recalc);
   });
+  if (sizeInput) {
+    sizeInput.addEventListener('input', function () { syncSizeVal(); recalc(); });
+    syncSizeVal();
+  }
 
   function fmtDist(inches) {
     var ft = inches / 12;
