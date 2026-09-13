@@ -373,8 +373,6 @@ window.THROW_DATA = [
   {b: "Wemax", m: "Go", t: [1.2, 1.2]},
   {b: "Wemax", m: "Nova", t: [0.233, 0.233]},
   {b: "Wemax", m: "Vogue Pro", t: [1.1, 1.1]},
-  {b: "XGIMI", m: "AURA 2", t: [0.177, 0.177]},
-  {b: "XGIMI", m: "AURA 2 (New)", t: [0.177, 0.177]},
   {b: "XGIMI", m: "Elfin", t: [1.2, 1.2]},
   {b: "XGIMI", m: "Halo", t: [1.2, 1.2]},
   {b: "XGIMI", m: "Halo+ (New)", t: [1.2, 1.2]},
