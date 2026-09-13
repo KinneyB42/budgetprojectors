@@ -293,6 +293,7 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__slider-row input[type="range"] { flex: 1; accent-color: var(--navy); height: 32px; }
 .calc__slider-val { font-size: 20px; font-weight: 700; color: var(--navy); min-width: 68px; text-align: right; }
 .calc__slider-ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 2px; padding-right: 80px; }
+.calc__aspect { margin: 6px 0 4px; }
 .calc__viz { border: 1px solid var(--line); background: var(--white); margin: 0 0 22px; }
 .calc__viz svg { display: block; width: 100%; height: auto; }
 .calc__viz text { font-family: var(--sans); }

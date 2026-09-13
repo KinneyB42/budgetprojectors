@@ -14,8 +14,12 @@
 
   /* Throw-distance room planner — per-model ratios from js/throw-data.js.
      16:9: width = diagonal * 0.8716, height = diagonal * 0.4903. */
-  var WIDTH_FACTOR = 0.8716; // 16:9 width as fraction of diagonal
-  var HEIGHT_FACTOR = 0.4903; // 16:9 height as fraction of diagonal
+  var ASPECTS = { '16:9': [16, 9], '2.35:1': [2.35, 1], '4:3': [4, 3], '1:1': [1, 1] };
+  var stdAspect = '16:9';
+  function stdWidthFactor() {
+    var a = ASPECTS[stdAspect] || ASPECTS['16:9'];
+    return a[0] / Math.sqrt(a[0] * a[0] + a[1] * a[1]);
+  }
   var THROW = window.THROW_DATA || [];
 
   function fmt(n, digits) {
@@ -192,6 +196,7 @@
   var golfMode = false;
   var golfWrap = document.getElementById('calc-golf-wrap');
   var diagWrap = document.getElementById('calc-diag-wrap');
+  var aspectStdWrap = document.getElementById('calc-aspect-std-wrap');
   var wInput = document.getElementById('calc-screen-w');
   var hInput = document.getElementById('calc-screen-h');
   var aspectSel = document.getElementById('calc-aspect');
@@ -229,6 +234,7 @@
     });
     if (golfWrap) golfWrap.hidden = !on;
     if (diagWrap) diagWrap.style.display = on ? 'none' : '';
+    if (aspectStdWrap) aspectStdWrap.style.display = on ? 'none' : '';
     syncUnitLabels();
     var vizTitle = document.getElementById('calc-viz-title');
     if (vizTitle) vizTitle.textContent = on ? 'Simulator preview' : 'Room preview';
@@ -374,6 +380,15 @@
     sizeInput.addEventListener('input', function () { syncSizeVal(); recalc(); });
     syncSizeVal();
   }
+  document.querySelectorAll('#calc-aspect-std .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      stdAspect = chip.getAttribute('data-ar');
+      document.querySelectorAll('#calc-aspect-std .calc__chip').forEach(function (c) {
+        c.classList.toggle('chosen', c === chip);
+      });
+      recalc();
+    });
+  });
 
   function fmtDist(inches) {
     if (unit === 'm') {
@@ -441,9 +456,11 @@
           '<span>Type the screen diagonal you want and the planner will show throw distance, seating, and whether it fits your room.</span>';
         return;
       }
-      scrWIn = diag * WIDTH_FACTOR; scrHIn = diag * HEIGHT_FACTOR;
+      var a = ASPECTS[stdAspect] || ASPECTS['16:9'];
+      var ad = Math.sqrt(a[0] * a[0] + a[1] * a[1]);
+      scrWIn = diag * a[0] / ad; scrHIn = diag * a[1] / ad;
       imgWIn = scrWIn;
-      scrLabel = fmt(diag, 0) + '&Prime; 16:9';
+      scrLabel = fmt(diag, 0) + '&Prime; ' + stdAspect;
     }
 
     var ust = r[1] < 1;
@@ -496,7 +513,7 @@
         bits.push('Too big for this room: the widest screen that fits is about ' + dispDist(maxW / 12) + ' wide.');
       } else {
         bits.push('Too big for this room: the largest screen that fits is about ' +
-          fmt(maxW / WIDTH_FACTOR, 0) + '&Prime;.');
+          fmt(maxW / stdWidthFactor(), 0) + '&Prime; ' + stdAspect + '.');
       }
     } else {
       bits.push('No walls to worry about outdoors, just keep the throw path clear.');
