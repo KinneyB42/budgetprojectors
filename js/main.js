@@ -174,9 +174,9 @@
     var outdoor = type === 'outdoors';
     if (dimsBox) dimsBox.style.display = outdoor ? 'none' : '';
     if (!outdoor && R.len) {
-      if (lenInput) lenInput.value = R.len;
-      if (widInput) widInput.value = R.wid;
-      if (ceilInput) ceilInput.value = R.ceil;
+      if (lenInput) lenInput.value = unit === 'm' ? fmt(R.len * M_PER_FT, 2) : R.len;
+      if (widInput) widInput.value = unit === 'm' ? fmt(R.wid * M_PER_FT, 2) : R.wid;
+      if (ceilInput) ceilInput.value = unit === 'm' ? fmt(R.ceil * M_PER_FT, 2) : R.ceil;
     }
     if (roomTip) roomTip.textContent = R.tip;
     recalc();
@@ -229,8 +229,7 @@
     });
     if (golfWrap) golfWrap.hidden = !on;
     if (diagWrap) diagWrap.style.display = on ? 'none' : '';
-    var seatLabel = document.getElementById('calc-seat-label');
-    if (seatLabel) seatLabel.textContent = on ? 'Hitting distance from screen (ft)' : 'Seating distance (ft)';
+    syncUnitLabels();
     var vizTitle = document.getElementById('calc-viz-title');
     if (vizTitle) vizTitle.textContent = on ? 'Simulator preview' : 'Room preview';
     recalc();
@@ -255,6 +254,76 @@
   if (aspectSel) aspectSel.addEventListener('change', function () { applyAspect(); recalc(); });
   [wInput, hInput].forEach(function (el) {
     if (el) el.addEventListener('input', function () { syncAspectFromDims(); recalc(); });
+  });
+
+  /* ---------- Units: feet or meters (all internal math stays in feet) ---------- */
+  var M_PER_FT = 0.3048;
+  var unit = 'ft';
+  try { unit = localStorage.getItem('calc-unit') || 'ft'; } catch (e) { unit = 'ft'; }
+  if (unit !== 'm') unit = 'ft';
+  function toFt(v) { return unit === 'm' ? v / M_PER_FT : v; }
+  function dispDist(ft) { return unit === 'm' ? fmt(ft * M_PER_FT, 2) + ' m' : fmt(ft, 1) + ' ft'; }
+  function dispShort(ft) { return unit === 'm' ? fmt(ft * M_PER_FT, 1) + ' m' : fmt(ft, 0) + ' ft'; }
+  var DIM_INPUTS = [ // id, min, max, step in feet
+    ['calc-room-len', 6, 100, 0.5],
+    ['calc-room-wid', 6, 100, 0.5],
+    ['calc-room-ceil', 7, 30, 0.5],
+    ['calc-seat', 2, 60, 0.5],
+    ['calc-screen-w', 4, 40, 0.5],
+    ['calc-screen-h', 3, 20, 0.5]
+  ];
+  function syncUnitLabels() {
+    var m = unit === 'm';
+    var u = m ? 'm' : 'ft';
+    var map = [
+      ['calc-room-len', 'Room length', null],
+      ['calc-room-wid', 'Room width', null],
+      ['calc-room-ceil', 'Ceiling height', null],
+      ['calc-seat', golfMode ? 'Hitting distance from screen' : 'Seating distance', m ? 'e.g. 3' : 'e.g. 10'],
+      ['calc-screen-w', 'Screen width', m ? 'e.g. 3' : 'e.g. 10'],
+      ['calc-screen-h', 'Screen height', m ? 'e.g. 2.3' : 'e.g. 7.5']
+    ];
+    map.forEach(function (row) {
+      var lab = document.querySelector('label[for="' + row[0] + '"]');
+      if (lab) lab.textContent = row[1] + ' (' + u + ')';
+      if (row[2]) {
+        var inp = document.getElementById(row[0]);
+        if (inp) inp.placeholder = row[2];
+      }
+    });
+    DIM_INPUTS.forEach(function (d) {
+      var inp = document.getElementById(d[0]);
+      if (!inp) return;
+      if (m) {
+        inp.min = fmt(d[1] * M_PER_FT, 1);
+        inp.max = fmt(d[2] * M_PER_FT, 0);
+        inp.step = '0.1';
+      } else {
+        inp.min = d[1]; inp.max = d[2]; inp.step = d[3];
+      }
+    });
+  }
+  function setUnit(u, convert) {
+    if (u !== 'ft' && u !== 'm') return;
+    if (convert && u !== unit) {
+      var toM = (u === 'm');
+      [lenInput, widInput, ceilInput, seatInput, wInput, hInput].forEach(function (el) {
+        if (!el || el.value === '') return;
+        var v = parseFloat(el.value, 10);
+        if (!(v >= 0)) return;
+        el.value = toM ? fmt(v * M_PER_FT, 2) : fmt(v / M_PER_FT, 2);
+      });
+    }
+    unit = u;
+    try { localStorage.setItem('calc-unit', u); } catch (e) {}
+    document.querySelectorAll('#calc-units .calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', c.getAttribute('data-unit') === u);
+    });
+    syncUnitLabels();
+    recalc();
+  }
+  document.querySelectorAll('#calc-units .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () { setUnit(chip.getAttribute('data-unit'), true); });
   });
 
   /* ---------- Projector position (standard mode) ---------- */
@@ -307,6 +376,10 @@
   }
 
   function fmtDist(inches) {
+    if (unit === 'm') {
+      if (inches < 36) return fmt(inches * 2.54, 0) + ' cm';
+      return fmt(inches * 0.0254, 2) + ' m';
+    }
     var ft = inches / 12;
     if (inches < 36) return fmt(inches, 0) + ' in';
     return fmt(ft, 1) + ' ft';
@@ -316,11 +389,11 @@
     if (!planResult || !svg) return;
     var r = currentRatio();
     var diag = sizeInput ? parseFloat(sizeInput.value, 10) : NaN;
-    var seat = seatInput ? parseFloat(seatInput.value, 10) : NaN;
+    var seat = seatInput ? toFt(parseFloat(seatInput.value, 10)) : NaN;
     var outdoor = roomType === 'outdoors';
-    var L = outdoor ? 30 : (lenInput ? parseFloat(lenInput.value, 10) : NaN);
-    var W = outdoor ? 24 : (widInput ? parseFloat(widInput.value, 10) : NaN);
-    var H = outdoor ? 0 : (ceilInput ? parseFloat(ceilInput.value, 10) : NaN);
+    var L = outdoor ? 30 : (lenInput ? toFt(parseFloat(lenInput.value, 10)) : NaN);
+    var W = outdoor ? 24 : (widInput ? toFt(parseFloat(widInput.value, 10)) : NaN);
+    var H = outdoor ? 0 : (ceilInput ? toFt(parseFloat(ceilInput.value, 10)) : NaN);
     if (!(L > 0)) L = 18; if (!(W > 0)) W = 14; if (!(H >= 0)) H = 9;
 
     if (!r) {
@@ -333,8 +406,8 @@
     // Screen size: diagonal in standard mode, width x height in golf-sim mode.
     var scrWIn = 0, scrHIn = 0, imgWIn = 0, arWarn = '', scrLabel = '';
     if (golfMode) {
-      var wFt = wInput ? parseFloat(wInput.value, 10) : NaN;
-      var hFt = hInput ? parseFloat(hInput.value, 10) : NaN;
+      var wFt = wInput ? toFt(parseFloat(wInput.value, 10)) : NaN;
+      var hFt = hInput ? toFt(parseFloat(hInput.value, 10)) : NaN;
       if (!(wFt > 0) || !(hFt > 0)) {
         drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType, golf: golfMode });
         planResult.innerHTML = '<strong>Enter your screen dimensions</strong>' +
@@ -344,7 +417,7 @@
       scrWIn = wFt * 12; scrHIn = hFt * 12;
       var scrAR = scrWIn / scrHIn;
       var aLabel = aspectLabel(scrWIn, scrHIn);
-      scrLabel = fmt(wFt, 1) + ' x ' + fmt(hFt, 1) + ' ft (' + aLabel + ')';
+      scrLabel = dispDist(wFt) + ' x ' + dispDist(hFt) + ' (' + aLabel + ')';
       if (Math.abs(scrAR - PROJ_AR) / PROJ_AR < 0.01) {
         imgWIn = scrWIn;
       } else if (scrAR < PROJ_AR) {
@@ -408,19 +481,19 @@
     if (sunOn) bits.push('With sunlight in the room, use an ALR (ambient light rejecting) screen. ' +
       'A standard white screen washes out in daylight, while an ALR screen preserves contrast and brightness.');
     if (arWarn) bits.push(arWarn);
-    bits.push('Reference seating: ' + fmt(dClose, 1) + '–' + fmt(dFarV, 1) +
-      ' ft from the screen (30–36&deg; viewing angle, SMPTE/THX guidance).');
+    bits.push('Reference seating: ' + dispDist(dClose) + '–' + dispDist(dFarV) +
+      ' from the screen (30–36&deg; viewing angle, SMPTE/THX guidance).');
     if (seat > 0 && !golfMode) {
-      if (seat < dClose) bits.push('Your seating (' + fmt(seat, 1) + ' ft) is closer than the reference range: extra immersive.');
-      else if (seat > dFarV) bits.push('Your seating (' + fmt(seat, 1) + ' ft) is farther than the reference range: the image may feel small.');
-      else bits.push('Your seating (' + fmt(seat, 1) + ' ft) lands inside the reference range.');
+      if (seat < dClose) bits.push('Your seating (' + dispDist(seat) + ') is closer than the reference range: extra immersive.');
+      else if (seat > dFarV) bits.push('Your seating (' + dispDist(seat) + ') is farther than the reference range: the image may feel small.');
+      else bits.push('Your seating (' + dispDist(seat) + ') lands inside the reference range.');
     }
     if (!outdoor) {
       var maxW = Math.min(L * 12 / r[1], (W - 1) * 12);
       if (far <= L && scrWIn / 12 <= W - 1) {
         bits.push('It fits your ' + ROOMS[roomType].label.toLowerCase() + '.');
       } else if (golfMode) {
-        bits.push('Too big for this room: the widest screen that fits is about ' + fmt(maxW / 12, 1) + ' ft wide.');
+        bits.push('Too big for this room: the widest screen that fits is about ' + dispDist(maxW / 12) + ' wide.');
       } else {
         bits.push('Too big for this room: the largest screen that fits is about ' +
           fmt(maxW / WIDTH_FACTOR, 0) + '&Prime;.');
@@ -439,10 +512,10 @@
     if (golfMode && placement === 'golfer') {
       if (hitD > 0 && hitD >= near - 0.05 && hitD <= far + 0.05) {
         placeStr = 'The ' + modelName + ' works next to the golfer: set it beside the hitting mat, about ' +
-          fmt(hitD, 1) + ' ft from the screen. ';
+          dispDist(hitD) + ' from the screen. ';
       } else if (hitD > 0) {
-        placeStr = 'Heads up: at a ' + fmt(hitD, 1) + ' ft hitting distance the ' + modelName + ' needs ' +
-          fmt(near, 1) + '–' + fmt(far, 1) + ' ft of throw, so it will not focus properly next to the golfer. ';
+        placeStr = 'Heads up: at a ' + dispDist(hitD) + ' hitting distance the ' + modelName + ' needs ' +
+          dispDist(near) + '–' + dispDist(far) + ' of throw, so it will not focus properly next to the golfer. ';
       } else {
         placeStr = 'Enter your hitting distance to check the next-to-golfer placement. ';
       }
@@ -590,8 +663,8 @@
         poly([[bwx, 0, wz1 - 0.2],[bwx + 1.5, 0, wz1 - 0.2],[bwx - 2.4, 2.6, 0.05],[bwx - 3.9, 2.6, 0.05]], '#ffd76a', { opacity: 0.14 });
       }
     }
-    txt(L / 2, -0.6, 0, fmt(L, 0) + ' ft', 12);
-    txt(-0.6, W / 2, 0, fmt(W, 0) + ' ft', 12);
+    txt(L / 2, -0.6, 0, dispShort(L), 12);
+    txt(-0.6, W / 2, 0, dispShort(W), 12);
 
     var hasScreen = o.swFt > 0 && o.shFt > 0;
     var sw = 0, sh = 0, z0 = 2, zc = 3, yc = W / 2;
@@ -703,7 +776,7 @@
           box(sx, yc, 0.7, 1.7, 1.7, 1.4, S[0], S[1], S[2]); // seat
           box(sx + 0.95, yc, 1.6, 0.45, 1.7, 3.2, S[0], S[1], S[2]); // backrest
         }
-        txt(sx, yc, fz, fname + ' · ' + fmt(o.seat, 1) + ' ft', 11);
+        txt(sx, yc, fz, fname + ' · ' + dispDist(o.seat), 11);
       }
       // floor lamp in the back corner: green when the lights are on, red when off
       if (hasScreen && !o.outdoor) {
@@ -731,5 +804,6 @@
   }
 
   // init
+  setUnit(unit, false);
   setRoom('living');
 })();
