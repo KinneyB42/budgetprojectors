@@ -475,6 +475,14 @@
 
     function raw(x, y, z) { return [(y - x) * 0.8660254, (x + y) * 0.5 - z]; }
     var corners = [[0,0,0],[L,0,0],[0,W,0],[L,W,0],[0,0,H],[L,0,H],[0,W,H],[L,W,H]];
+    if (scene === 'sun' && H > 0) {
+      // make room in the frame for the sun icon outside the side wall
+      var sunFx = L * 0.5, sunFz = H * 0.52;
+      [[sunFx - 2.6, -4.8, sunFz], [sunFx + 2.6, -4.8, sunFz],
+       [sunFx, -4.8, sunFz + 2.8], [sunFx, -4.8, sunFz - 2.8]].forEach(function (c) {
+        corners.push(c);
+      });
+    }
     var rp = corners.map(function (c) { return raw(c[0], c[1], c[2]); });
     var xs = rp.map(function (p) { return p[0]; });
     var ys = rp.map(function (p) { return p[1]; });
@@ -525,12 +533,34 @@
       poly([[0,0,0],[L,0,0],[L,0,H],[0,0,H]], pal.wallB); // side wall (y=0)
     }
     if (scene === 'sun' && H > 0) {
-      // slanted sunbeams falling from the side wall
-      for (var b = 0; b < 3; b++) {
-        var bx = L * (0.22 + b * 0.2);
-        poly([[bx, 0, H], [bx + 2.4, 0, H], [bx + 0.6, 0, 0], [bx - 1.8, 0, 0]], '#ffd76a', { opacity: 0.12 });
+      var wx0 = L * 0.36, wx1 = L * 0.64, wz0 = H * 0.32, wz1 = H * 0.72;
+      var wxm = (wx0 + wx1) / 2, wzm = (wz0 + wz1) / 2;
+      // window on the side wall, glowing with daylight
+      poly([[wx0,0,wz0],[wx1,0,wz0],[wx1,0,wz1],[wx0,0,wz1]], '#ffedb0', { opacity: 0.55, filter: 'url(#calc-glow)' });
+      poly([[wx0,0,wz0],[wx1,0,wz0],[wx1,0,wz1],[wx0,0,wz1]], '#fffbe8', { stroke: '#b89b5e', 'stroke-width': 2 });
+      poly([[wxm-0.09,0,wz0],[wxm+0.09,0,wz0],[wxm+0.09,0,wz1],[wxm-0.09,0,wz1]], '#b89b5e'); // mullion V
+      poly([[wx0,0,wzm-0.09],[wx1,0,wzm-0.09],[wx1,0,wzm+0.09],[wx0,0,wzm+0.09]], '#b89b5e'); // mullion H
+      // sun icon outside the room
+      var sunx = L * 0.5, suny = -3.4, sunz = wzm;
+      var scp = P(sunx, suny, sunz);
+      el('ellipse', { cx: scp[0].toFixed(1), cy: scp[1].toFixed(1), rx: 15, ry: 15, fill: '#ffd94d', stroke: '#e0a92e', 'stroke-width': 2 });
+      for (var ri = 0; ri < 8; ri++) {
+        var ra = ri * Math.PI / 4;
+        var r1x = Math.cos(ra) * 1.35, r1z = Math.sin(ra) * 1.35;
+        var r2x = Math.cos(ra) * 2.15, r2z = Math.sin(ra) * 2.15;
+        var qx = -Math.sin(ra) * 0.12, qz = Math.cos(ra) * 0.12;
+        poly([[sunx+r1x+qx, suny, sunz+r1z+qz],[sunx+r1x-qx, suny, sunz+r1z-qz],
+              [sunx+r2x-qx, suny, sunz+r2z-qz],[sunx+r2x+qx, suny, sunz+r2z+qz]], '#ffd94d');
       }
-      txt(L * 0.52, 0.25, H - 0.7, 'sunlight', 11);
+      // arrow from the sun to the window
+      box(sunx, (suny - 0.8) / 2, sunz, 0.18, (-0.8) - suny, 0.18, '#e0a92e', '#c99a2e', '#c99a2e');
+      poly([[sunx - 0.5, -0.8, sunz],[sunx + 0.5, -0.8, sunz],[sunx, 0.05, sunz]], '#e0a92e');
+      txt(sunx, suny, sunz + 2.9, 'sunlight', 11);
+      // beams from the window slanting across the room toward the screen
+      for (var b = 0; b < 3; b++) {
+        var bwx = L * (0.40 + b * 0.10);
+        poly([[bwx, 0, wz1 - 0.2],[bwx + 1.5, 0, wz1 - 0.2],[bwx - 2.4, 2.6, 0.05],[bwx - 3.9, 2.6, 0.05]], '#ffd76a', { opacity: 0.14 });
+      }
     }
     txt(L / 2, -0.6, 0, fmt(L, 0) + ' ft', 12);
     txt(-0.6, W / 2, 0, fmt(W, 0) + ' ft', 12);
