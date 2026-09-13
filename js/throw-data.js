@@ -50,6 +50,7 @@ window.THROW_DATA = [
   {b: "Optoma", m: "GT1080HDR", t: [0.5, 0.5]},
   {b: "Optoma", m: "GT1090HDR", t: [0.5, 0.5]},
   {b: "Optoma", m: "GT2000HDR", t: [0.496, 0.496]},
+  {b: "Optoma", m: "GT2100HDR", t: [0.496, 0.496]},
   {b: "Optoma", m: "GT2400HDR", t: [0.496, 0.496]},
   {b: "Optoma", m: "ZH406ST", t: [0.5, 0.5]},
   {b: "Optoma", m: "ZW350ST", t: [0.521, 0.521]},
