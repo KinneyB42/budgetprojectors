@@ -188,6 +188,56 @@
     });
   });
 
+  /* ---------- Golf simulator mode ---------- */
+  var golfMode = false;
+  var golfToggle = document.getElementById('calc-golf-toggle');
+  var golfWrap = document.getElementById('calc-golf-wrap');
+  var diagWrap = document.getElementById('calc-diag-wrap');
+  var wInput = document.getElementById('calc-screen-w');
+  var hInput = document.getElementById('calc-screen-h');
+  var aspectSel = document.getElementById('calc-aspect');
+  var PROJ_AR = 16 / 9; // projector native aspect
+  var STD_ARS = [[16, 9], [16, 10], [4, 3], [1, 1]];
+
+  function aspectLabel(wIn, hIn) {
+    if (aspectSel && aspectSel.value !== 'custom') return aspectSel.value;
+    return fmt(wIn / hIn, 2) + ':1';
+  }
+
+  function syncAspectFromDims() {
+    if (!aspectSel || !wInput || !hInput) return;
+    var w = parseFloat(wInput.value, 10), h = parseFloat(hInput.value, 10);
+    if (!(w > 0) || !(h > 0)) return;
+    var ar = w / h, matched = 'custom';
+    STD_ARS.forEach(function (s) {
+      if (Math.abs(ar - s[0] / s[1]) / (s[0] / s[1]) < 0.005) matched = s[0] + ':' + s[1];
+    });
+    aspectSel.value = matched;
+  }
+
+  function applyAspect() {
+    if (!aspectSel || !wInput || !hInput || aspectSel.value === 'custom') return;
+    var w = parseFloat(wInput.value, 10);
+    if (!(w > 0)) return;
+    var parts = aspectSel.value.split(':');
+    hInput.value = fmt(w * parseFloat(parts[1], 10) / parseFloat(parts[0], 10), 1);
+  }
+
+  if (golfToggle) {
+    golfToggle.addEventListener('click', function () {
+      golfMode = !golfMode;
+      golfToggle.classList.toggle('chosen', golfMode);
+      golfToggle.setAttribute('aria-pressed', golfMode ? 'true' : 'false');
+      if (golfWrap) golfWrap.hidden = !golfMode;
+      if (diagWrap) diagWrap.style.display = golfMode ? 'none' : '';
+      recalc();
+    });
+  }
+  if (aspectSel) aspectSel.addEventListener('change', function () { applyAspect(); recalc(); });
+  [wInput, hInput].forEach(function (el) {
+    if (el) el.addEventListener('input', function () { syncAspectFromDims(); recalc(); });
+  });
+
   [lenInput, widInput, ceilInput, sizeInput, seatInput].forEach(function (el) {
     if (el) el.addEventListener('input', recalc);
   });
@@ -209,32 +259,71 @@
     var H = outdoor ? 0 : (ceilInput ? parseFloat(ceilInput.value, 10) : NaN);
     if (!(L > 0)) L = 18; if (!(W > 0)) W = 14; if (!(H >= 0)) H = 9;
 
-    drawViz({ L: L, W: W, H: H, outdoor: outdoor, diag: diag, r: r, seat: seat });
-
     if (!r) {
+      drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: null, seat: seat });
       planResult.innerHTML = '<strong>Pick your projector model</strong>' +
         '<span>Choose your model from the list above (or enter its throw ratio manually) and your room plan will appear here.</span>';
       return;
     }
-    if (!(diag > 0)) {
-      planResult.innerHTML = '<strong>Enter a screen size</strong>' +
-        '<span>Type the screen diagonal you want and the planner will show throw distance, seating, and whether it fits your room.</span>';
-      return;
+
+    // Screen size: diagonal in standard mode, width x height in golf-sim mode.
+    var scrWIn = 0, scrHIn = 0, imgWIn = 0, arWarn = '', scrLabel = '';
+    if (golfMode) {
+      var wFt = wInput ? parseFloat(wInput.value, 10) : NaN;
+      var hFt = hInput ? parseFloat(hInput.value, 10) : NaN;
+      if (!(wFt > 0) || !(hFt > 0)) {
+        drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat });
+        planResult.innerHTML = '<strong>Enter your screen dimensions</strong>' +
+          '<span>Type the screen width and height for your golf simulator and the planner will do the rest.</span>';
+        return;
+      }
+      scrWIn = wFt * 12; scrHIn = hFt * 12;
+      var scrAR = scrWIn / scrHIn;
+      var aLabel = aspectLabel(scrWIn, scrHIn);
+      scrLabel = fmt(wFt, 1) + ' x ' + fmt(hFt, 1) + ' ft (' + aLabel + ')';
+      if (Math.abs(scrAR - PROJ_AR) / PROJ_AR < 0.01) {
+        imgWIn = scrWIn;
+      } else if (scrAR < PROJ_AR) {
+        // Narrower screen (4:3, 1:1): 16:9 image fills the width, height is reduced.
+        imgWIn = scrWIn;
+        var imgH = scrWIn / PROJ_AR;
+        arWarn = 'Heads up: a 16:9 projector on a ' + aLabel + ' screen will not fill the full height. ' +
+          'The picture will be ' + fmt(imgH, 1) + '&Prime; tall on a ' + fmt(scrHIn, 1) +
+          '&Prime; tall screen, with black bars top and bottom.';
+      } else {
+        // Wider screen: image fills the height, width is reduced.
+        imgWIn = scrHIn * PROJ_AR;
+        arWarn = 'Heads up: a 16:9 projector on a ' + aLabel + ' screen will not fill the full width. ' +
+          'The picture will be ' + fmt(imgWIn, 1) + '&Prime; wide on a ' + fmt(scrWIn, 1) +
+          '&Prime; wide screen, with black bars on the sides.';
+      }
+    } else {
+      if (!(diag > 0)) {
+        drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat });
+        planResult.innerHTML = '<strong>Enter a screen size</strong>' +
+          '<span>Type the screen diagonal you want and the planner will show throw distance, seating, and whether it fits your room.</span>';
+        return;
+      }
+      scrWIn = diag * WIDTH_FACTOR; scrHIn = diag * HEIGHT_FACTOR;
+      imgWIn = scrWIn;
+      scrLabel = fmt(diag, 0) + '&Prime; 16:9';
     }
 
-    var wIn = diag * WIDTH_FACTOR;
-    var hIn = diag * HEIGHT_FACTOR;
-    var near = wIn * r[0] / 12; // ft
-    var far = wIn * r[1] / 12; // ft
+    drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
+      scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat });
+
+    var near = imgWIn * r[0] / 12; // ft
+    var far = imgWIn * r[1] / 12; // ft
     var ust = r[1] < 1;
     var modelName = selectedModel ? selectedModel.b + ' ' + selectedModel.m : 'throw ' + ratioLabel(r);
 
     // Reference viewing distance from viewing angle: 36 deg (immersive) to 30 deg (SMPTE minimum).
-    var dClose = (wIn / 2) / Math.tan(18 * Math.PI / 180) / 12; // ft
-    var dFarV = (wIn / 2) / Math.tan(15 * Math.PI / 180) / 12; // ft
+    var dClose = (imgWIn / 2) / Math.tan(18 * Math.PI / 180) / 12; // ft
+    var dFarV = (imgWIn / 2) / Math.tan(15 * Math.PI / 180) / 12; // ft
 
     var bits = [];
-    bits.push('Screen: ' + fmt(diag, 0) + '&Prime; 16:9 (' + fmt(wIn, 1) + '&Prime; wide).');
+    bits.push('Screen: ' + scrLabel + '.');
+    if (arWarn) bits.push(arWarn);
     bits.push('Reference seating: ' + fmt(dClose, 1) + '–' + fmt(dFarV, 1) +
       ' ft from the screen (30–36&deg; viewing angle, SMPTE/THX guidance).');
     if (seat > 0) {
@@ -244,12 +333,13 @@
     }
     if (!outdoor) {
       var maxW = Math.min(L * 12 / r[1], (W - 1) * 12);
-      var maxDiag = maxW / WIDTH_FACTOR;
-      if (far <= L && wIn / 12 <= W - 1) {
+      if (far <= L && scrWIn / 12 <= W - 1) {
         bits.push('It fits your ' + ROOMS[roomType].label.toLowerCase() + '.');
+      } else if (golfMode) {
+        bits.push('Too big for this room: the widest screen that fits is about ' + fmt(maxW / 12, 1) + ' ft wide.');
       } else {
         bits.push('Too big for this room: the largest screen that fits is about ' +
-          fmt(maxDiag, 0) + '&Prime;.');
+          fmt(maxW / WIDTH_FACTOR, 0) + '&Prime;.');
       }
     } else {
       bits.push('No walls to worry about outdoors, just keep the throw path clear.');
@@ -257,15 +347,15 @@
     if (ust) bits.push('Ultra-short-throw: measure from the wall, not the lens.');
     bits.push(ROOMS[roomType].tip);
 
-    var throwStr = fmtDist(wIn * r[0]);
+    var imgRef = golfMode ? 'the ' + fmt(imgWIn, 1) + '&Prime;-wide image' : 'a ' + fmt(diag, 0) + '&Prime; screen';
+    var throwStr = fmtDist(imgWIn * r[0]);
     var placeStr;
     if (r[0] === r[1]) {
-      placeStr = 'Place the ' + modelName + ' ' + throwStr + ' from a ' +
-        fmt(diag, 0) + '&Prime; screen. ';
+      placeStr = 'Place the ' + modelName + ' ' + throwStr + ' from ' + imgRef + '. ';
     } else {
-      throwStr += ' – ' + fmtDist(wIn * r[1]);
-      placeStr = 'Place the ' + modelName + ' between ' + fmtDist(wIn * r[0]) + ' and ' +
-        fmtDist(wIn * r[1]) + ' from a ' + fmt(diag, 0) + '&Prime; screen. ';
+      throwStr += ' – ' + fmtDist(imgWIn * r[1]);
+      placeStr = 'Place the ' + modelName + ' between ' + fmtDist(imgWIn * r[0]) + ' and ' +
+        fmtDist(imgWIn * r[1]) + ' from ' + imgRef + '. ';
     }
 
     planResult.innerHTML =
@@ -326,18 +416,18 @@
     txt(L / 2, -0.6, 0, fmt(L, 0) + ' ft', 12);
     txt(-0.6, W / 2, 0, fmt(W, 0) + ' ft', 12);
 
-    var hasScreen = o.diag > 0;
+    var hasScreen = o.swFt > 0 && o.shFt > 0;
     var sw = 0, sh = 0, z0 = 2, zc = 3, yc = W / 2;
     if (hasScreen) {
-      sw = o.diag * WIDTH_FACTOR / 12; // ft
-      sh = o.diag * HEIGHT_FACTOR / 12; // ft
+      sw = o.swFt; // ft
+      sh = o.shFt; // ft
       z0 = 2;
       if (H > 0 && z0 + sh > H - 0.5) z0 = Math.max(0.5, H - sh - 0.5);
       zc = z0 + sh / 2;
       var yA = yc - sw / 2, yB = yc + sw / 2;
       // screen
       poly([[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]], '#ffffff', { stroke: NAVY, 'stroke-width': 2 });
-      txt(0, yc, z0 + sh + 0.7, fmt(o.diag, 0) + '" screen', 12);
+      txt(0, yc, z0 + sh + 0.7, o.scrLabel || 'screen', 12);
       if (o.outdoor) {
         // simple stand legs
         box(0.15, yA + 0.3, z0 / 2, 0.25, 0.25, z0, '#8a8474', '#7a7466', '#6e695c');
@@ -347,16 +437,17 @@
 
     if (hasScreen && o.r) {
       var ust = o.r[1] < 1;
-      var near = o.diag * WIDTH_FACTOR / 12 * o.r[0]; // ft
-      var far = o.diag * WIDTH_FACTOR / 12 * o.r[1]; // ft
+      var imgWIn = o.imgWIn || o.swFt * 12;
+      var near = imgWIn / 12 * o.r[0]; // ft
+      var far = imgWIn / 12 * o.r[1]; // ft
       // throw range zone on the floor
       poly([[near,yc-1.1,0.02],[far,yc-1.1,0.02],[far,yc+1.1,0.02],[near,yc+1.1,0.02]], NAVY, { opacity: 0.10 });
       // projector at the near end
       var zp = ust ? 1 : zc;
       box(near, yc, zp, 1.1, 0.9, 0.55, '#24406e', NAVY, '#081a38');
       txt(near, yc, zp + 0.9, 'projector', 11);
-      var rangeLabel = fmtDist(o.diag * WIDTH_FACTOR * o.r[0]);
-      if (o.r[1] !== o.r[0]) rangeLabel += '–' + fmtDist(o.diag * WIDTH_FACTOR * o.r[1]);
+      var rangeLabel = fmtDist(imgWIn * o.r[0]);
+      if (o.r[1] !== o.r[0]) rangeLabel += '–' + fmtDist(imgWIn * o.r[1]);
       txt((near + far) / 2, yc - 1.5, 0.05, rangeLabel, 11);
       // light cone: lens to screen corners
       var lens = [near, yc, zp];

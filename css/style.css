@@ -289,6 +289,17 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__viz { border: 1px solid var(--line); background: var(--white); margin: 22px 0; }
 .calc__viz svg { display: block; width: 100%; height: auto; }
 .calc__viz text { font-family: var(--sans); }
+.calc__golf { margin-bottom: 6px; }
+.calc select {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  margin-bottom: 6px;
+  background: var(--white);
+}
 
 .ref-table { width: 100%; border-collapse: collapse; margin-top: 28px; font-size: 15px; }
 .ref-table th, .ref-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); }
