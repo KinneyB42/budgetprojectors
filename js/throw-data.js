@@ -81,6 +81,7 @@ window.THROW_DATA = [
   {b: "ViewSonic", m: "PA503HD", t: [1.48, 1.62]},
   {b: "ViewSonic", m: "X1-4K Pro", t: [1.15, 1.5]},
   {b: "Epson", m: "Home Cinema 1100", t: [1.0, 1.21]},
+  {b: "Epson", m: "PowerLite 530", t: [0.54, 0.74]},
   {b: "Epson", m: "EpiqVision Flex CO-FH02", t: [1.19, 1.61]},
   {b: "Epson", m: "EpiqVision Pop Plus (Lifestudio Pop Plus)", t: [1.2, 1.2]},
   {b: "Epson", m: "EpiqVision Flex (Lifestudio Flex)", t: [1.2, 1.2]},
