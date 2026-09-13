@@ -273,7 +273,10 @@ h3 { font-size: 22px; margin-bottom: 12px; }
   padding: 9px 14px;
   cursor: pointer;
 }
-.calc__chip:hover, .calc__chip.chosen { background: var(--navy); color: var(--white); }
+.calc__chip.chosen { background: var(--navy); color: var(--white); }
+@media (hover: hover) {
+  .calc__chip:hover { background: var(--navy); color: var(--white); }
+}
 .calc__selected { font-size: 15px; font-weight: 600; color: var(--navy); margin: 12px 0 4px; }
 .calc__linkbtn { background: none; border: 0; padding: 0; color: var(--navy); text-decoration: underline; font-size: inherit; cursor: pointer; font-family: inherit; }
 .calc__manual { margin-top: 14px; }

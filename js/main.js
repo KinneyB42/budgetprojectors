@@ -232,6 +232,8 @@
       if (diagWrap) diagWrap.style.display = golfMode ? 'none' : '';
       var seatLabel = document.getElementById('calc-seat-label');
       if (seatLabel) seatLabel.textContent = golfMode ? 'Hitting distance from screen (ft)' : 'Seating distance (ft)';
+      var vizTitle = document.getElementById('calc-viz-title');
+      if (vizTitle) vizTitle.textContent = golfMode ? 'Simulator preview' : 'Room preview';
       recalc();
     });
   }
@@ -466,6 +468,10 @@
       proj: ['#24406e', NAVY, '#081a38'], seat: ['#9aa5bd', '#7c88a3', '#6b7690'],
       label: MUTED, stand: ['#8a8474', '#7a7466', '#6e695c']
     };
+    // Golf simulator: turf floor instead of room flooring.
+    if (o.golf) {
+      pal.floor = scene === 'night' ? '#243024' : (scene === 'sun' ? '#93a94e' : '#79b356');
+    }
 
     function raw(x, y, z) { return [(y - x) * 0.8660254, (x + y) * 0.5 - z]; }
     var corners = [[0,0,0],[L,0,0],[0,W,0],[L,W,0],[0,0,H],[L,0,H],[0,W,H],[L,W,H]];
