@@ -596,6 +596,21 @@
         poly([[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]], '#bcd0ff', { opacity: 0.5, filter: 'url(#calc-glow)' });
       }
       poly([[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]], '#ffffff', { stroke: NAVY, 'stroke-width': 2 });
+      // diagonal size arrow across the screen face
+      if (sw > 2 && sh > 1.5) {
+        var ax = 0.45;
+        var ay1 = yA + 0.3, az1 = z0 + 0.35, ay2 = yB - 0.3, az2 = z0 + sh - 0.35;
+        var ady = ay2 - ay1, adz = az2 - az1;
+        var alen = Math.sqrt(ady * ady + adz * adz);
+        var auy = ady / alen, auz = adz / alen, anx = -auz, anz = auy, at = 0.07;
+        var dcol = '#0c2244';
+        poly([[ax, ay1 + anx * at, az1 + anz * at],[ax, ay1 - anx * at, az1 - anz * at],
+              [ax, ay2 - anx * at, az2 - anz * at],[ax, ay2 + anx * at, az2 + anz * at]], dcol);
+        poly([[ax, ay1 - auy * 0.5, az1 - auz * 0.5],[ax, ay1 + anx * 0.3, az1 + anz * 0.3],[ax, ay1 - anx * 0.3, az1 - anz * 0.3]], dcol);
+        poly([[ax, ay2 + auy * 0.5, az2 + auz * 0.5],[ax, ay2 + anx * 0.3, az2 + anz * 0.3],[ax, ay2 - anx * 0.3, az2 - anz * 0.3]], dcol);
+        var adiag = Math.sqrt(sw * sw + sh * sh) * 12;
+        txt(ax, (ay1 + ay2) / 2 + anx * 0.62, (az1 + az2) / 2 + anz * 0.62, fmt(adiag, 0) + '"', 13);
+      }
       txt(0, yc, z0 + sh + 0.7, o.scrLabel || 'screen', 12);
       if (o.outdoor) {
         // simple stand legs
