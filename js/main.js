@@ -284,7 +284,7 @@
     if (!(L > 0)) L = 18; if (!(W > 0)) W = 14; if (!(H >= 0)) H = 9;
 
     if (!r) {
-      drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: null, seat: seat });
+      drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: null, seat: seat, room: roomType, golf: golfMode });
       planResult.innerHTML = '<strong>Pick your projector model</strong>' +
         '<span>Choose your model from the list above (or enter its throw ratio manually) and your room plan will appear here.</span>';
       return;
@@ -296,7 +296,7 @@
       var wFt = wInput ? parseFloat(wInput.value, 10) : NaN;
       var hFt = hInput ? parseFloat(hInput.value, 10) : NaN;
       if (!(wFt > 0) || !(hFt > 0)) {
-        drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat });
+        drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType, golf: golfMode });
         planResult.innerHTML = '<strong>Enter your screen dimensions</strong>' +
           '<span>Type the screen width and height for your golf simulator and the planner will do the rest.</span>';
         return;
@@ -323,7 +323,7 @@
       }
     } else {
       if (!(diag > 0)) {
-        drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat });
+        drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType, golf: golfMode });
         planResult.innerHTML = '<strong>Enter a screen size</strong>' +
           '<span>Type the screen diagonal you want and the planner will show throw distance, seating, and whether it fits your room.</span>';
         return;
@@ -334,7 +334,7 @@
     }
 
     drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
-      scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat });
+      scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType, golf: golfMode });
 
     var near = imgWIn * r[0] / 12; // ft
     var far = imgWIn * r[1] / 12; // ft
@@ -454,16 +454,15 @@
 
     // Floor and walls
     if (pal.bg) el('rect', { x: 0, y: 0, width: VW, height: VH, fill: pal.bg });
-    if (!lightsOn && scene === 'night') {
-      var defs = el('defs', {});
-      var filt = document.createElementNS(NS, 'filter');
-      filt.setAttribute('id', 'calc-glow');
-      filt.setAttribute('x', '-60%'); filt.setAttribute('y', '-60%');
-      filt.setAttribute('width', '220%'); filt.setAttribute('height', '220%');
-      var blur = document.createElementNS(NS, 'feGaussianBlur');
-      blur.setAttribute('stdDeviation', '10');
-      filt.appendChild(blur); defs.appendChild(filt);
-    }
+    // soft-glow filter (screen glow at night, lamp glow with lights on)
+    var defs = el('defs', {});
+    var filt = document.createElementNS(NS, 'filter');
+    filt.setAttribute('id', 'calc-glow');
+    filt.setAttribute('x', '-60%'); filt.setAttribute('y', '-60%');
+    filt.setAttribute('width', '220%'); filt.setAttribute('height', '220%');
+    var blur = document.createElementNS(NS, 'feGaussianBlur');
+    blur.setAttribute('stdDeviation', '10');
+    filt.appendChild(blur); defs.appendChild(filt);
     poly([[0,0,0],[L,0,0],[L,W,0],[0,W,0]], pal.floor);
     if (H > 0) {
       poly([[0,0,0],[0,W,0],[0,W,H],[0,0,H]], pal.wallA); // screen wall (x=0)
@@ -522,12 +521,64 @@
       for (var i = 0; i < 4; i++) {
         poly([lens, sc[i], sc[(i + 1) % 4]], pal.beam, { opacity: pal.coneOp });
       }
-      // seating
+      // seating furniture per room (a golfer in golf-sim mode)
       if (o.seat > 0) {
         var sx = Math.min(o.seat, o.outdoor ? L - 1 : L - 0.5);
-        box(sx, yc, 0.7, 1.7, 1.7, 1.4, pal.seat[0], pal.seat[1], pal.seat[2]); // seat
-        box(sx + 0.95, yc, 1.6, 0.45, 1.7, 3.2, pal.seat[0], pal.seat[1], pal.seat[2]); // backrest
-        txt(sx, yc, 3.9, fmt(o.seat, 1) + ' ft seating', 11);
+        var kind = o.golf ? 'golfer' : ({ living: 'couch', bedroom: 'bed', outdoors: 'campchair' }[o.room] || 'seat');
+        var S = pal.seat, fname = 'seat', fz = 3.9;
+        if (kind === 'couch') {
+          fname = 'couch'; fz = 4.1;
+          box(sx, yc, 0.75, 2.6, 7, 1.5, S[0], S[1], S[2]); // base
+          box(sx, yc, 1.6, 2.4, 6.6, 0.35, S[0], S[1], S[2]); // cushions
+          box(sx + 1.35, yc, 1.7, 0.7, 7, 3.4, S[0], S[1], S[2]); // backrest
+          box(sx, yc - 3.55, 1.15, 2.6, 0.7, 2.3, S[0], S[1], S[2]); // armrest
+          box(sx, yc + 3.55, 1.15, 2.6, 0.7, 2.3, S[0], S[1], S[2]); // armrest
+        } else if (kind === 'bed') {
+          fname = 'bed'; fz = 5.2;
+          box(sx, yc, 1.0, 7, 5.5, 2.0, S[0], S[1], S[2]); // frame
+          box(sx - 0.8, yc, 2.15, 4.2, 5.3, 0.3, S[1], S[2], S[1]); // blanket
+          box(sx + 2.3, yc, 2.35, 1.4, 4.6, 0.7, S[0], S[1], S[2]); // pillow
+          box(sx + 3.6, yc, 2.2, 0.5, 5.5, 4.4, S[0], S[1], S[2]); // headboard
+        } else if (kind === 'campchair') {
+          fname = 'camp chair'; fz = 4.1;
+          box(sx, yc, 0.9, 1.9, 1.9, 0.25, S[0], S[1], S[2]); // seat
+          poly([[sx + 0.85, yc - 0.95, 1.0], [sx + 0.85, yc + 0.95, 1.0], [sx + 1.55, yc + 0.95, 3.4], [sx + 1.55, yc - 0.95, 3.4]], S[0], { stroke: S[2], 'stroke-width': 1 }); // backrest
+          box(sx - 0.7, yc - 0.7, 0.5, 0.16, 0.16, 1.0, S[1], S[2], S[1]);
+          box(sx - 0.7, yc + 0.7, 0.5, 0.16, 0.16, 1.0, S[1], S[2], S[1]);
+          box(sx + 0.7, yc - 0.7, 0.5, 0.16, 0.16, 1.0, S[1], S[2], S[1]);
+          box(sx + 0.7, yc + 0.7, 0.5, 0.16, 0.16, 1.0, S[1], S[2], S[1]);
+        } else if (kind === 'golfer') {
+          fname = 'golfer'; fz = 6.4;
+          poly([[sx - 3.1, yc - 1, 0.03], [sx - 1, yc - 1, 0.03], [sx - 1, yc + 1.4, 0.03], [sx - 3.1, yc + 1.4, 0.03]], '#3a8f5d', { opacity: 0.85 }); // hitting mat
+          box(sx, yc - 0.35, 1.4, 0.35, 0.35, 2.8, S[0], S[1], S[2]); // legs
+          box(sx, yc + 0.35, 1.4, 0.35, 0.35, 2.8, S[0], S[1], S[2]);
+          box(sx, yc, 3.6, 0.9, 1.1, 2.2, S[0], S[1], S[2]); // torso
+          var hc = P(sx, yc, 5.4);
+          el('ellipse', { cx: hc[0].toFixed(1), cy: hc[1].toFixed(1), rx: 9, ry: 11, fill: S[0], stroke: S[2], 'stroke-width': 1 }); // head
+          poly([[sx - 0.9, yc + 0.25, 2.6], [sx - 0.7, yc + 0.25, 2.6], [sx - 1.9, yc + 0.25, 0.12], [sx - 2.1, yc + 0.25, 0.12]], '#8a6f4d'); // club
+          var bc = P(sx - 2.3, yc + 0.25, 0.18);
+          el('ellipse', { cx: bc[0].toFixed(1), cy: bc[1].toFixed(1), rx: 4, ry: 3, fill: '#ffffff' }); // ball
+        } else {
+          box(sx, yc, 0.7, 1.7, 1.7, 1.4, S[0], S[1], S[2]); // seat
+          box(sx + 0.95, yc, 1.6, 0.45, 1.7, 3.2, S[0], S[1], S[2]); // backrest
+        }
+        txt(sx, yc, fz, fname + ' · ' + fmt(o.seat, 1) + ' ft', 11);
+      }
+      // floor lamp next to the screen; glows when the lights are on
+      if (hasScreen && !o.outdoor) {
+        var lx = 1.1, ly = Math.min(yc + sw / 2 + 1.9, W - 0.8);
+        if (scene === 'day') {
+          poly([[lx - 2.2, ly - 2.2, 0.03], [lx + 2.2, ly - 2.2, 0.03], [lx + 2.2, ly + 2.2, 0.03], [lx - 2.2, ly + 2.2, 0.03]], '#ffdf9e', { opacity: 0.20 });
+        }
+        box(lx, ly, 0.1, 0.7, 0.7, 0.2, pal.stand[0], pal.stand[1], pal.stand[2]); // base
+        box(lx, ly, 2.4, 0.18, 0.18, 4.6, pal.stand[0], pal.stand[1], pal.stand[2]); // pole
+        poly([[lx - 0.75, ly, 5.3], [lx + 0.75, ly, 5.3], [lx + 0.45, ly, 4.35], [lx - 0.45, ly, 4.35]],
+          scene === 'day' || scene === 'sun' ? '#f2e3bb' : '#3a4358', { stroke: pal.label, 'stroke-width': 1 }); // shade
+        if (scene === 'day') {
+          var lc = P(lx, ly, 4.8);
+          el('ellipse', { cx: lc[0].toFixed(1), cy: lc[1].toFixed(1), rx: 34, ry: 40, fill: '#ffdf9e', opacity: 0.55, filter: 'url(#calc-glow)' });
+        }
+        txt(lx, ly, 6.1, 'lamp', 11);
       }
     } else if (!hasScreen) {
       txt(L / 2, W / 2, 1, o.r ? 'Enter a screen size to place the screen.' : 'Pick a model and enter a screen size.', 13);
