@@ -294,6 +294,7 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__viz-toggles .calc__chip { margin: 0 0 0 8px; }
 .calc__viz-toggles .calc__chip:first-child { margin-left: 0; }
 .calc__golf { margin-bottom: 6px; }
+.calc__place { margin-top: 10px; }
 .calc select {
   width: 100%;
   font-family: var(--sans);

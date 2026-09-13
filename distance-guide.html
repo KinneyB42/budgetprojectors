@@ -117,6 +117,14 @@
           </div>
         </div>
         <p class="calc__hint">Golf sim screens are usually 4:3 or 1:1. Pick an aspect to fill the height, or type your exact width and height.</p>
+        <div class="calc__place">
+          <label>Where will the projector go?</label>
+          <div class="calc__chips" id="calc-placement">
+            <button type="button" class="calc__chip chosen" data-place="ceiling">Ceiling Mount</button>
+            <button type="button" class="calc__chip" data-place="floor">On Floor</button>
+            <button type="button" class="calc__chip" data-place="golfer">Next to Golfer</button>
+          </div>
+        </div>
       </div>
 
       <div class="calc__plan">
@@ -125,7 +133,7 @@
           <input type="number" id="calc-size" min="20" max="300" step="1" placeholder="e.g. 100" inputmode="decimal">
         </div>
         <div>
-          <label for="calc-seat">Seating distance (ft)</label>
+          <label for="calc-seat" id="calc-seat-label">Seating distance (ft)</label>
           <input type="number" id="calc-seat" min="2" max="60" step="0.5" placeholder="e.g. 10" inputmode="decimal">
         </div>
       </div>

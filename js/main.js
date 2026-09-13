@@ -230,9 +230,23 @@
       golfToggle.setAttribute('aria-pressed', golfMode ? 'true' : 'false');
       if (golfWrap) golfWrap.hidden = !golfMode;
       if (diagWrap) diagWrap.style.display = golfMode ? 'none' : '';
+      var seatLabel = document.getElementById('calc-seat-label');
+      if (seatLabel) seatLabel.textContent = golfMode ? 'Hitting distance from screen (ft)' : 'Seating distance (ft)';
       recalc();
     });
   }
+
+  /* ---------- Golf-sim projector placement ---------- */
+  var placement = 'ceiling';
+  document.querySelectorAll('#calc-placement .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      placement = chip.getAttribute('data-place');
+      document.querySelectorAll('#calc-placement .calc__chip').forEach(function (c) {
+        c.classList.toggle('chosen', c === chip);
+      });
+      recalc();
+    });
+  });
   if (aspectSel) aspectSel.addEventListener('change', function () { applyAspect(); recalc(); });
   [wInput, hInput].forEach(function (el) {
     if (el) el.addEventListener('input', function () { syncAspectFromDims(); recalc(); });
@@ -334,12 +348,28 @@
     }
 
     drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
-      scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType, golf: golfMode });
+      scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType, golf: golfMode,
+      px: px, py: py, pz: pz, pmount: pmount });
 
     var near = imgWIn * r[0] / 12; // ft
     var far = imgWIn * r[1] / 12; // ft
     var ust = r[1] < 1;
     var modelName = selectedModel ? selectedModel.b + ' ' + selectedModel.m : 'throw ' + ratioLabel(r);
+
+    // Golf-sim projector placement (also drives the 3D projector position).
+    var hitD = seat; // hitting distance from the screen, ft
+    var px = near, py = W / 2, pz = ust ? 1 : 3, pmount = false;
+    if (golfMode) {
+      if (placement === 'ceiling') {
+        px = near; pz = H > 0 ? Math.max(H - 0.9, 2) : 6; pmount = H > 0;
+      } else if (placement === 'floor') {
+        px = near; pz = 0.6;
+      } else { // next to golfer
+        px = Math.min(hitD > 0 ? hitD : near, L - 0.5);
+        py = Math.min(W / 2 + 2.8, W - 1);
+        pz = 0.6;
+      }
+    }
 
     // Reference viewing distance from viewing angle: 36 deg (immersive) to 30 deg (SMPTE minimum).
     var dClose = (imgWIn / 2) / Math.tan(18 * Math.PI / 180) / 12; // ft
@@ -352,7 +382,7 @@
     if (arWarn) bits.push(arWarn);
     bits.push('Reference seating: ' + fmt(dClose, 1) + '–' + fmt(dFarV, 1) +
       ' ft from the screen (30–36&deg; viewing angle, SMPTE/THX guidance).');
-    if (seat > 0) {
+    if (seat > 0 && !golfMode) {
       if (seat < dClose) bits.push('Your seating (' + fmt(seat, 1) + ' ft) is closer than the reference range: extra immersive.');
       else if (seat > dFarV) bits.push('Your seating (' + fmt(seat, 1) + ' ft) is farther than the reference range: the image may feel small.');
       else bits.push('Your seating (' + fmt(seat, 1) + ' ft) lands inside the reference range.');
@@ -376,7 +406,27 @@
     var imgRef = golfMode ? 'the ' + fmt(imgWIn, 1) + '&Prime;-wide image' : 'a ' + fmt(diag, 0) + '&Prime; screen';
     var throwStr = fmtDist(imgWIn * r[0]);
     var placeStr;
-    if (r[0] === r[1]) {
+    if (golfMode && placement === 'golfer') {
+      if (hitD > 0 && hitD >= near - 0.05 && hitD <= far + 0.05) {
+        placeStr = 'The ' + modelName + ' works next to the golfer: set it beside the hitting mat, about ' +
+          fmt(hitD, 1) + ' ft from the screen. ';
+      } else if (hitD > 0) {
+        placeStr = 'Heads up: at a ' + fmt(hitD, 1) + ' ft hitting distance the ' + modelName + ' needs ' +
+          fmt(near, 1) + '–' + fmt(far, 1) + ' ft of throw, so it will not focus properly next to the golfer. ';
+      } else {
+        placeStr = 'Enter your hitting distance to check the next-to-golfer placement. ';
+      }
+    } else if (golfMode) {
+      var how = placement === 'ceiling' ? 'Ceiling-mount' : 'Place on the floor';
+      if (r[0] === r[1]) {
+        placeStr = how + ' the ' + modelName + ' ' + throwStr + ' from ' + imgRef + '. ';
+      } else {
+        throwStr += ' – ' + fmtDist(imgWIn * r[1]);
+        placeStr = how + ' the ' + modelName + ' between ' + fmtDist(imgWIn * r[0]) + ' and ' +
+          fmtDist(imgWIn * r[1]) + ' from ' + imgRef + '. ';
+      }
+      if (placement === 'floor') placeStr += 'Keep it behind the hitting area and shielded from errant shots. ';
+    } else if (r[0] === r[1]) {
       placeStr = 'Place the ' + modelName + ' ' + throwStr + ' from ' + imgRef + '. ';
     } else {
       throwStr += ' – ' + fmtDist(imgWIn * r[1]);
@@ -508,15 +558,20 @@
       var far = imgWIn / 12 * o.r[1]; // ft
       // throw range zone on the floor
       poly([[near,yc-1.1,0.02],[far,yc-1.1,0.02],[far,yc+1.1,0.02],[near,yc+1.1,0.02]], pal.zone, { opacity: pal.zoneOp });
-      // projector at the near end
-      var zp = ust ? 1 : zc;
-      box(near, yc, zp, 1.1, 0.9, 0.55, pal.proj[0], pal.proj[1], pal.proj[2]);
-      txt(near, yc, zp + 0.9, 'projector', 11);
+      // projector (position follows golf-sim placement)
+      var pxx = (o.px != null) ? o.px : near;
+      var pyy = (o.py != null) ? o.py : yc;
+      var pzz = (o.pz != null) ? o.pz : (ust ? 1 : zc);
+      if (o.pmount && H > 0) {
+        box(pxx, pyy, (pzz + H) / 2, 0.18, 0.18, H - pzz, pal.stand[0], pal.stand[1], pal.stand[2]); // mount pole
+      }
+      box(pxx, pyy, pzz, 1.1, 0.9, 0.55, pal.proj[0], pal.proj[1], pal.proj[2]);
+      txt(pxx, pyy, pzz + 0.9, 'projector', 11);
       var rangeLabel = fmtDist(imgWIn * o.r[0]);
       if (o.r[1] !== o.r[0]) rangeLabel += '–' + fmtDist(imgWIn * o.r[1]);
       txt((near + far) / 2, yc - 1.5, 0.05, rangeLabel, 11);
       // light cone: lens to screen corners
-      var lens = [near, yc, zp];
+      var lens = [pxx, pyy, pzz];
       var sc = [[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]];
       for (var i = 0; i < 4; i++) {
         poly([lens, sc[i], sc[(i + 1) % 4]], pal.beam, { opacity: pal.coneOp });
