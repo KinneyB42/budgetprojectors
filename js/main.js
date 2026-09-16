@@ -279,7 +279,8 @@
     ['calc-room-ceil', 7, 30, 0.5],
     ['calc-seat', 2, 60, 0.5],
     ['calc-screen-w', 4, 40, 0.5],
-    ['calc-screen-h', 3, 20, 0.5]
+    ['calc-screen-h', 3, 20, 0.5],
+    ['calc-throwdist', 1, 100, 0.5]
   ];
   function syncUnitLabels() {
     var m = unit === 'm';
@@ -290,7 +291,8 @@
       ['calc-room-ceil', 'Ceiling height', null],
       ['calc-seat', golfMode ? 'Hitting distance from screen' : 'Seating distance', m ? 'e.g. 3' : 'e.g. 10'],
       ['calc-screen-w', 'Screen width', m ? 'e.g. 3' : 'e.g. 10'],
-      ['calc-screen-h', 'Screen height', m ? 'e.g. 2.3' : 'e.g. 7.5']
+      ['calc-screen-h', 'Screen height', m ? 'e.g. 2.3' : 'e.g. 7.5'],
+      ['calc-throwdist', 'Throw distance', m ? 'e.g. 3.7' : 'e.g. 12']
     ];
     map.forEach(function (row) {
       var lab = document.querySelector('label[for="' + row[0] + '"]');
@@ -316,7 +318,7 @@
     if (u !== 'ft' && u !== 'm') return;
     if (convert && u !== unit) {
       var toM = (u === 'm');
-      [lenInput, widInput, ceilInput, seatInput, wInput, hInput].forEach(function (el) {
+      [lenInput, widInput, ceilInput, seatInput, wInput, hInput, throwDistInput].forEach(function (el) {
         if (!el || el.value === '') return;
         var v = parseFloat(el.value, 10);
         if (!(v >= 0)) return;
@@ -391,6 +393,10 @@
     enc('g', golfMode ? '1' : '0');
     if (!golfMode && sizeInput && parseFloat(sizeInput.value, 10) > 0) enc('sz', Math.round(parseFloat(sizeInput.value, 10)));
     enc('ar', stdAspect);
+    enc('dir', reverseMode ? '1' : '0');
+    if (reverseMode && !golfMode) { var td = inFt(throwDistInput); if (td > 0) enc('td', r2(td)); }
+    if (compareB) enc('cb', compareB.b + ' ' + compareB.m);
+    if (compareC) enc('cc', compareC.b + ' ' + compareC.m);
     var seat = inFt(seatInput); if (seat > 0) enc('seat', r2(seat));
     enc('pp', projPos);
     if (golfMode) {
@@ -471,7 +477,22 @@
     if (!isNaN(num('W')) && widInput) widInput.value = toDisp(num('W'));
     if (!isNaN(num('H')) && ceilInput) ceilInput.value = toDisp(num('H'));
     setGolfMode(p.g === '1');
+    if (p.dir === '1') setDirection('throw');
     if (!isNaN(num('sz')) && sizeInput) { sizeInput.value = Math.round(num('sz')); syncSizeVal(); }
+    if (!isNaN(num('td')) && throwDistInput) throwDistInput.value = toDisp(num('td'));
+    if (p.cb || p.cc) {
+      if (!compareOn && compareToggle) compareToggle.click();
+      [['b', p.cb], ['c', p.cc]].forEach(function (q) {
+        if (!q[1]) return;
+        var found = null;
+        THROW.forEach(function (x) { if ((x.b + ' ' + x.m) === q[1]) found = x; });
+        if (found) {
+          setCompare(q[0], found);
+          var ci = document.getElementById(q[0] === 'b' ? 'calc-model-b' : 'calc-model-c');
+          if (ci) ci.value = q[1];
+        }
+      });
+    }
     if (p.ar && ASPECTS[p.ar]) {
       stdAspect = p.ar;
       document.querySelectorAll('#calc-aspect-std .calc__chip').forEach(function (c) {
@@ -616,6 +637,76 @@
     });
   });
 
+  /* ---------- Direction: screen size -> throw, or throw distance -> screen size ---------- */
+  var reverseMode = false;
+  var throwDistInput = document.getElementById('calc-throwdist');
+  var screenModeWrap = document.getElementById('calc-screenmode-wrap');
+  var throwModeWrap = document.getElementById('calc-throwmode-wrap');
+  function setDirection(dir) {
+    reverseMode = dir === 'throw';
+    document.querySelectorAll('#calc-dir-chips .calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', c.getAttribute('data-dir') === dir);
+    });
+    if (screenModeWrap) screenModeWrap.hidden = reverseMode;
+    if (throwModeWrap) throwModeWrap.hidden = !reverseMode;
+    recalc();
+  }
+  document.querySelectorAll('#calc-dir-chips .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () { setDirection(chip.getAttribute('data-dir')); });
+  });
+  if (throwDistInput) throwDistInput.addEventListener('input', recalc);
+
+  /* ---------- Head-to-head model comparison ---------- */
+  var compareOn = false, compareB = null, compareC = null;
+  var compareToggle = document.getElementById('calc-compare-toggle');
+  var compareWrap = document.getElementById('calc-compare-wrap');
+  function setCompare(which, entry) {
+    if (which === 'b') compareB = entry; else compareC = entry;
+  }
+  function bindCompareInput(inputId, suggestId, which) {
+    var inp = document.getElementById(inputId), sug = document.getElementById(suggestId);
+    if (!inp || !sug) return;
+    inp.addEventListener('input', function () {
+      setCompare(which, null);
+      var q = inp.value.trim().toLowerCase();
+      if (q.length < 2) { sug.hidden = true; sug.innerHTML = ''; recalc(); return; }
+      var matches = THROW.filter(function (x) {
+        return (x.b + ' ' + x.m).toLowerCase().indexOf(q) !== -1;
+      }).slice(0, 6);
+      sug.innerHTML = '';
+      matches.forEach(function (x) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = x.b + ' ' + x.m + ' · ' + ratioLabel(x.t);
+        btn.addEventListener('click', function () {
+          inp.value = x.b + ' ' + x.m;
+          sug.hidden = true; sug.innerHTML = '';
+          setCompare(which, x);
+          recalc();
+        });
+        sug.appendChild(btn);
+      });
+      sug.hidden = !matches.length;
+      recalc();
+    });
+  }
+  bindCompareInput('calc-model-b', 'calc-suggest-b', 'b');
+  bindCompareInput('calc-model-c', 'calc-suggest-c', 'c');
+  if (compareToggle) {
+    compareToggle.addEventListener('click', function () {
+      compareOn = !compareOn;
+      if (compareWrap) compareWrap.hidden = !compareOn;
+      compareToggle.textContent = compareOn ? 'Hide comparison' : 'Compare multiple models';
+      if (!compareOn) {
+        compareB = compareC = null;
+        ['calc-model-b', 'calc-model-c'].forEach(function (id) {
+          var i = document.getElementById(id); if (i) i.value = '';
+        });
+      }
+      recalc();
+    });
+  }
+
   function fmtDist(inches) {
     if (unit === 'm') {
       if (inches < 36) return fmt(inches * 2.54, 0) + ' cm';
@@ -645,7 +736,9 @@
     }
 
     // Screen size: diagonal in standard mode, width x height in golf-sim mode.
+    // Reverse mode: throw distance in, screen-size range out.
     var scrWIn = 0, scrHIn = 0, imgWIn = 0, arWarn = '', scrLabel = '';
+    var tdFt = NaN, dMin = NaN, dMax = NaN, dRange = '';
     if (golfMode) {
       var wFt = wInput ? toFt(parseFloat(wInput.value, 10)) : NaN;
       var hFt = hInput ? toFt(parseFloat(hInput.value, 10)) : NaN;
@@ -675,6 +768,22 @@
           'The picture will be ' + fmt(imgWIn, 1) + '&Prime; wide on a ' + fmt(scrWIn, 1) +
           '&Prime; wide screen, with black bars on the sides.';
       }
+    } else if (reverseMode) {
+      tdFt = throwDistInput ? toFt(parseFloat(throwDistInput.value, 10)) : NaN;
+      if (!(tdFt > 0)) {
+        drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType, golf: golfMode });
+        planResult.innerHTML = '<strong>Enter a throw distance</strong>' +
+          '<span>Type how far back the projector will sit and the planner will show the screen sizes it can fill.</span>';
+        return;
+      }
+      var ra = ASPECTS[stdAspect] || ASPECTS['16:9'];
+      var rwf = ra[0] / Math.sqrt(ra[0] * ra[0] + ra[1] * ra[1]);
+      dMin = tdFt * 12 / r[1] / rwf;
+      dMax = tdFt * 12 / r[0] / rwf;
+      scrWIn = dMax * rwf; scrHIn = scrWIn * ra[1] / ra[0];
+      imgWIn = scrWIn;
+      dRange = fmt(dMin, 0) + (Math.abs(dMax - dMin) < 0.5 ? '' : '&ndash;' + fmt(dMax, 0));
+      scrLabel = dRange + '&Prime; ' + stdAspect;
     } else {
       if (!(diag > 0)) {
         drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType, golf: golfMode });
@@ -711,9 +820,36 @@
       }
     }
 
+    // Head-to-head: extra projectors drawn at their own throw distances for the same screen.
+    var extraProj = [];
+    if (compareOn && !reverseMode && (compareB || compareC)) {
+      [['B', compareB], ['C', compareC]].forEach(function (q) {
+        var entry = q[1];
+        if (!entry) return;
+        var t = entry.t, xust = t[1] < 1;
+        var nX = imgWIn * t[0] / 12;
+        var sp = {
+          tag: q[0], ust: xust,
+          dist: fmtDist(imgWIn * t[0]) + (t[1] !== t[0] ? '–' + fmtDist(imgWIn * t[1]) : '')
+        };
+        if (golfMode) {
+          sp.py = W / 2;
+          if (placement === 'ceiling') { sp.px = nX; sp.pz = H > 0 ? Math.max(H - 0.9, 2) : 6; sp.pmount = H > 0; }
+          else if (placement === 'floor') { sp.px = nX; sp.pz = 0.6; }
+          else { sp.px = px; sp.py = Math.min(py + 1.8, W - 1); sp.pz = 0.6; }
+        } else {
+          sp.px = Math.min(nX, L - 0.8);
+          sp.py = W / 2;
+          sp.pos = xust ? 'behind' : projPos;
+          sp.pz = sp.pos === 'table' ? 2.475 : null;
+        }
+        extraProj.push(sp);
+      });
+    }
+
     drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
       scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType, golf: golfMode,
-      px: px, py: py, pz: pz, pmount: pmount, projPos: projPos });
+      px: px, py: py, pz: pz, pmount: pmount, projPos: projPos, extraProj: extraProj });
 
     // Reference viewing distance from viewing angle: 36 deg (immersive) to 30 deg (SMPTE minimum).
     var dClose = (imgWIn / 2) / Math.tan(18 * Math.PI / 180) / 12; // ft
@@ -730,6 +866,12 @@
       if (seat < dClose) bits.push('Your seating (' + dispDist(seat) + ') is closer than the reference range: extra immersive.');
       else if (seat > dFarV) bits.push('Your seating (' + dispDist(seat) + ') is farther than the reference range: the image may feel small.');
       else bits.push('Your seating (' + dispDist(seat) + ') lands inside the reference range.');
+      // Ideal screen size for this seating distance (inverse of the viewing-angle math above).
+      var wLo = 2 * seat * Math.tan(15 * Math.PI / 180) * 12; // inches, 30 deg
+      var wHi = 2 * seat * Math.tan(18 * Math.PI / 180) * 12; // inches, 36 deg
+      var swf = stdWidthFactor();
+      bits.push('For your ' + dispDist(seat) + ' seating, the 30&ndash;36&deg; sweet spot is a ' +
+        fmt(wLo / swf, 0) + '&ndash;' + fmt(wHi / swf, 0) + '&Prime; ' + stdAspect + ' screen.');
     }
     // Brightness: lumens over the lit image area, in foot-lamberts.
     var fl = NaN, flNote = '';
@@ -747,9 +889,10 @@
         bits.push('Brightness: about ' + fmt(fl, 0) + ' foot-lamberts on this screen, ' + flNote + '.');
       }
     }
-    var fitsRoom = !outdoor && far <= L && scrWIn / 12 <= W - 1;
+    var fitsRoom;
     if (!outdoor) {
       var maxW = Math.min(L * 12 / r[1], (W - 1) * 12);
+      fitsRoom = reverseMode ? (tdFt <= L && scrWIn / 12 <= W - 1) : (far <= L && scrWIn / 12 <= W - 1);
       if (fitsRoom) {
         bits.push('It fits your ' + ROOMS[roomType].label.toLowerCase() + '.');
       } else if (golfMode) {
@@ -773,7 +916,10 @@
     var placeStr;
     var posWord = (!golfMode && !ust && projPos === 'ceiling') ? 'Ceiling-mount' : 'Place';
     var posTail = (!golfMode && !ust && projPos === 'table') ? ' on a table' : '';
-    if (golfMode && placement === 'golfer') {
+    if (reverseMode && !golfMode) {
+      placeStr = 'At a ' + dispDist(tdFt) + ' throw, the ' + modelName + ' fills a ' +
+        dRange + '&Prime; ' + stdAspect + ' screen. ';
+    } else if (golfMode && placement === 'golfer') {
       if (hitD > 0 && hitD >= near - 0.05 && hitD <= far + 0.05) {
         placeStr = 'The ' + modelName + ' works next to the golfer: set it beside the hitting mat, about ' +
           dispDist(hitD) + ' from the screen. ';
@@ -801,10 +947,13 @@
         fmtDist(imgWIn * r[1]) + ' from ' + imgRef + posTail + '. ';
     }
 
+    var revMode = reverseMode && !golfMode;
+    var headStr = revMode ? dRange + '&Prime; screen' : throwStr + ' throw';
     planSummary = {
       model: modelName,
-      throw: throwStr + ' throw',
-      screen: golfMode ? scrLabel : fmt(diag, 0) + '″ ' + stdAspect,
+      throw: revMode ? dispDist(tdFt) + ' throw' : throwStr + ' throw',
+      screen: revMode ? dRange.replace(/&ndash;/g, '–') + '″ ' + stdAspect :
+        (golfMode ? scrLabel : fmt(diag, 0) + '″ ' + stdAspect),
       room: ROOMS[roomType].label + ', ' + dispShort(L) + ' × ' + dispShort(W) + (outdoor ? '' : ', ' + dispShort(H) + ' ceiling'),
       seat: seat > 0 ? dispDist(seat) + (golfMode ? ' hitting distance' : ' seating') : '',
       bright: fl > 0 ? 'about ' + fmt(fl, 0) + ' fL, ' + flNote : '',
@@ -812,9 +961,36 @@
         (fitsRoom ? 'Fits your ' + ROOMS[roomType].label.toLowerCase() : 'Too big for this room')
     };
 
+    // Head-to-head comparison table (A = main model, B/C = compare models).
+    var cmpHtml = '';
+    if (compareOn && (compareB || compareC)) {
+      var cmpModels = [{ tag: 'A', name: modelName, t: r }];
+      if (compareB) cmpModels.push({ tag: 'B', name: compareB.b + ' ' + compareB.m, t: compareB.t });
+      if (compareC) cmpModels.push({ tag: 'C', name: compareC.b + ' ' + compareC.m, t: compareC.t });
+      cmpHtml = '<table class="ref-table calc__compare-table"><thead><tr><th></th><th>Model</th>';
+      if (revMode) {
+        var cwf = stdWidthFactor();
+        cmpHtml += '<th>Screen at ' + dispDist(tdFt) + '</th></tr></thead><tbody>';
+        cmpModels.forEach(function (m) {
+          var lo = tdFt * 12 / m.t[1] / cwf, hi = tdFt * 12 / m.t[0] / cwf;
+          var lr = fmt(lo, 0) + (Math.abs(hi - lo) < 0.5 ? '' : '&ndash;' + fmt(hi, 0));
+          cmpHtml += '<tr><td>' + m.tag + '</td><td>' + m.name + '</td><td>' + lr + '&Prime;</td></tr>';
+        });
+      } else {
+        cmpHtml += '<th>Throw for this screen</th><th>Fits room</th></tr></thead><tbody>';
+        cmpModels.forEach(function (m) {
+          var cn = imgWIn * m.t[0], cf = imgWIn * m.t[1];
+          var ctr = fmtDist(cn) + (m.t[1] !== m.t[0] ? '&ndash;' + fmtDist(cf) : '');
+          var cfit = outdoor ? '&ndash;' : (cf / 12 <= L ? 'Yes' : 'No');
+          cmpHtml += '<tr><td>' + m.tag + '</td><td>' + m.name + '</td><td>' + ctr + '</td><td>' + cfit + '</td></tr>';
+        });
+      }
+      cmpHtml += '</tbody></table>';
+    }
+
     planResult.innerHTML =
-      '<strong>' + throwStr + ' throw</strong>' +
-      '<span>' + placeStr + bits.join(' ') + '</span>';
+      '<strong>' + headStr + '</strong>' +
+      '<span>' + placeStr + bits.join(' ') + '</span>' + cmpHtml;
   }
 
   /* ---------- Isometric 3D room visualization (SVG) ---------- */
@@ -1010,6 +1186,22 @@
       for (var i = 0; i < 4; i++) {
         poly([lens, sc[i], sc[(i + 1) % 4]], pal.beam, { opacity: pal.coneOp });
       }
+      // head-to-head: extra projectors at their own throw distances (B green, C orange)
+      (o.extraProj || []).forEach(function (xp, xi) {
+        var cols = xi === 0 ? ['#2e7d5b', '#1d5c40', '#123c29'] : ['#c07a1e', '#8f5a12', '#5f3c0b'];
+        var ex = xp.px, ey = xp.py != null ? xp.py : yc, ez;
+        if (!o.golf && !xp.ust && xp.pos === 'ceiling' && H > 0) {
+          ez = H - 1.0;
+          box(ex, ey, (ez + H) / 2, 0.18, 0.18, H - ez, pal.stand[0], pal.stand[1], pal.stand[2]);
+        } else if (xp.pmount && H > 0) {
+          ez = xp.pz;
+          box(ex, ey, (ez + H) / 2, 0.18, 0.18, H - ez, pal.stand[0], pal.stand[1], pal.stand[2]);
+        } else {
+          ez = xp.pz != null ? xp.pz : (xp.ust ? 1 : zc);
+        }
+        box(ex, ey, ez, 1.1, 0.9, 0.55, cols[0], cols[1], cols[2]);
+        txt(ex, ey, ez + 0.95, xp.tag + ' ' + xp.dist, 11);
+      });
       // seating furniture per room (a golfer in golf-sim mode)
       if (o.seat > 0) {
         var sx = Math.min(o.seat, o.outdoor ? L - 1 : L - 0.5);

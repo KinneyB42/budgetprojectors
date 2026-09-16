@@ -320,6 +320,15 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .ref-table th, .ref-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); }
 .ref-table th { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--navy); }
 
+/* ---------- Calculator additions: direction, compare, head-to-head ---------- */
+#calc-dir-chips { margin-bottom: 14px; }
+#calc-throwmode-wrap input { margin-top: 4px; }
+.calc__compare { margin-top: 10px; }
+.calc__compare > div { margin-bottom: 10px; }
+.calc__compare .calc__suggest { margin: -6px 0 10px; }
+.calc__compare-table { margin-top: 16px; font-size: 14px; }
+.calc__compare-table th, .calc__compare-table td { padding: 9px 10px; }
+
 /* ---------- Steps ---------- */
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 48px; counter-reset: step; }
 .step { border-top: 3px solid var(--navy); padding-top: 24px; }
