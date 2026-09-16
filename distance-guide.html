@@ -63,6 +63,19 @@
           </div>
           <p class="calc__hint">Use the same number in both boxes if your projector has no optical zoom. You&rsquo;ll find the throw ratio on the manufacturer&rsquo;s spec sheet.</p>
         </div>
+        <p class="calc__hint"><button type="button" class="calc__linkbtn" id="calc-compare-toggle">Compare multiple models</button></p>
+        <div class="calc__compare" id="calc-compare-wrap" hidden>
+          <div>
+            <label for="calc-model-b">Second model</label>
+            <input type="text" id="calc-model-b" placeholder="Start typing&hellip;" autocomplete="off">
+            <div class="calc__suggest" id="calc-suggest-b" hidden></div>
+          </div>
+          <div>
+            <label for="calc-model-c">Third model (optional)</label>
+            <input type="text" id="calc-model-c" placeholder="Start typing&hellip;" autocomplete="off">
+            <div class="calc__suggest" id="calc-suggest-c" hidden></div>
+          </div>
+        </div>
       </div>
 
       <div class="calc__room">
@@ -145,12 +158,23 @@
 
       <div class="calc__plan">
         <div id="calc-diag-wrap">
-          <label for="calc-size">Screen size (diagonal, inches)</label>
-          <div class="calc__slider-row">
-            <input type="range" id="calc-size" min="0" max="300" step="1" value="100">
-            <span class="calc__slider-val" id="calc-size-val">100&Prime;</span>
+          <label>Plan by</label>
+          <div class="calc__chips" id="calc-dir-chips">
+            <button type="button" class="calc__chip chosen" data-dir="screen">Screen size</button>
+            <button type="button" class="calc__chip" data-dir="throw">Throw distance</button>
           </div>
-          <div class="calc__slider-ends"><span>0&Prime;</span><span>300&Prime;</span></div>
+          <div id="calc-screenmode-wrap">
+            <label for="calc-size">Screen size (diagonal, inches)</label>
+            <div class="calc__slider-row">
+              <input type="range" id="calc-size" min="0" max="300" step="1" value="100">
+              <span class="calc__slider-val" id="calc-size-val">100&Prime;</span>
+            </div>
+            <div class="calc__slider-ends"><span>0&Prime;</span><span>300&Prime;</span></div>
+          </div>
+          <div id="calc-throwmode-wrap" hidden>
+            <label for="calc-throwdist" id="calc-throwdist-label">Throw distance (ft)</label>
+            <input type="number" id="calc-throwdist" min="1" max="100" step="0.5" placeholder="e.g. 12" inputmode="decimal">
+          </div>
         </div>
         <div>
           <label for="calc-seat" id="calc-seat-label">Seating distance (ft)</label>
