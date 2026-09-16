@@ -156,6 +156,14 @@
           <label for="calc-seat" id="calc-seat-label">Seating distance (ft)</label>
           <input type="number" id="calc-seat" min="2" max="60" step="0.5" placeholder="e.g. 10" inputmode="decimal">
         </div>
+        <div>
+          <label for="calc-lumens">Projector lumens (optional)</label>
+          <input type="number" id="calc-lumens" min="100" max="20000" step="50" placeholder="e.g. 3000" inputmode="numeric">
+        </div>
+        <div>
+          <label for="calc-gain">Screen gain</label>
+          <input type="number" id="calc-gain" min="0.1" max="3" step="0.1" value="1.0" inputmode="decimal">
+        </div>
       </div>
       <p class="calc__hint">Assumes a 16:9 projector. Seating is measured from the screen.</p>
 
@@ -174,6 +182,9 @@
         <div class="calc__viz-toggles">
           <button type="button" class="calc__chip" id="calc-lights-toggle" aria-pressed="true">Lights: On</button>
           <button type="button" class="calc__chip" id="calc-sun-toggle" aria-pressed="false">Sunlight: Off</button>
+          <button type="button" class="calc__chip" id="calc-share">Share link</button>
+          <button type="button" class="calc__chip" id="calc-export-png">Export PNG</button>
+          <button type="button" class="calc__chip" id="calc-export-jpg">Export JPG</button>
         </div>
       </div>
       <div class="calc__viz">

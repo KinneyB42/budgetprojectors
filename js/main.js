@@ -166,8 +166,11 @@
   var roomTip = document.getElementById('calc-room-tip');
   var sizeInput = document.getElementById('calc-size');
   var seatInput = document.getElementById('calc-seat');
+  var lumensInput = document.getElementById('calc-lumens');
+  var gainInput = document.getElementById('calc-gain');
   var planResult = document.getElementById('calc-plan-result');
   var svg = document.getElementById('calc-svg');
+  var planSummary = null; // plain-text snapshot of the current plan, used by the image exporter
 
   function setRoom(type) {
     roomType = type;
@@ -369,6 +372,226 @@
     });
   }
 
+  /* ---------- Shareable links: encode the whole setup in the URL hash ---------- */
+  function buildShareLink() {
+    var parts = [];
+    function enc(k, v) {
+      if (v === null || v === undefined || v === '') return;
+      parts.push(k + '=' + encodeURIComponent(v));
+    }
+    function inFt(el) { return el ? toFt(parseFloat(el.value, 10)) : NaN; }
+    function r2(v) { return Math.round(v * 100) / 100; }
+    if (selectedModel) {
+      enc('m', selectedModel.b + ' ' + selectedModel.m);
+    } else if (manualBox && !manualBox.hidden) {
+      var a = parseFloat(ratioMinInput.value, 10), b = parseFloat(ratioMaxInput.value, 10);
+      if (a > 0 && b > 0) enc('mr', Math.min(a, b) + ',' + Math.max(a, b));
+    }
+    enc('r', roomType);
+    enc('g', golfMode ? '1' : '0');
+    if (!golfMode && sizeInput && parseFloat(sizeInput.value, 10) > 0) enc('sz', Math.round(parseFloat(sizeInput.value, 10)));
+    enc('ar', stdAspect);
+    var seat = inFt(seatInput); if (seat > 0) enc('seat', r2(seat));
+    enc('pp', projPos);
+    if (golfMode) {
+      enc('gp', placement);
+      var gw = inFt(wInput); if (gw > 0) enc('gw', r2(gw));
+      var gh = inFt(hInput); if (gh > 0) enc('gh', r2(gh));
+      if (aspectSel) enc('ga', aspectSel.value);
+    } else if (roomType !== 'outdoors') {
+      var L = inFt(lenInput); if (L > 0) enc('L', r2(L));
+      var Wd = inFt(widInput); if (Wd > 0) enc('W', r2(Wd));
+      var H = inFt(ceilInput); if (H > 0) enc('H', r2(H));
+    }
+    enc('u', unit);
+    if (lumensInput && parseFloat(lumensInput.value, 10) > 0) enc('lm', Math.round(parseFloat(lumensInput.value, 10)));
+    if (gainInput && parseFloat(gainInput.value, 10) > 0) enc('gn', parseFloat(gainInput.value, 10));
+    enc('li', lightsOn ? '1' : '0');
+    enc('sun', sunOn ? '1' : '0');
+    return window.location.href.split('#')[0] + '#calc=' + parts.join(';');
+  }
+
+  function copyText(t, done) {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      done();
+    }
+    if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  var shareBtn = document.getElementById('calc-share');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', function () {
+      var link = buildShareLink();
+      try { history.replaceState(null, '', '#calc=' + link.split('#calc=')[1]); } catch (e) {}
+      copyText(link, function () {
+        var old = shareBtn.textContent;
+        shareBtn.textContent = 'Copied!';
+        setTimeout(function () { shareBtn.textContent = old; }, 1600);
+      });
+    });
+  }
+
+  function applyShareHash() {
+    var h = window.location.hash || '';
+    if (h.indexOf('#calc=') !== 0) return;
+    var p = {};
+    h.substring(6).split(';').forEach(function (kv) {
+      var i = kv.indexOf('=');
+      if (i > 0) {
+        try { p[kv.substring(0, i)] = decodeURIComponent(kv.substring(i + 1)); } catch (e) {}
+      }
+    });
+    function num(k) { var v = parseFloat(p[k], 10); return v >= 0 ? v : NaN; }
+    function toDisp(ft) { return unit === 'm' ? fmt(ft * M_PER_FT, 2) : String(Math.round(ft * 100) / 100); }
+    if (p.u === 'm' || p.u === 'ft') setUnit(p.u, false);
+    if (p.m) {
+      var found = null;
+      THROW.forEach(function (x) { if ((x.b + ' ' + x.m) === p.m) found = x; });
+      if (found) chooseModel(found, null);
+    } else if (p.mr && manualToggle && ratioMinInput && ratioMaxInput) {
+      if (manualBox.hidden) manualToggle.click();
+      var mm = p.mr.split(',');
+      ratioMinInput.value = mm[0] || '';
+      ratioMaxInput.value = mm[1] || mm[0] || '';
+    }
+    if (p.r && ROOMS[p.r]) setRoom(p.r);
+    if (!isNaN(num('L')) && lenInput) lenInput.value = toDisp(num('L'));
+    if (!isNaN(num('W')) && widInput) widInput.value = toDisp(num('W'));
+    if (!isNaN(num('H')) && ceilInput) ceilInput.value = toDisp(num('H'));
+    setGolfMode(p.g === '1');
+    if (!isNaN(num('sz')) && sizeInput) { sizeInput.value = Math.round(num('sz')); syncSizeVal(); }
+    if (p.ar && ASPECTS[p.ar]) {
+      stdAspect = p.ar;
+      document.querySelectorAll('#calc-aspect-std .calc__chip').forEach(function (c) {
+        c.classList.toggle('chosen', c.getAttribute('data-ar') === p.ar);
+      });
+    }
+    if (!isNaN(num('seat')) && seatInput) seatInput.value = toDisp(num('seat'));
+    if (p.pp) {
+      projPos = p.pp;
+      document.querySelectorAll('#calc-projpos .calc__chip').forEach(function (c) {
+        c.classList.toggle('chosen', c.getAttribute('data-pos') === p.pp);
+      });
+    }
+    if (p.gp) {
+      placement = p.gp;
+      document.querySelectorAll('#calc-placement .calc__chip').forEach(function (c) {
+        c.classList.toggle('chosen', c.getAttribute('data-place') === p.gp);
+      });
+    }
+    if (!isNaN(num('gw')) && wInput) wInput.value = toDisp(num('gw'));
+    if (!isNaN(num('gh')) && hInput) hInput.value = toDisp(num('gh'));
+    if (p.ga && aspectSel) aspectSel.value = p.ga;
+    if (!isNaN(num('lm')) && lumensInput) lumensInput.value = Math.round(num('lm'));
+    if (!isNaN(num('gn')) && gainInput) gainInput.value = p.gn;
+    if (p.li === '0' && lightsOn && lightsToggle) lightsToggle.click();
+    if (p.li === '1' && !lightsOn && lightsToggle) lightsToggle.click();
+    if (p.sun === '1' && !sunOn && sunToggle) sunToggle.click();
+    if (p.sun === '0' && sunOn && sunToggle) sunToggle.click();
+    recalc();
+  }
+
+  /* ---------- Export: baked PNG/JPG with measurements on the left, 3D on the right ---------- */
+  function downloadBlob(blob, name) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 800);
+  }
+
+  function exportImage(kind) {
+    if (!svg || !planSummary) return;
+    var mime = kind === 'jpg' ? 'image/jpeg' : 'image/png';
+    var clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.setAttribute('width', '1320');
+    clone.setAttribute('height', '880');
+    var st = document.createElementNS(NS, 'style');
+    st.textContent = 'text{font-family:Arial,Helvetica,sans-serif}';
+    clone.insertBefore(st, clone.firstChild);
+    var svgUrl = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }));
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var CW = 1600, CH = 900, PW = 540;
+        var cv = document.createElement('canvas');
+        cv.width = CW; cv.height = CH;
+        var cx = cv.getContext('2d');
+        // left measurements panel
+        cx.fillStyle = '#0c2244';
+        cx.fillRect(0, 0, PW, CH);
+        // right side backdrop matches the scene
+        var night = !sunOn && !lightsOn;
+        cx.fillStyle = night ? '#0e1320' : '#ffffff';
+        cx.fillRect(PW, 0, CW - PW, CH);
+        var s = Math.min((CW - PW) / 660, CH / 440);
+        var dw = 660 * s, dh = 440 * s;
+        cx.drawImage(img, PW + ((CW - PW) - dw) / 2, (CH - dh) / 2, dw, dh);
+        // measurements text
+        var S = planSummary;
+        function row(label, value, y) {
+          cx.fillStyle = '#8fa3c8';
+          cx.font = '600 13px Arial,sans-serif';
+          cx.fillText(label.toUpperCase(), 48, y);
+          cx.fillStyle = '#ffffff';
+          cx.font = '400 23px Arial,sans-serif';
+          cx.fillText(String(value).substring(0, 40), 48, y + 30);
+        }
+        cx.fillStyle = '#8fa3c8';
+        cx.font = '600 15px Arial,sans-serif';
+        cx.fillText('BUDGETPROJECTORS.ORG', 48, 64);
+        cx.fillStyle = '#ffffff';
+        cx.font = '700 42px Arial,sans-serif';
+        cx.fillText('Room Plan', 48, 114);
+        cx.strokeStyle = 'rgba(255,255,255,0.18)';
+        cx.lineWidth = 1;
+        cx.beginPath(); cx.moveTo(48, 140); cx.lineTo(PW - 48, 140); cx.stroke();
+        var y = 184;
+        if (S.model) { row('Projector', S.model, y); y += 74; }
+        if (S.throw) { row('Throw distance', S.throw, y); y += 74; }
+        if (S.screen) { row('Screen', S.screen, y); y += 74; }
+        if (S.room) { row('Room', S.room, y); y += 74; }
+        if (S.seat) { row('Seating', S.seat, y); y += 74; }
+        if (S.bright) { row('Brightness', S.bright, y); y += 74; }
+        if (S.verdict) {
+          cx.fillStyle = '#ffd94d';
+          cx.font = '600 20px Arial,sans-serif';
+          cx.fillText(String(S.verdict).substring(0, 38), 48, CH - 58);
+        }
+        cx.fillStyle = '#8fa3c8';
+        cx.font = '400 13px Arial,sans-serif';
+        cx.fillText('Made with the BudgetProjectors throw-distance calculator', 48, CH - 28);
+        cv.toBlob(function (blob) {
+          if (blob) downloadBlob(blob, 'budgetprojectors-room-plan.' + kind);
+          URL.revokeObjectURL(svgUrl);
+        }, mime, 0.92);
+      } catch (e) {
+        URL.revokeObjectURL(svgUrl);
+      }
+    };
+    img.onerror = function () { URL.revokeObjectURL(svgUrl); };
+    img.src = svgUrl;
+  }
+
+  var pngBtn = document.getElementById('calc-export-png');
+  if (pngBtn) pngBtn.addEventListener('click', function () { exportImage('png'); });
+  var jpgBtn = document.getElementById('calc-export-jpg');
+  if (jpgBtn) jpgBtn.addEventListener('click', function () { exportImage('jpg'); });
+
   var sizeVal = document.getElementById('calc-size-val');
   function syncSizeVal() {
     if (sizeInput && sizeVal) sizeVal.textContent = sizeInput.value + '″';
@@ -380,6 +603,9 @@
     sizeInput.addEventListener('input', function () { syncSizeVal(); recalc(); });
     syncSizeVal();
   }
+  [lumensInput, gainInput].forEach(function (el) {
+    if (el) el.addEventListener('input', recalc);
+  });
   document.querySelectorAll('#calc-aspect-std .calc__chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
       stdAspect = chip.getAttribute('data-ar');
@@ -505,9 +731,26 @@
       else if (seat > dFarV) bits.push('Your seating (' + dispDist(seat) + ') is farther than the reference range: the image may feel small.');
       else bits.push('Your seating (' + dispDist(seat) + ') lands inside the reference range.');
     }
+    // Brightness: lumens over the lit image area, in foot-lamberts.
+    var fl = NaN, flNote = '';
+    var lumens = lumensInput ? parseFloat(lumensInput.value, 10) : NaN;
+    if (lumens > 0) {
+      var gain = gainInput ? parseFloat(gainInput.value, 10) : NaN;
+      if (!(gain > 0)) gain = 1;
+      var imgHIn = golfMode ? imgWIn / PROJ_AR : scrHIn;
+      var areaSqFt = imgWIn * imgHIn / 144;
+      if (areaSqFt > 0) {
+        fl = lumens * gain / areaSqFt;
+        flNote = fl < 12 ? 'dim, best in a fully dark room' :
+          fl < 30 ? 'good with the lights off' :
+          fl < 60 ? 'holds up with some ambient light' : 'bright enough for lights-on viewing';
+        bits.push('Brightness: about ' + fmt(fl, 0) + ' foot-lamberts on this screen, ' + flNote + '.');
+      }
+    }
+    var fitsRoom = !outdoor && far <= L && scrWIn / 12 <= W - 1;
     if (!outdoor) {
       var maxW = Math.min(L * 12 / r[1], (W - 1) * 12);
-      if (far <= L && scrWIn / 12 <= W - 1) {
+      if (fitsRoom) {
         bits.push('It fits your ' + ROOMS[roomType].label.toLowerCase() + '.');
       } else if (golfMode) {
         bits.push('Too big for this room: the widest screen that fits is about ' + dispDist(maxW / 12) + ' wide.');
@@ -517,6 +760,10 @@
       }
     } else {
       bits.push('No walls to worry about outdoors, just keep the throw path clear.');
+    }
+    if (!outdoor && H > 0 && scrHIn > 0 && scrHIn / 12 > H - 1) {
+      bits.push('Vertical fit: that screen is ' + dispDist(scrHIn / 12) + ' tall and your ceiling is ' +
+        dispDist(H) + ', so it will nearly touch the floor and ceiling. Consider a smaller screen.');
     }
     if (ust) bits.push('Ultra-short-throw: measure from the wall, not the lens.');
     bits.push(ROOMS[roomType].tip);
@@ -553,6 +800,17 @@
       placeStr = posWord + ' the ' + modelName + ' between ' + fmtDist(imgWIn * r[0]) + ' and ' +
         fmtDist(imgWIn * r[1]) + ' from ' + imgRef + posTail + '. ';
     }
+
+    planSummary = {
+      model: modelName,
+      throw: throwStr + ' throw',
+      screen: golfMode ? scrLabel : fmt(diag, 0) + '″ ' + stdAspect,
+      room: ROOMS[roomType].label + ', ' + dispShort(L) + ' × ' + dispShort(W) + (outdoor ? '' : ', ' + dispShort(H) + ' ceiling'),
+      seat: seat > 0 ? dispDist(seat) + (golfMode ? ' hitting distance' : ' seating') : '',
+      bright: fl > 0 ? 'about ' + fmt(fl, 0) + ' fL, ' + flNote : '',
+      verdict: outdoor ? 'Outdoor setup: keep the throw path clear' :
+        (fitsRoom ? 'Fits your ' + ROOMS[roomType].label.toLowerCase() : 'Too big for this room')
+    };
 
     planResult.innerHTML =
       '<strong>' + throwStr + ' throw</strong>' +
@@ -818,9 +1076,15 @@
     } else {
       txt(L / 2, W / 2, 1, 'Pick your projector model to place it in the room.', 13);
     }
+
+    // watermark
+    var wm = el('text', { x: VW - 12, y: VH - 10, 'text-anchor': 'end', 'font-size': 13,
+      'font-weight': '600', 'letter-spacing': '1', fill: pal.label, opacity: 0.55 });
+    wm.textContent = 'BudgetProjectors.org';
   }
 
   // init
   setUnit(unit, false);
   setRoom('living');
+  applyShareHash();
 })();
