@@ -385,7 +385,8 @@
   }
 
   // Outdoors has no ceiling: hide the ceiling-mount position and the indoor-only
-  // screen styles (acoustic frame, floor rising), falling back to safe choices.
+  // screen styles (acoustic frame, floor rising, manual pull-down), falling back
+  // to safe choices.
   // Outdoors also has no lights, sunlight, or ceiling-fan controls.
   function gateOutdoorOptions() {
     var outdoor = roomType === 'outdoors';
@@ -394,7 +395,7 @@
     });
     document.querySelectorAll('#calc-screenstyle .calc__chip').forEach(function (c) {
       var ss = c.getAttribute('data-ss');
-      if (ss === 'acoustic' || ss === 'floor') c.style.display = outdoor ? 'none' : '';
+      if (ss === 'acoustic' || ss === 'floor' || ss === 'pulldown') c.style.display = outdoor ? 'none' : '';
     });
     ['calc-lights-toggle', 'calc-sun-toggle', 'calc-fan-toggle'].forEach(function (id) {
       var b = document.getElementById(id);
@@ -408,7 +409,7 @@
       if (fanOn && fanToggle) fanToggle.click();
     }
     if (outdoor && projPos === 'ceiling') setProjPos('table');
-    if (outdoor && (screenStyle === 'acoustic' || screenStyle === 'floor')) setScreenStyle('fixed');
+    if (outdoor && (screenStyle === 'acoustic' || screenStyle === 'floor' || screenStyle === 'pulldown')) setScreenStyle('fixed');
     if (outdoor && speakerMode !== 'none') setSpeakerMode('none'); // tripods are drawn automatically
     applyViewToggles();
   }
@@ -2512,12 +2513,14 @@
     });
     el3('line', { x1: 58, y1: floorY, x2: VW - 58, y2: floorY,
       stroke: trimCol, 'stroke-width': 2, opacity: 0.8 });
-    // ceiling band across the top of the room
+    // ceiling band across the top of the room (no ceiling outdoors)
     var ceilY = 56;
-    var ceilTone = night ? '#1a2340' : '#e6dfcc';
-    el3('polygon', { points: '0,0 ' + VW + ',0 ' + (VW - 58) + ',' + ceilY + ' 58,' + ceilY, fill: ceilTone });
-    el3('line', { x1: 58, y1: ceilY, x2: VW - 58, y2: ceilY,
-      stroke: trimCol, 'stroke-width': 2, opacity: 0.8 });
+    if (!o.outdoor) {
+      var ceilTone = night ? '#1a2340' : '#e6dfcc';
+      el3('polygon', { points: '0,0 ' + VW + ',0 ' + (VW - 58) + ',' + ceilY + ' 58,' + ceilY, fill: ceilTone });
+      el3('line', { x1: 58, y1: ceilY, x2: VW - 58, y2: ceilY,
+        stroke: trimCol, 'stroke-width': 2, opacity: 0.8 });
+    }
     // window on the left wall when sunlight is on (drawn before the screen so the screen sits in front)
     if (sunOn && !o.outdoor) {
       var winFrame = '#b89b5e';
@@ -2742,7 +2745,7 @@
       lt.setAttribute('transform', 'rotate(-90 ' + lx.toFixed(1) + ' ' + ly.toFixed(1) + ')');
     }
     if (sx - 40 > 4 && sy + scrH + 48 < VH) dimCallout(sx - 28, sy + scrH, 1, dispIn(maV.botGapIn) + ' off floor');
-    if (sx + scrW + 40 < VW - 4 && sy - 48 > 0) dimCallout(sx + scrW + 28, sy, -1, dispIn(maV.topGapIn) + ' to ceiling');
+    if (!o.outdoor && sx + scrW + 40 < VW - 4 && sy - 48 > 0) dimCallout(sx + scrW + 28, sy, -1, dispIn(maV.topGapIn) + ' to ceiling');
     var shiftNote = (shiftOn && shiftHPct) ? ' · image shifted ' + (shiftHPct > 0 ? 'right' : 'left') +
       ' ' + Math.abs(shiftHPct) + '% (lens shift)' : '';
     // bottom caption stack, built upward from the bottom line so wrapped
