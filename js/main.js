@@ -241,6 +241,7 @@
     selectedLens = 0;
     syncLensPicker();
     if (modelInput) modelInput.value = '';
+    if (lumensInput) lumensInput.value = '';
     if (selectedLine) selectedLine.hidden = true;
     clearModelChips();
     if (suggest) suggest.hidden = true;
@@ -260,6 +261,9 @@
     syncLensPicker();
     if (selectedLine) selectedLine.hidden = false;
     refreshSelectedLine();
+    // Auto-fill the published lumen output so it never has to be typed by hand;
+    // the box stays editable as a manual override.
+    if (lumensInput) lumensInput.value = (entry.lm > 0) ? Math.round(entry.lm) : '';
     recalc();
   }
 
@@ -294,6 +298,7 @@
       syncLensPicker();
       if (selectedLine) selectedLine.hidden = true;
       clearModelChips();
+      if (lumensInput) lumensInput.value = '';
       renderSuggest(modelInput.value.trim().toLowerCase());
       recalc();
     });
