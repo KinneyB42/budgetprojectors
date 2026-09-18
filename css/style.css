@@ -385,3 +385,15 @@ h3 { font-size: 22px; margin-bottom: 12px; }
   .site-nav a { display: block; padding: 12px; border-top: 1px solid var(--line); }
   .calc { padding: 28px 22px; }
 }
+
+/* Golf simulator calculator: form + 3D side by side on desktop */
+.calc.golf-layout { max-width: 1180px; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 44px; align-items: start; }
+.golf-side { position: sticky; top: 24px; min-width: 0; }
+.golf-views { display: grid; gap: 28px; margin-top: 24px; }
+.golf-views figure { margin: 0; min-width: 0; }
+.golf-cap { font-size: 12.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--navy); margin-bottom: 10px; }
+.golf-svg { width: 100%; height: auto; display: block; }
+@media (max-width: 900px) {
+  .calc.golf-layout { grid-template-columns: 1fr; }
+  .golf-side { position: static; }
+}
