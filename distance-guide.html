@@ -301,6 +301,13 @@
           </div>
           <p class="calc__hint">Golf sim screens are usually 4:3 or 1:1. Pick an aspect to fill the height, or type your exact width and height.</p>
 
+          <label>Room type</label>
+          <div class="calc__chips" id="golf-roomtype">
+            <button type="button" class="calc__chip chosen" data-roomtype="garage">Garage</button>
+            <button type="button" class="calc__chip" data-roomtype="dedicated">Dedicated room</button>
+            <button type="button" class="calc__chip" data-roomtype="open">Open area (freestanding)</button>
+          </div>
+
           <div class="golf-row3">
             <div>
               <label for="golf-room-len">Room length (ft)</label>
@@ -336,6 +343,7 @@
             <button type="button" class="calc__chip" data-place="table-right">Table right of golfer</button>
           </div>
 
+          <div id="golf-opener-block">
           <label>Ceiling-mounted garage door opener?</label>
           <div class="calc__chips" id="golf-opener-chips">
             <button type="button" class="calc__chip chosen" data-opener="no">No</button>
@@ -345,6 +353,7 @@
             <label for="golf-opener-dist">Opener distance from screen (ft)</label>
             <input type="number" id="golf-opener-dist" step="0.5" min="1" max="40" placeholder="e.g. 9">
             <p class="calc__hint">For a ceiling mount, the opener eats into your room: available length is room length minus this distance.</p>
+          </div>
           </div>
 
           <label>Source device</label>

@@ -23,6 +23,7 @@
   var selectedLens = 0;
   var placement = 'ceiling';
   var opener = false;
+  var roomType = 'garage';
   var device = 'pc';
   var shiftOn = false;
   var autoLumens = 0; // last auto-filled lumens value (user edits win)
@@ -45,6 +46,7 @@
   var hitInput = $('golf-hit');
   var throwInput = $('golf-throw');
   var openerWrap = $('golf-opener-wrap');
+  var openerBlock = $('golf-opener-block');
   var openerDist = $('golf-opener-dist');
   var deviceAdvice = $('golf-device-advice');
   var shiftChip = $('golf-shift-chip');
@@ -258,6 +260,11 @@
   };
 
   chipGroup('golf-placement', 'data-place', function (v) { placement = v; });
+  chipGroup('golf-roomtype', 'data-roomtype', function (v) {
+    roomType = v;
+    if (openerBlock) openerBlock.hidden = (roomType !== 'garage');
+    recalc();
+  });
   chipGroup('golf-opener-chips', 'data-opener', function (v) {
     opener = (v === 'yes');
     openerWrap.hidden = !opener;
@@ -393,7 +400,7 @@
     }
 
     /* Throw check: garage opener eats into the room for ceiling mounts. */
-    var openerD = opener ? parseFloat(openerDist.value, 10) : 0;
+    var openerD = (roomType === 'garage' && opener) ? parseFloat(openerDist.value, 10) : 0;
     if (td > 0 && placement === 'ceiling' && rl > 0) {
       var avail = (opener && openerD > 0) ? rl - openerD : rl;
       if (opener && openerD > 0) {
@@ -432,10 +439,13 @@
         '" font-family="Poppins, sans-serif">' + str + '</text>');
     }
 
-    // room
+    // room (dashed outline when freestanding: no walls)
+    var noWalls = (roomType === 'open');
     parts.push('<rect x="' + x0.toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' +
       roomWpx.toFixed(1) + '" height="' + roomHpx.toFixed(1) +
-      '" fill="#fbfaf7" stroke="' + NAVY + '" stroke-width="2"/>');
+      '" fill="' + (noWalls ? 'none' : '#fbfaf7') + '" stroke="' + NAVY + '" stroke-width="2"' +
+      (noWalls ? ' stroke-dasharray="10 7"' : '') + '/>');
+    if (noWalls) txt(x0 + roomWpx / 2, y0 - 8, 'Open area (no walls)', 12, MUTED, 'middle');
     // screen line
     var scrHalf = Math.min(sw * s, roomWpx) / 2;
     parts.push('<line x1="' + (cx - scrHalf).toFixed(1) + '" y1="' + scrY.toFixed(1) +
