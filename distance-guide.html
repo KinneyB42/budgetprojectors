@@ -63,14 +63,6 @@
           <select id="calc-lens"></select>
           <p class="calc__hint">This projector takes interchangeable lenses. Pick the one installed to plan with its exact throw ratio.</p>
         </div>
-        <div class="calc__zoom" id="calc-zoom-wrap" hidden>
-          <label for="calc-zoom">Lens zoom</label>
-          <div class="calc__slider-row">
-            <input type="range" id="calc-zoom" min="0" max="100" step="1" value="0">
-            <span class="calc__slider-val" id="calc-zoom-val"></span>
-          </div>
-          <div class="calc__slider-ends"><span>Wide</span><span>Tele</span></div>
-        </div>
         <p class="calc__hint" id="calc-model-hint">Search <span id="calc-model-count"></span> recommended models. Can&rsquo;t find yours? <button type="button" class="calc__linkbtn" id="calc-manual-toggle">Enter the throw ratio manually</button>.</p>
         <div class="calc__manual" id="calc-manual" hidden>
           <div class="calc__manual-row">
@@ -194,6 +186,14 @@
               <span class="calc__slider-val" id="calc-size-val">100&Prime;</span>
             </div>
             <div class="calc__slider-ends"><span>0&Prime;</span><span>300&Prime;</span></div>
+            <div class="calc__zoom" id="calc-zoom-wrap" hidden>
+              <label for="calc-zoom">Lens zoom</label>
+              <div class="calc__slider-row">
+                <input type="range" id="calc-zoom" min="0" max="100" step="1" value="0">
+                <span class="calc__slider-val" id="calc-zoom-val"></span>
+              </div>
+              <div class="calc__slider-ends"><span>Wide</span><span>Tele</span></div>
+            </div>
           </div>
           <div id="calc-throwmode-wrap" hidden>
             <label for="calc-throwdist" id="calc-throwdist-label">Throw distance (ft)</label>
