@@ -135,7 +135,6 @@
         </div>
         <div class="calc__chips" style="margin-top:8px">
           <button type="button" class="calc__chip" id="calc-shift-chip" aria-pressed="false">My projector has lens shift</button>
-          <button type="button" class="calc__chip" id="calc-fan-toggle" aria-pressed="false">Ceiling fan: Off</button>
         </div>
         <div id="calc-shift-wrap" hidden>
           <label for="calc-shift">Move projector up/down (lens shift): <span id="calc-shift-val">0%</span></label>
@@ -168,13 +167,6 @@
             </div>
             <div class="calc__slider-ends"><span>0&Prime;</span><span>300&Prime;</span></div>
             <div class="calc__aspect" style="margin-top:6px">
-              <label>Screen material</label>
-              <div class="calc__chips" id="calc-screentype">
-                <button type="button" class="calc__chip chosen" data-st="standard">Standard white</button>
-                <button type="button" class="calc__chip" data-st="alr">ALR</button>
-              </div>
-            </div>
-            <div class="calc__aspect" style="margin-top:6px">
               <label>Screen style</label>
               <div class="calc__chips" id="calc-screenstyle">
                 <button type="button" class="calc__chip chosen" data-ss="fixed">Fixed frame</button>
@@ -182,14 +174,6 @@
                 <button type="button" class="calc__chip" data-ss="acoustic">Acoustic frame</button>
                 <button type="button" class="calc__chip" data-ss="floor">Floor rising</button>
                 <button type="button" class="calc__chip" data-ss="portable">Portable on legs</button>
-              </div>
-            </div>
-            <div class="calc__aspect" style="margin-top:6px">
-              <label>Front speakers</label>
-              <div class="calc__chips" id="calc-speakers">
-                <button type="button" class="calc__chip chosen" data-spk="none">None</button>
-                <button type="button" class="calc__chip" data-spk="wall">Wall speakers</button>
-                <button type="button" class="calc__chip" data-spk="tower">Tower speakers</button>
               </div>
             </div>
             <div class="calc__lockrow" id="calc-image-lockrow" hidden>
@@ -239,10 +223,28 @@
         <div class="calc__viz-toggles">
           <button type="button" class="calc__chip" id="calc-lights-toggle" aria-pressed="false">Lights: Off</button>
           <button type="button" class="calc__chip" id="calc-sun-toggle" aria-pressed="false">Sunlight: Off</button>
+          <button type="button" class="calc__chip" id="calc-fan-toggle" aria-pressed="false">Ceiling fan: Off</button>
           <button type="button" class="calc__chip" id="calc-share">Share link</button>
         </div>
       </div>
       <div class="calc__viz-note">room lighting simulation</div>
+      <div class="calc__viz-opts">
+        <div class="calc__viz-opt">
+          <span class="calc__viz-opts-label">Screen material</span>
+          <div class="calc__chips" id="calc-screentype">
+            <button type="button" class="calc__chip chosen" data-st="standard">Standard white</button>
+            <button type="button" class="calc__chip" data-st="alr">ALR</button>
+          </div>
+        </div>
+        <div class="calc__viz-opt">
+          <span class="calc__viz-opts-label">Front speakers</span>
+          <div class="calc__chips" id="calc-speakers">
+            <button type="button" class="calc__chip chosen" data-spk="none">None</button>
+            <button type="button" class="calc__chip" data-spk="wall">Wall speakers</button>
+            <button type="button" class="calc__chip" data-spk="tower">Tower speakers</button>
+          </div>
+        </div>
+      </div>
       <div class="calc__viz">
         <figure class="calc__fig">
           <svg id="calc-svg" viewBox="0 0 660 440" role="img" aria-label="3D room visualization"></svg>
@@ -498,7 +500,7 @@
 </footer>
 
 <script src="js/throw-data.js"></script>
-<script src="js/main.js?v=20260918j"></script>
+<script src="js/main.js?v=20260918k"></script>
 <script src="js/golf.js?v=20260918h"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>
