@@ -2628,13 +2628,13 @@
     el4('line', { x1: wallL - 24, y1: fy, x2: wallR + 24, y2: fy, stroke: ink, 'stroke-width': 3 });
     tx(wallL - 30, fy + 4, 'Floor', 12, 'end', mut);
     el4('line', { x1: wallL - 24, y1: cy, x2: wallR + 24, y2: cy, stroke: ink, 'stroke-width': 1.5 });
-    tx(wallR + 30, cy + 4, 'Ceiling ' + dispShort(ma.ceilFt) + (ma.ceilKnown ? '' : ' (assumed)'), 12, 'start', mut);
+    tx(652, cy + 4, 'Ceiling ' + dispShort(ma.ceilFt) + (ma.ceilKnown ? '' : ' (assumed)'), 12, 'end', mut);
     // seated eye-level line through the screen center
     if (ma.placeable) {
       var ey = Y(ma.eyeIn);
       el4('line', { x1: wallL, y1: ey, x2: wallR, y2: ey, stroke: night ? '#7fd6a4' : '#2e7d5b',
         'stroke-width': 1.5, 'stroke-dasharray': '7 5' });
-      tx(wallR + 30, ey + 4, 'seated eye level ' + dispIn(ma.eyeIn), 12, 'start', night ? '#7fd6a4' : '#2e7d5b');
+      tx(652, ey + 4, 'seated eye level ' + dispIn(ma.eyeIn), 12, 'end', night ? '#7fd6a4' : '#2e7d5b');
     }
     // dimensions: floor -> screen bottom, screen top -> ceiling
     var topIn = Math.min(ma.botGapIn + scrHIn, ceilIn);
@@ -2684,7 +2684,7 @@
     var scrX = 120, lensX = 430;
     // ceiling + floor
     el5('line', { x1: 60, y1: cy, x2: 600, y2: cy, stroke: ink, 'stroke-width': 1.5 });
-    tx(606, cy + 4, 'Ceiling ' + dispShort(ma.ceilFt) + (ma.ceilKnown ? '' : ' (assumed)'), 11, 'start', mut);
+    tx(654, cy + 4, 'Ceiling ' + dispShort(ma.ceilFt) + (ma.ceilKnown ? '' : ' (assumed)'), 11, 'end', mut);
     el5('line', { x1: 60, y1: fy, x2: 600, y2: fy, stroke: ink, 'stroke-width': 3 });
     tx(54, fy + 4, 'Floor', 11, 'end', mut);
     // screen on the left wall at the mounting height
