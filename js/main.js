@@ -1173,7 +1173,7 @@
       '<div class="cp-fit ' + (fits ? 'yes' : 'warn') + '">' + escHtml(S.verdict) + '</div>' +
       '<h2>3D view</h2><div class="cp-view" id="cp-view"></div>' +
       '<h2>Side view</h2><div class="cp-view" id="cp-view-side"></div>' +
-      '<h2>Viewer view</h2><div class="cp-view" id="cp-view-viewer"></div>' +
+      '<h2>Seating view</h2><div class="cp-view" id="cp-view-viewer"></div>' +
       '<h2>Mounting view</h2><div class="cp-view" id="cp-view-mount"></div>' +
       '<h2>Mount drop simulator</h2><div class="cp-view" id="cp-view-drop"></div>' +
       '<div class="cp-foot"><strong>BudgetProjectors.org</strong> &middot; Generated ' + date + '<br>' + tagline + '</div>';
