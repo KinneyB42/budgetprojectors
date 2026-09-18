@@ -2761,6 +2761,7 @@
     }
     // A = the main projector; B/C comparison projectors are drawn after this block
     var showA = (viewerProj === 'all' || viewerProj === 'a');
+    var aTopLabel = false; // A occupies the top-center label slot (behind-viewer modes)
     if (showA) {
     if (isUstV) {
       if (sy + scrH < VH - 120) {
@@ -2792,6 +2793,7 @@
         el3('rect', { x: (ttx - 24).toFixed(1), y: 22, width: 48, height: 14, rx: 3, fill: projBodyC, opacity: 0.5 });
         projLens3(ttx, 29, 4.5, 0.6);
         tx3(ttx, 58, 'projector on a table behind you', 11, 'middle', mut);
+        aTopLabel = true;
       } else {
         el3('rect', { x: (ttx - 24).toFixed(1), y: (floorY - 48).toFixed(1), width: 48, height: 14, rx: 3, fill: projBodyC });
         projLens3(ttx, floorY - 41, 4.5);
@@ -2807,6 +2809,7 @@
       el3('rect', { x: (bbx - 30).toFixed(1), y: 22, width: 60, height: 22, rx: 5, fill: projBodyC, opacity: 0.5 });
       projLens3(bbx, 33, 6, 0.6);
       tx3(bbx, 58, 'projector on a shelf behind you', 11, 'middle', mut);
+      aTopLabel = true;
     }
     } // end showA
     // Head-to-head B/C comparison projectors in the viewer, per the projector toggle.
@@ -2846,9 +2849,10 @@
         }
       } else {
         // behind the viewer (or rear): small indicator at the top
-        el3('rect', { x: (cx - 20).toFixed(1), y: 22, width: 40, height: 12, rx: 3, fill: col, opacity: 0.6 });
-        projLens3(cx, 28, 3.5, 0.7);
-        tx3(cx, 52, lab, 10, 'middle', labCol);
+        var bcx = (aTopLabel && cmpShow.length === 1) ? cx + 140 : cx; // keep clear of A's shelf marker
+        el3('rect', { x: (bcx - 20).toFixed(1), y: 22, width: 40, height: 12, rx: 3, fill: col, opacity: 0.6 });
+        projLens3(bcx, 28, 3.5, 0.7);
+        tx3(bcx, aTopLabel ? 76 : 52, lab, 10, 'middle', labCol);
       }
     }
     cmpShow.forEach(function (xp, i) {
