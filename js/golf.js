@@ -54,6 +54,8 @@
   var roomWid = $('golf-room-wid');
   var roomCeil = $('golf-room-ceil');
   var hitInput = $('golf-hit');
+  var heightFt = $('golf-height-ft');
+  var heightIn = $('golf-height-in');
   var openerWrap = $('golf-opener-wrap');
   var openerBlock = $('golf-opener-block');
   var openerDist = $('golf-opener-dist');
@@ -390,8 +392,8 @@
 
   /* ---------- every other input recalcs ---------- */
   [roomLen, roomWid, roomCeil,
-   hitInput, openerDist, gainInput].forEach(function (el) {
-    el.addEventListener('input', recalc);
+   hitInput, heightFt, heightIn, openerDist, gainInput].forEach(function (el) {
+    if (el) el.addEventListener('input', recalc);
   });
 
   /* ---------- math + rendering ---------- */
@@ -410,6 +412,10 @@
     var rl = parseFloat(roomLen.value, 10), rw = parseFloat(roomWid.value, 10);
     var ch = parseFloat(roomCeil.value, 10);
     var hit = parseFloat(hitInput.value, 10);
+    var gh = (parseFloat(heightFt.value, 10) || 0) + (parseFloat(heightIn.value, 10) || 0) / 12;
+    var hasGh = gh >= 3 && gh <= 8.5;
+    var drawGh = hasGh ? gh : 5.75; // generic figure until a height is entered
+    function fmtHt(h) { return Math.floor(h) + "'" + Math.round((h - Math.floor(h)) * 12) + '"'; }
     var gain = parseFloat(gainInput.value, 10);
     if (!(gain > 0)) gain = 1;
 
@@ -500,10 +506,36 @@
       out.push('<p><strong>Brightness:</strong> pick a model with published lumens to see the foot-lambert estimate.</p>');
     }
 
+    /* Golfer clearance: swing room, head bumps, club strikes, beam shadows. */
+    var projH = placement === 'ceiling' ? ch - 0.8 :
+      placement === 'frame' ? sh + 0.4 :
+      (placement === 'table-left' || placement === 'table-right') ? 2.8 : 1.1;
+    if (hasGh && ch > 0 && ch < gh + 3.5) {
+      out.push('<p style="color:' + WARN + '"><strong>Ceiling too low for a full swing:</strong> at ' + fmtHt(gh) +
+        ' tall you need about ' + ft(gh + 3.5) + ' of ceiling for a driver. Stick to shorter clubs or find more height.</p>');
+    }
+    if (hasGh && hit > 0 && projDist > 0) {
+      var gap = Math.abs(projDist - hit);
+      if (gap < 2.5 && projH < gh + 0.5) {
+        out.push('<p style="color:' + WARN + '"><strong>Head-bump risk:</strong> the projector hangs at ' + ft(projH) +
+          ' right by the hitting mat - you will bump your head on it. Move the projector farther from the mat or mount it higher.</p>');
+      } else if (gap < 3.5 && projH < gh + 3.5) {
+        out.push('<p style="color:' + WARN + '"><strong>Club-strike risk:</strong> your driver swing reaches about ' + ft(gh + 3.5) +
+          ' high and the projector sits inside your swing zone. Move it at least 4 ft from the mat or mount it higher.</p>');
+      }
+      if (hit < projDist && sh > 0) {
+        var lineH = projH - (projH - sh / 2) * (projDist - hit) / projDist;
+        if (lineH < gh + 0.3) {
+          out.push('<p style="color:' + WARN + '"><strong>You will block the image:</strong> the throw beam passes at ' + ft(lineH) +
+            ' high over the hitting mat while you stand ' + fmtHt(gh) + ' - your head will cast a shadow on the screen. Move the mat forward or mount the projector higher.</p>');
+        }
+      }
+    }
+
     results.innerHTML = out.join('');
     drawTop(r, sw, sh, rl, rw, hit, projDist, openerD);
     drawFront(sw, sh, drawW, drawH, unusedSide, overflow, projDist);
-    if (svgSide) drawSide(sw, sh, rl, ch, hit, projDist, drawW, drawH, openerD);
+    if (svgSide) drawSide(sw, sh, rl, ch, hit, projDist, drawW, drawH, openerD, projH, drawGh, hasGh, fmtHt);
   }
 
   /* ---------- SVG A: top-down ---------- */
@@ -663,7 +695,7 @@
   }
 
   /* ---------- SVG C: side view ---------- */
-  function drawSide(sw, sh, rl, ch, hit, projDist, drawW, drawH, openerD) {
+  function drawSide(sw, sh, rl, ch, hit, projDist, drawW, drawH, openerD, projH, drawGh, hasGh, fmtHt) {
     if (!(rl > 0) || !(ch > 0)) { svgSide.innerHTML = ''; return; }
     var W = 620, H = 400, L = 56, T = 30, R = 20, B = 46;
     var plotW = W - L - R, plotH = H - T - B;
@@ -734,22 +766,31 @@
       txt(X(openerD), Y(ch) - 8, 'Opener', 11, conflict ? WARN : AMBER, 'middle');
     }
 
-    // hitting mat + golfer
+    // hitting mat + golfer drawn to scale
     if (hit > 0 && hit < rl) {
       var mw = Math.min(2.4 * s, 60);
       parts.push('<rect x="' + (X(hit) - mw / 2).toFixed(1) + '" y="' + (Y(0) - 7).toFixed(1) +
         '" width="' + mw.toFixed(1) + '" height="7" fill="#4a7c59" rx="2"/>');
-      parts.push('<circle cx="' + X(hit).toFixed(1) + '" cy="' + Y(3.2).toFixed(1) + '" r="10" fill="' + NAVY + '"/>');
-      parts.push('<line x1="' + X(hit).toFixed(1) + '" y1="' + Y(2.4).toFixed(1) +
-        '" x2="' + X(hit).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="' + NAVY + '" stroke-width="4"/>');
-      txt(X(hit), Y(0) + 24, 'Golfer', 11, MUTED, 'middle');
+      var headR = Math.max(6, 0.42 * s), bodyW = Math.max(3, 0.28 * s);
+      parts.push('<line x1="' + X(hit).toFixed(1) + '" y1="' + Y(0).toFixed(1) +
+        '" x2="' + X(hit).toFixed(1) + '" y2="' + Y(drawGh - 0.75).toFixed(1) +
+        '" stroke="' + NAVY + '" stroke-width="' + bodyW.toFixed(1) + '" stroke-linecap="round"/>');
+      parts.push('<circle cx="' + X(hit).toFixed(1) + '" cy="' + Y(drawGh - 0.35).toFixed(1) +
+        '" r="' + headR.toFixed(1) + '" fill="' + NAVY + '"/>');
+      txt(X(hit), Y(0) + 24, hasGh ? 'You (' + fmtHt(drawGh) + ')' : 'Golfer', 11, MUTED, 'middle');
+      // driver swing reach
+      if (hasGh) {
+        var reach = drawGh + 3.5, rx0 = Math.max(0, hit - 3), rx1 = Math.min(rl, hit + 3);
+        parts.push('<line x1="' + X(rx0).toFixed(1) + '" y1="' + Y(reach).toFixed(1) +
+          '" x2="' + X(rx1).toFixed(1) + '" y2="' + Y(reach).toFixed(1) +
+          '" stroke="' + MUTED + '" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.7"/>');
+        txt(X(rx1) + 4, Y(reach) + 4, 'driver swing reach', 10, MUTED, 'start');
+      }
     }
 
     // projector (height depends on placement)
     if (projDist > 0 && projDist < rl + 2) {
-      var ph = placement === 'ceiling' ? ch - 0.8 :
-        placement === 'frame' ? sh + 0.4 :
-        (placement === 'table-left' || placement === 'table-right') ? 2.8 : 1.1;
+      var ph = projH;
       var px = X(projDist), py = Y(ph);
       parts.push('<line x1="' + px.toFixed(1) + '" y1="' + py.toFixed(1) +
         '" x2="' + X(0).toFixed(1) + '" y2="' + Y(sh / 2).toFixed(1) +
