@@ -272,7 +272,7 @@
     if (q.length < 2) { suggest.hidden = true; suggest.innerHTML = ''; return; }
     var matches = THROW.filter(function (x) {
       return (x.b + ' ' + x.m).toLowerCase().indexOf(q) !== -1;
-    }).slice(0, 8);
+    }).slice(0, 20);
     if (!matches.length) { suggest.hidden = true; suggest.innerHTML = ''; return; }
     suggest.innerHTML = '';
     matches.forEach(function (x) {
@@ -945,7 +945,7 @@
       if (q.length < 2) { sug.hidden = true; sug.innerHTML = ''; recalc(); return; }
       var matches = THROW.filter(function (x) {
         return (x.b + ' ' + x.m).toLowerCase().indexOf(q) !== -1;
-      }).slice(0, 6);
+      }).slice(0, 20);
       sug.innerHTML = '';
       matches.forEach(function (x) {
         var btn = document.createElement('button');
