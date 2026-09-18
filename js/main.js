@@ -2205,6 +2205,28 @@
   // First-person view from the seating position: the screen drawn at its true
   // angular size inside a ~90-degree field-of-view viewport, with 30°/36°
   // reference frames (SMPTE minimum / immersive target).
+  // shared SVG caption wrapper: split a string into lines that fit maxW px
+  var svgMeasureCtx = null;
+  function wrapText(str, font, maxW, maxLines) {
+    if (!svgMeasureCtx) svgMeasureCtx = document.createElement('canvas').getContext('2d');
+    var ctx = svgMeasureCtx;
+    ctx.font = font;
+    var words = String(str).split(/\s+/).filter(Boolean), lines = [], line = '';
+    words.forEach(function (w) {
+      var t = line ? line + ' ' + w : w;
+      if (ctx.measureText(t).width <= maxW || !line) line = t;
+      else { lines.push(line); line = w; }
+    });
+    if (line) lines.push(line);
+    if (maxLines && lines.length > maxLines) {
+      lines = lines.slice(0, maxLines);
+      var last = lines[maxLines - 1];
+      while (last.length > 1 && ctx.measureText(last + '…').width > maxW) last = last.slice(0, -1);
+      lines[maxLines - 1] = last + '…';
+    }
+    return lines;
+  }
+
   function drawViewerViz(o) {
     var svg3 = document.getElementById('calc-svg-viewer');
     if (!svg3) return;
@@ -2453,20 +2475,28 @@
     if (sx + scrW + 40 < VW - 4 && sy - 48 > 0) dimCallout(sx + scrW + 28, sy, -1, dispIn(maV.topGapIn) + ' to ceiling');
     var shiftNote = (shiftOn && shiftHPct) ? ' · image shifted ' + (shiftHPct > 0 ? 'right' : 'left') +
       ' ' + Math.abs(shiftHPct) + '% (lens shift)' : '';
-    // header moved to the bottom caption stack so the ceiling stays clear for the projector and fan
-    if (sunOn) tx3(VW / 2, VH - 70, 'Simulated sunlight — actual brightness varies by room', 11, 'middle',
-      night ? '#dbe2f0' : '#8a6a2a');
-    tx3(VW / 2, VH - 52, 'From your seat · ' + dispDist(seat) + ' away · ' + styleName, 14, 'middle', night ? '#dbe2f0' : NAVY);
-    tx3(VW / 2, VH - 34, fillsAll ? 'The screen fills your entire field of view' + shiftNote :
+    // bottom caption stack, built upward from the bottom line so wrapped
+    // lines grow into free space instead of colliding with the line below
+    var verdictStr = fillsAll ? 'The screen fills your entire field of view' + shiftNote :
       'The screen fills about ' + Math.round(screenDeg) + '° of your view' +
       (screenDeg < 30 ? ' · below the 30° cinematic minimum' :
-       screenDeg <= 40 ? ' · right in the cinematic sweet spot' : ' · bigger than the 36° immersive target') + shiftNote,
-      12, 'middle', mut);
-    if (isRearV) tx3(VW / 2, VH - 16, 'Rear projection needs a dedicated rear-projection screen', 11, 'middle', mut);
-    else if (sunOn && !alr) tx3(VW / 2, VH - 16, 'sunlight washes out a matte white screen — consider ALR', 11, 'middle', mut);
-    else if (sunOn && alr) tx3(VW / 2, VH - 16, 'ALR holds up in sunlight, though blacks still lift', 11, 'middle', mut);
-    else if (!night && !alr) tx3(VW / 2, VH - 16, 'matte white washes out with the lights on', 11, 'middle', mut);
-    else if (!night && alr) tx3(VW / 2, VH - 16, 'ALR holds contrast with the lights on', 11, 'middle', mut);
+       screenDeg <= 40 ? ' · right in the cinematic sweet spot' : ' · bigger than the 36° immersive target') + shiftNote;
+    var verdictLines = wrapText(verdictStr, '12px Arial,sans-serif', 620, 2);
+    var noteStr = isRearV ? 'Rear projection needs a dedicated rear-projection screen' :
+      (sunOn && !alr) ? 'sunlight washes out a matte white screen — consider ALR' :
+      (sunOn && alr) ? 'ALR holds up in sunlight, though blacks still lift' :
+      (!night && !alr) ? 'matte white washes out with the lights on' :
+      (!night && alr) ? 'ALR holds contrast with the lights on' : '';
+    var capY = VH - 16;
+    if (noteStr) { tx3(VW / 2, capY, noteStr, 11, 'middle', mut); capY -= 18; }
+    verdictLines.forEach(function (ln, i) {
+      tx3(VW / 2, capY - (verdictLines.length - 1 - i) * 16, ln, 12, 'middle', mut);
+    });
+    capY -= (verdictLines.length - 1) * 16 + 18;
+    tx3(VW / 2, capY, 'From your seat · ' + dispDist(seat) + ' away · ' + styleName, 14, 'middle', night ? '#dbe2f0' : NAVY);
+    capY -= 18;
+    if (sunOn) tx3(VW / 2, capY, 'Simulated sunlight — actual brightness varies by room', 11, 'middle',
+      night ? '#dbe2f0' : '#8a6a2a');
     watermark3();
   }
 
@@ -2578,7 +2608,8 @@
     var eyeIn = eyeHeightIn();
     var ma = mountAdvice(o, eyeIn);
     var ceilIn = ma.ceilFt * 12, scrHIn = ma.scrHIn, scrWIn = o.swFt * 12;
-    var cy = 64, fy = 318;
+    var warnLines = ma.warn ? wrapText(ma.warn, '12px Arial,sans-serif', 600, 2) : [];
+    var cy = 64 + (warnLines.length > 1 ? 16 : 0), fy = 318 + (warnLines.length > 1 ? 16 : 0);
     var s = (fy - cy) / ceilIn;
     function Y(v) { return fy - v * s; }
     var wallL = 150, wallR = 510;
@@ -2610,7 +2641,9 @@
     dimV(112, Y(ma.botGapIn), fy, dispIn(ma.botGapIn) + ' off floor');
     if (ceilIn - topIn > 0.5) dimV(548, cy, Y(topIn), dispIn(ceilIn - topIn) + ' to ceiling');
     tx(330, 30, 'Mount the screen with its center at seated eye level (' + dispIn(ma.eyeIn) + ')', 14, 'middle', ink);
-    if (ma.warn) tx(330, 50, ma.warn, 12, 'middle', night ? '#ff9d8a' : '#c0392b');
+    warnLines.forEach(function (ln, i) {
+      tx(330, 50 + i * 15, ln, 12, 'middle', night ? '#ff9d8a' : '#c0392b');
+    });
   }
 
   function drawDropViz(o) {
@@ -2644,7 +2677,8 @@
     var ma = mountAdvice(o, eyeIn);
     var da = dropAdvice(o, ma, pipeIn);
     var ceilIn = ma.ceilFt * 12, scrHIn = ma.scrHIn;
-    var cy = 44, fy = 248;
+    var vLines = wrapText(da.text, '12.5px Arial,sans-serif', 600, 3);
+    var cy = 22 + vLines.length * 16, fy = 248;
     var s = (fy - cy) / ceilIn;
     function Y(v) { return fy - v * s; }
     var scrX = 120, lensX = 430;
@@ -2681,7 +2715,7 @@
     el5('line', { x1: lensX, y1: Y(zlIn).toFixed(1), x2: scrX, y2: Y(botIn).toFixed(1),
       stroke: mut, 'stroke-width': 1.2, 'stroke-dasharray': '6 4' });
     var col = da.ok ? (night ? '#7fd6a4' : '#2e7d5b') : (night ? '#ff9d8a' : '#c0392b');
-    tx(330, 22, da.text, 12.5, 'middle', col);
+    vLines.forEach(function (ln, i) { tx(330, 22 + i * 16, ln, 12.5, 'middle', col); });
   }
 
   // init
