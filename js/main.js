@@ -220,16 +220,17 @@
   });
 
   /* ---------- Room planner ---------- */
+  // Room types carry no measurements: the user enters their own room size.
   var ROOMS = {
-    living: { label: 'Living Room', len: 18, wid: 14, ceil: 9,
+    living: { label: 'Living Room',
       tip: 'Living rooms usually have some ambient light. A low-gain or ALR screen helps the image hold up with the lights on.' },
-    bedroom: { label: 'Bedroom', len: 14, wid: 12, ceil: 8,
+    bedroom: { label: 'Bedroom',
       tip: 'Smaller rooms suit short-throw models. Keep the projector ventilated and out of the walkway.' },
-    dedicated: { label: 'Dedicated Space', len: 20, wid: 15, ceil: 9,
+    dedicated: { label: 'Dedicated Space',
       tip: 'Light-controlled rooms get the most from any projector. Dark walls and ceiling boost perceived contrast.' },
-    garage: { label: 'Garage', len: 22, wid: 20, ceil: 10,
+    garage: { label: 'Garage',
       tip: 'Garages often have ambient light and light-colored walls, so brightness matters more than contrast here.' },
-    outdoors: { label: 'Outdoors', len: 0, wid: 0, ceil: 0,
+    outdoors: { label: 'Outdoors',
       tip: 'Outside there are no walls to bounce light, so lumens matter most. Plan for after dark and keep the projector dry.' }
   };
   var roomType = 'living';
@@ -255,18 +256,18 @@
     var R = ROOMS[type];
     var outdoor = type === 'outdoors';
     if (dimsBox) dimsBox.style.display = outdoor ? 'none' : '';
-    if (!outdoor && R.len) {
-      if (lenInput) lenInput.value = unit === 'm' ? fmt(R.len * M_PER_FT, 2) : R.len;
-      if (widInput) widInput.value = unit === 'm' ? fmt(R.wid * M_PER_FT, 2) : R.wid;
-      if (ceilInput) ceilInput.value = unit === 'm' ? fmt(R.ceil * M_PER_FT, 2) : R.ceil;
-    }
     if (roomTip) roomTip.textContent = R.tip;
     recalc();
   }
 
   document.querySelectorAll('.calc__chip[data-room]').forEach(function (chip) {
     chip.addEventListener('click', function () {
-      setRoom(chip.getAttribute('data-room'));
+      var type = chip.getAttribute('data-room');
+      setRoom(type);
+      // Prompt for the room size: jump to the length field when it is still empty.
+      if (type !== 'outdoors' && lenInput && lenInput.value === '') {
+        try { lenInput.focus(); } catch (e) {}
+      }
     });
   });
 
@@ -361,9 +362,9 @@
     var m = unit === 'm';
     var u = m ? 'm' : 'ft';
     var map = [
-      ['calc-room-len', 'Room length', null],
-      ['calc-room-wid', 'Room width', null],
-      ['calc-room-ceil', 'Ceiling height', null],
+      ['calc-room-len', 'Room length', m ? 'e.g. 5.5' : 'e.g. 18'],
+      ['calc-room-wid', 'Room width', m ? 'e.g. 4.3' : 'e.g. 14'],
+      ['calc-room-ceil', 'Ceiling height', m ? 'e.g. 2.7' : 'e.g. 9'],
       ['calc-seat', golfMode ? 'Hitting distance from screen' : 'Seating distance', m ? 'e.g. 3' : 'e.g. 10'],
       ['calc-screen-w', 'Screen width', m ? 'e.g. 3' : 'e.g. 10'],
       ['calc-screen-h', 'Screen height', m ? 'e.g. 2.3' : 'e.g. 7.5'],
@@ -538,7 +539,7 @@
     function num(k) { var v = parseFloat(p[k], 10); return v >= 0 ? v : NaN; }
     function toDisp(ft) { return unit === 'm' ? fmt(ft * M_PER_FT, 2) : String(Math.round(ft * 100) / 100); }
     // Links carrying advanced-only settings open in Advanced mode.
-    if (p.g === '1' || p.dir === '1' || p.cb || p.cc || p.cbl || p.ccl || p.lm || p.gn || p.pp || p.gp || p.gw || p.gh || p.ga || p.L || p.W || p.H) setAdvMode(true);
+    if (p.g === '1' || p.dir === '1' || p.cb || p.cc || p.cbl || p.ccl || p.lm || p.gn || p.pp || p.gp || p.gw || p.gh || p.ga) setAdvMode(true);
     if (p.u === 'm' || p.u === 'ft') setUnit(p.u, false);
     if (p.m) {
       var found = null;
@@ -891,7 +892,8 @@
     var L = outdoor ? 30 : (lenInput ? toFt(parseFloat(lenInput.value, 10)) : NaN);
     var W = outdoor ? 24 : (widInput ? toFt(parseFloat(widInput.value, 10)) : NaN);
     var H = outdoor ? 0 : (ceilInput ? toFt(parseFloat(ceilInput.value, 10)) : NaN);
-    if (!(L > 0)) L = 18; if (!(W > 0)) W = 14; if (!(H >= 0)) H = 9;
+    // No hidden preset: without user-entered dims the fit simply cannot be judged.
+    var dimsKnown = outdoor || (L > 0 && W > 0);
 
     if (!r) {
       drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: null, seat: seat, room: roomType, golf: golfMode });
@@ -1060,7 +1062,10 @@
       }
     }
     var fitsRoom;
-    if (!outdoor) {
+    if (!outdoor && !dimsKnown) {
+      fitsRoom = null; // cannot judge the fit without the user's room size
+      bits.push('Enter your room size above to check whether this fits.');
+    } else if (!outdoor) {
       var maxW = Math.min(L * 12 / r[1], (W - 1) * 12);
       fitsRoom = reverseMode ? (tdFt <= L && scrWIn / 12 <= W - 1) : (far <= L && scrWIn / 12 <= W - 1);
       if (fitsRoom) {
@@ -1124,11 +1129,14 @@
       throw: revMode ? dispDist(tdFt) + ' throw' : throwStr + ' throw',
       screen: revMode ? dRange.replace(/&ndash;/g, '–') + '″ ' + stdAspect :
         (golfMode ? scrLabel : fmt(diag, 0) + '″ ' + stdAspect),
-      room: ROOMS[roomType].label + ', ' + dispShort(L) + ' × ' + dispShort(W) + (outdoor ? '' : ', ' + dispShort(H) + ' ceiling'),
+      room: ROOMS[roomType].label + (outdoor ? '' : (dimsKnown ?
+        ', ' + dispShort(L) + ' × ' + dispShort(W) + ((H >= 0) ? ', ' + dispShort(H) + ' ceiling' : '') :
+        ' (enter your room size)')),
       seat: seat > 0 ? dispDist(seat) + (golfMode ? ' hitting distance' : ' seating') : '',
       bright: fl > 0 ? 'about ' + fmt(fl, 0) + ' fL, ' + flNote : '',
       verdict: outdoor ? 'Outdoor setup: keep the throw path clear' :
-        (fitsRoom ? 'Fits your ' + ROOMS[roomType].label.toLowerCase() : 'Too big for this room')
+        (!dimsKnown ? 'Enter your room size to check fit' :
+        (fitsRoom ? 'Fits your ' + ROOMS[roomType].label.toLowerCase() : 'Too big for this room'))
     };
 
     // Head-to-head comparison table (A = main model, B/C = compare models).
@@ -1151,7 +1159,7 @@
         cmpModels.forEach(function (m) {
           var cn = imgWIn * m.t[0], cf = imgWIn * m.t[1];
           var ctr = fmtDist(cn) + (m.t[1] !== m.t[0] ? '&ndash;' + fmtDist(cf) : '');
-          var cfit = outdoor ? '&ndash;' : (cf / 12 <= L ? 'Yes' : 'No');
+          var cfit = outdoor ? '&ndash;' : (!dimsKnown ? '?' : (cf / 12 <= L ? 'Yes' : 'No'));
           cmpHtml += '<tr><td>' + m.tag + '</td><td>' + m.name + '</td><td>' + ctr + '</td><td>' + cfit + '</td></tr>';
         });
       }
@@ -1171,6 +1179,18 @@
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     var VW = 660, VH = 440, pad = 34;
     var L = o.L, W = o.W, H = o.H;
+
+    // No room size entered yet: prompt instead of drawing a room with made-up dims.
+    if (!o.outdoor && !(L > 0 && W > 0)) {
+      var dp = el('text', { x: VW / 2, y: VH / 2 - 8, 'text-anchor': 'middle',
+        'font-size': 15, 'font-weight': '600', fill: '#8a94a8' });
+      dp.textContent = 'Enter your room size above to see the 3D preview.';
+      var wm0 = el('text', { x: VW - 12, y: VH - 10, 'text-anchor': 'end', 'font-size': 13,
+        'font-weight': '600', 'letter-spacing': '1', fill: '#8a94a8', opacity: 0.55 });
+      wm0.textContent = 'BudgetProjectors.org';
+      return;
+    }
+    if (!(H >= 0)) H = 9; // ceiling only affects the 3D drawing, default it when empty
 
     // Palette: sunlight wins over the lights switch.
     var scene = sunOn ? 'sun' : (lightsOn ? 'day' : 'night');
@@ -1354,7 +1374,8 @@
       var tThrow = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
       tThrow.textContent = 'Throw ' + rangeLabel;
       throwTag.appendChild(tThrow);
-      if (!o.outdoor) {
+      // Only judge the fit when the user has entered a room length.
+      if (!o.outdoor && o.L > 0) {
         var throwInRange = far <= o.L;
         var tStat = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
         tStat.textContent = throwInRange ? ' · In range' : ' · Out of range';
