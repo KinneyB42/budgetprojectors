@@ -3013,10 +3013,10 @@
     var scrTopY = Y(scrTopIn);
     el4('rect', { x: sx.toFixed(1), y: scrTopY.toFixed(1),
       width: scrWpx.toFixed(1), height: scrHpx.toFixed(1), fill: scrFill, stroke: ink, 'stroke-width': 2 });
-    if (o.scrLabel) tx(330, scrTopY + scrHpx / 2 + 4, o.scrLabel, 12, 'middle', ink);
+    if (o.scrLabel) tx(330, scrTopY - 10, o.scrLabel, 12, 'middle', ink);
     // floor + ceiling
     el4('line', { x1: wallL - 24, y1: fy, x2: wallR + 24, y2: fy, stroke: ink, 'stroke-width': 3 });
-    tx(wallL - 30, fy + 4, 'Floor', 12, 'end', mut);
+    tx(wallR + 30, fy + 4, 'Floor', 12, 'start', mut);
     el4('line', { x1: wallL - 24, y1: cy, x2: wallR + 24, y2: cy, stroke: ink, 'stroke-width': 1.5 });
     tx(652, cy + 4, 'Ceiling ' + dispShort(ma.ceilFt) + (ma.ceilKnown ? '' : ' (assumed)'), 12, 'end', mut);
     // seated eye-level line through the screen center
@@ -3069,7 +3069,7 @@
     var da = dropAdvice(o, ma, isFlushDv ? 4 : pipeIn, isFlushDv);
     var ceilIn = ma.ceilFt * 12, scrHIn = ma.scrHIn;
     var vLines = wrapText(da.text, '12.5px Arial,sans-serif', 600, 3);
-    var cy = 22 + vLines.length * 16, fy = 248;
+    var cy = 30 + vLines.length * 16, fy = 248;
     var s = (fy - cy) / ceilIn;
     function Y(v) { return fy - v * s; }
     var scrX = 120, lensX = 430;
@@ -3088,12 +3088,15 @@
       return;
     }
     var zlIn = da.vHas ? da.zlIn : ceilIn - da.needIn;
-    // shift-range band on the pole
+    // shift-range band on the pole, clamped so it never drops below the floor
     if (da.vHas) {
-      el5('rect', { x: lensX - 5, y: Y(da.zlHi).toFixed(1), width: 10,
-        height: Math.max(2, Y(da.zlLo) - Y(da.zlHi)).toFixed(1),
-        fill: night ? '#1d3a2a' : '#d9efe2', stroke: night ? '#7fd6a4' : '#2e7d5b', 'stroke-width': 1 });
-      tx(lensX + 14, (Y(da.zlHi) + Y(da.zlLo)) / 2 + 4, 'lens shift range', 11, 'start', night ? '#7fd6a4' : '#2e7d5b');
+      var bandTop = Math.min(da.zlHi, ceilIn), bandBot = Math.max(da.zlLo, 0);
+      if (bandBot < bandTop) {
+        el5('rect', { x: lensX - 5, y: Y(bandTop).toFixed(1), width: 10,
+          height: Math.max(2, Y(bandBot) - Y(bandTop)).toFixed(1),
+          fill: night ? '#1d3a2a' : '#d9efe2', stroke: night ? '#7fd6a4' : '#2e7d5b', 'stroke-width': 1 });
+        tx(lensX + 14, (Y(bandTop) + Y(bandBot)) / 2 + 4, 'lens shift range', 11, 'start', night ? '#7fd6a4' : '#2e7d5b');
+      }
     }
     // pole + projector body at the pipe drop
     el5('line', { x1: lensX, y1: cy, x2: lensX, y2: Y(zlIn).toFixed(1), stroke: ink, 'stroke-width': 3 });
@@ -3106,7 +3109,7 @@
     el5('line', { x1: lensX, y1: Y(zlIn).toFixed(1), x2: scrX, y2: Y(botIn).toFixed(1),
       stroke: mut, 'stroke-width': 1.2, 'stroke-dasharray': '6 4' });
     var col = da.ok ? (night ? '#7fd6a4' : '#2e7d5b') : (night ? '#ff9d8a' : '#c0392b');
-    vLines.forEach(function (ln, i) { tx(330, 22 + i * 16, ln, 12.5, 'middle', col); });
+    vLines.forEach(function (ln, i) { tx(330, 30 + i * 16, ln, 12.5, 'middle', col); });
   }
 
   // init
