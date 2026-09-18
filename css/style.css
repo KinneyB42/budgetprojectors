@@ -285,6 +285,11 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__disclaimer { font-size: 13.5px; color: var(--muted); max-width: 720px; margin-top: 18px; line-height: 1.6; }
 .calc__room { margin-bottom: 26px; }
 .calc__chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.calc__mode { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+.calc__mode .calc__chips { margin-bottom: 0; }
+.calc__mode-label { font-size: 14px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.08em; }
+.calc__mode .calc__hint { margin: 0; flex-basis: 100%; }
+.calc--basic .adv-only { display: none !important; }
 .calc__dims { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 6px; }
 @media (max-width: 560px) { .calc__dims { grid-template-columns: 1fr; } }
 .calc__plan { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 6px; }

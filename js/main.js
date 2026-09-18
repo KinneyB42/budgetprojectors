@@ -461,6 +461,8 @@
     });
     function num(k) { var v = parseFloat(p[k], 10); return v >= 0 ? v : NaN; }
     function toDisp(ft) { return unit === 'm' ? fmt(ft * M_PER_FT, 2) : String(Math.round(ft * 100) / 100); }
+    // Links carrying advanced-only settings open in Advanced mode.
+    if (p.g === '1' || p.dir === '1' || p.cb || p.cc || p.lm || p.gn || p.pp || p.gp || p.gw || p.gh || p.ga || p.L || p.W || p.H) setAdvMode(true);
     if (p.u === 'm' || p.u === 'ft') setUnit(p.u, false);
     if (p.m) {
       var found = null;
@@ -707,6 +709,29 @@
     });
   }
 
+  /* ---------- Basic / Advanced mode ---------- */
+  var advMode = false;
+  function setAdvMode(on) {
+    advMode = on;
+    document.querySelectorAll('#calc-mode-chips .calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', c.getAttribute('data-mode') === (on ? 'advanced' : 'basic'));
+    });
+    var root = document.querySelector('.calc');
+    if (root) {
+      root.classList.toggle('calc--basic', !on);
+      root.classList.toggle('calc--advanced', on);
+    }
+    if (!on) {
+      if (golfMode) setGolfMode(false);
+      if (reverseMode) setDirection('screen');
+    }
+    try { localStorage.setItem('calc-mode', on ? 'advanced' : 'basic'); } catch (e) {}
+    recalc();
+  }
+  document.querySelectorAll('#calc-mode-chips .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () { setAdvMode(chip.getAttribute('data-mode') === 'advanced'); });
+  });
+
   function fmtDist(inches) {
     if (unit === 'm') {
       if (inches < 36) return fmt(inches * 2.54, 0) + ' cm';
@@ -822,7 +847,7 @@
 
     // Head-to-head: extra projectors drawn at their own throw distances for the same screen.
     var extraProj = [];
-    if (compareOn && !reverseMode && (compareB || compareC)) {
+    if (compareOn && advMode && !reverseMode && (compareB || compareC)) {
       [['B', compareB], ['C', compareC]].forEach(function (q) {
         var entry = q[1];
         if (!entry) return;
@@ -963,7 +988,7 @@
 
     // Head-to-head comparison table (A = main model, B/C = compare models).
     var cmpHtml = '';
-    if (compareOn && (compareB || compareC)) {
+    if (compareOn && advMode && (compareB || compareC)) {
       var cmpModels = [{ tag: 'A', name: modelName, t: r }];
       if (compareB) cmpModels.push({ tag: 'B', name: compareB.b + ' ' + compareB.m, t: compareB.t });
       if (compareC) cmpModels.push({ tag: 'C', name: compareC.b + ' ' + compareC.m, t: compareC.t });
@@ -1276,7 +1301,10 @@
   }
 
   // init
+  var savedMode = 'basic';
+  try { savedMode = localStorage.getItem('calc-mode') || 'basic'; } catch (e) {}
   setUnit(unit, false);
   setRoom('living');
+  setAdvMode(savedMode === 'advanced');
   applyShareHash();
 })();

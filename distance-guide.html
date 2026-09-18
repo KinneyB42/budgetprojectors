@@ -38,7 +38,16 @@
     <h1>Throw-Distance Calculator</h1>
     <p class="lede">Every projector throws a specific image size from a specific distance — that's the throw ratio. Get this wrong and your dream 120-inch screen becomes a 90-inch compromise. Run the numbers before you buy.</p>
 
-    <div class="calc">
+    <div class="calc__mode">
+      <span class="calc__mode-label">Mode</span>
+      <div class="calc__chips" id="calc-mode-chips">
+        <button type="button" class="calc__chip chosen" data-mode="basic">Basic</button>
+        <button type="button" class="calc__chip" data-mode="advanced">Advanced</button>
+      </div>
+      <p class="calc__hint">Basic covers the essentials. Advanced unlocks golf simulator mode, planning from a throw distance, side-by-side projector comparisons, and brightness math.</p>
+    </div>
+
+    <div class="calc calc--basic">
       <div class="calc__model">
         <label for="calc-model">Projector model</label>
         <input type="text" id="calc-model" placeholder="Start typing your model&hellip;" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="calc-suggest">
@@ -63,8 +72,8 @@
           </div>
           <p class="calc__hint">Use the same number in both boxes if your projector has no optical zoom. You&rsquo;ll find the throw ratio on the manufacturer&rsquo;s spec sheet.</p>
         </div>
-        <p class="calc__hint"><button type="button" class="calc__linkbtn" id="calc-compare-toggle">Compare multiple models</button></p>
-        <div class="calc__compare" id="calc-compare-wrap" hidden>
+        <p class="calc__hint adv-only"><button type="button" class="calc__linkbtn" id="calc-compare-toggle">Compare multiple models</button></p>
+        <div class="calc__compare adv-only" id="calc-compare-wrap" hidden>
           <div>
             <label for="calc-model-b">Second model</label>
             <input type="text" id="calc-model-b" placeholder="Start typing&hellip;" autocomplete="off">
@@ -92,12 +101,12 @@
           <button type="button" class="calc__chip" data-room="garage">Garage</button>
           <button type="button" class="calc__chip" data-room="outdoors">Outdoors</button>
         </div>
-        <label>Is this a golf simulator space?</label>
-        <div class="calc__chips" id="calc-golf-chips">
+        <label class="adv-only">Is this a golf simulator space?</label>
+        <div class="calc__chips adv-only" id="calc-golf-chips">
           <button type="button" class="calc__chip chosen" data-golf="no">No</button>
           <button type="button" class="calc__chip" data-golf="yes">Yes</button>
         </div>
-        <div class="calc__dims" id="calc-dims">
+        <div class="calc__dims adv-only" id="calc-dims">
           <div>
             <label for="calc-room-len">Room length (ft)</label>
             <input type="number" id="calc-room-len" min="6" max="100" step="0.5" inputmode="decimal">
@@ -147,7 +156,7 @@
         </div>
       </div>
 
-      <div id="calc-projpos-wrap">
+      <div id="calc-projpos-wrap" class="adv-only">
         <div class="calc__label">Projector position</div>
         <div class="calc__chips" id="calc-projpos">
           <button type="button" class="calc__chip chosen" data-pos="behind">Behind Seating</button>
@@ -158,8 +167,8 @@
 
       <div class="calc__plan">
         <div id="calc-diag-wrap">
-          <label>Plan by</label>
-          <div class="calc__chips" id="calc-dir-chips">
+          <label class="adv-only">Plan by</label>
+          <div class="calc__chips adv-only" id="calc-dir-chips">
             <button type="button" class="calc__chip chosen" data-dir="screen">Screen size</button>
             <button type="button" class="calc__chip" data-dir="throw">Throw distance</button>
           </div>
@@ -180,16 +189,16 @@
           <label for="calc-seat" id="calc-seat-label">Seating distance (ft)</label>
           <input type="number" id="calc-seat" min="2" max="60" step="0.5" placeholder="e.g. 10" inputmode="decimal">
         </div>
-        <div>
+        <div class="adv-only">
           <label for="calc-lumens">Projector lumens (optional)</label>
           <input type="number" id="calc-lumens" min="100" max="20000" step="50" placeholder="e.g. 3000" inputmode="numeric">
         </div>
-        <div>
+        <div class="adv-only">
           <label for="calc-gain">Screen gain</label>
           <input type="number" id="calc-gain" min="0.1" max="3" step="0.1" value="1.0" inputmode="decimal">
         </div>
       </div>
-      <p class="calc__hint">Assumes a 16:9 projector. Seating is measured from the screen.</p>
+      <p class="calc__hint">Seating is measured from the screen.</p>
 
       <div class="calc__aspect" id="calc-aspect-std-wrap">
         <label>Aspect ratio</label>
@@ -217,7 +226,7 @@
 
       <div class="calc__result show" id="calc-plan-result" aria-live="polite"></div>
     </div>
-    <p class="calc__disclaimer">This calculator is an estimation tool. Throw distances are based on published manufacturer specifications and standard 16:9 screen math, and actual placement can vary with zoom position, lens shift, and mounting. Measure your room before buying or mounting, and refer to the manufacturer&rsquo;s specifications for further information.</p>
+    <p class="calc__disclaimer">This calculator is an estimation tool. Throw distances are based on published manufacturer specifications and standard screen math for the selected aspect ratio, and actual placement can vary with zoom position, lens shift, and mounting. Measure your room before buying or mounting, and refer to the manufacturer&rsquo;s specifications for further information.</p>
 
     <div class="prose" style="margin-top: 56px;">
       <h3>How throw ratio works</h3>
