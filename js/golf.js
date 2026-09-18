@@ -228,7 +228,10 @@
   }
 
   aspectSel.addEventListener('change', function () { applyAspect(); recalc(); });
-  screenW.addEventListener('input', function () { syncAspectFromDims(); recalc(); });
+  screenW.addEventListener('input', function () {
+    if (aspectSel.value !== 'custom') applyAspect();
+    syncAspectFromDims(); recalc();
+  });
   screenH.addEventListener('input', function () { syncAspectFromDims(); recalc(); });
 
   /* ---------- chip groups ---------- */
