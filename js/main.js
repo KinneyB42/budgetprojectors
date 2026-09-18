@@ -1628,6 +1628,47 @@
   var NS = 'http://www.w3.org/2000/svg';
   var NAVY = '#0c2244', MUTED = '#5c5c5c';
 
+  // Color-key legend entries for the tagged projectors (A = first, B/C = compare).
+  function compareLegendItems(o, cols) {
+    var items = [];
+    var cmp = (o.extraProj || []).length > 0;
+    var mainName = selectedModel ? (selectedModel.b + ' ' + selectedModel.m) : null;
+    if (!mainName && !o.r) return items;
+    items.push({ col: cols.a, label: (cmp ? 'A · ' : '') + (mainName || 'Manual throw ratio') });
+    (o.extraProj || []).forEach(function (xp, xi) {
+      items.push({ col: xi === 0 ? cols.b : cols.c, label: xp.tag + ' · ' + compareFullName(xi === 0 ? 'b' : 'c') });
+    });
+    return items;
+  }
+  // Horizontal color-key legend row; centered=true centers the row in the 660-wide viewBox.
+  function drawLegend(elFn, items, x0, y, maxW, textCol, centered) {
+    if (!items.length) return;
+    if (!svgMeasureCtx) svgMeasureCtx = document.createElement('canvas').getContext('2d');
+    var ctx = svgMeasureCtx; ctx.font = '12px sans-serif';
+    var gap = 20;
+    items.forEach(function (it) {
+      var lab = String(it.label);
+      if (lab.length > 30) lab = lab.slice(0, 29).trim() + '…';
+      it.short = lab;
+    });
+    function total() {
+      return items.reduce(function (a, it) { return a + 20 + ctx.measureText(it.short).width; }, 0) + gap * (items.length - 1);
+    }
+    var guard = 0;
+    while (total() > maxW && guard++ < 12) {
+      var longest = items.reduce(function (a, b) { return b.short.length > a.short.length ? b : a; });
+      if (longest.short.length <= 10) break;
+      longest.short = longest.short.slice(0, -2).trim() + '…';
+    }
+    var x = centered ? (660 - total()) / 2 : x0;
+    items.forEach(function (it) {
+      elFn('rect', { x: x.toFixed(1), y: (y - 11).toFixed(1), width: 14, height: 14, rx: 3,
+        fill: it.col, stroke: textCol, 'stroke-width': 1 });
+      var t = elFn('text', { x: (x + 20).toFixed(1), y: y.toFixed(1), 'font-size': 12, fill: textCol });
+      t.textContent = it.short;
+      x += 20 + ctx.measureText(it.short).width + gap;
+    });
+  }
   function drawViz(o) {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     var VW = 660, VH = 440, pad = 34;
@@ -2031,6 +2072,9 @@
     } else {
       txt(L / 2, W / 2, 1, 'Pick your projector model to place it in the room.', 13);
     }
+
+    // legend at the bottom: color key for the projector labels
+    drawLegend(el, compareLegendItems(o, { a: pal.proj[0], b: '#2e7d5b', c: '#c07a1e' }), 16, VH - 14, 470, pal.label, false);
 
     // watermark
     var wm = el('text', { x: VW - 12, y: VH - 10, 'text-anchor': 'end', 'font-size': 13,
@@ -2551,8 +2595,10 @@
       watermark6(); return;
     }
     tx6(VW / 2, 24, 'Looking up at the ceiling — where each projector mounts', 14, 'middle', ink);
+    // legend under the caption: color key for the projector labels
+    drawLegend(el6, compareLegendItems(o, { a: night ? '#8fb0e8' : NAVY, b: night ? '#57b586' : '#2e7d5b', c: night ? '#e09a3c' : '#c07a1e' }), 0, 46, VW - 40, mut, true);
     // plan scale: x = distance from the screen wall, y = across the room
-    var padL = 64, padR = 30, padT = 48, padB = 54;
+    var padL = 64, padR = 30, padT = 68, padB = 54;
     var s = Math.min((VW - padL - padR) / L, (VH - padT - padB) / W);
     var ox = padL + ((VW - padL - padR) - L * s) / 2;
     var oy = padT + ((VH - padT - padB) - W * s) / 2;
