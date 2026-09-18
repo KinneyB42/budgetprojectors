@@ -2137,7 +2137,10 @@
       el2('rect', { x: (X(0) - 7).toFixed(1), y: Z(z0 + sh).toFixed(1), width: 7, height: (sh * s).toFixed(1),
         fill: '#fff3d0', opacity: 0.6 });
     }
-    tx(X(0) + 10, Z(zc) + 4, 'screen ' + dispShort(sh) + (o.screenType === 'alr' ? ' · ALR' : ''), 11, 'start', mut);
+    // screen label sits above the top of the screen so it never collides with the
+    // "blocks your view!" sightline warning at screen-center height
+    var scrLabY = (hKnown && H - (z0 + sh) <= 1) ? Z(zc) + 4 : Z(z0 + sh) - 10;
+    tx(X(0) + 10, scrLabY, 'screen ' + dispShort(sh) + (o.screenType === 'alr' ? ' · ALR' : ''), 11, 'start', mut);
     if (isRear) {
       // cutaway booth behind the screen wall
       var boothH = hKnown ? H : z0 + sh;
