@@ -4,8 +4,8 @@
 /* l: [[lens name, throwMin, throwMax, lumens?], ...] for interchangeable-lens models. */
 /* lm: published lumen output, where known. */
 window.THROW_DATA = [
-  {b: "JMGO", m: "IRIS ULTRA", t: [0.88, 1.7], sv: [-130.0, 130.0], sh: [-53.0, 53.0]},
-  {b: "JMGO", m: "IRIS ULTRA MAX", t: [0.88, 1.7], sv: [-130.0, 130.0], sh: [-53.0, 53.0]},
+  {b: "JMGO", m: "IRIS ULTRA", t: [0.88, 1.7], lm: 4500, sv: [-130.0, 130.0], sh: [-53.0, 53.0]},
+  {b: "JMGO", m: "IRIS ULTRA MAX", t: [0.88, 1.7], lm: 6500, sv: [-130.0, 130.0], sh: [-53.0, 53.0]},
   {b: "BenQ", m: "TK705STi", t: [0.8, 0.8], lm: 3000},
   {b: "BenQ", m: "TK705i", t: [1.0, 1.3], lm: 3000},
   {b: "BenQ", m: "TK850", t: [1.13, 1.47], lm: 3000},
