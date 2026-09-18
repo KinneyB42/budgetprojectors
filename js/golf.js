@@ -169,8 +169,9 @@
       suggest.hidden = false;
       modelInput.setAttribute('aria-expanded', 'true');
     }
-    if (!THROW.length) {
-      emptyNote('Loading projector database - results will appear automatically.');
+    try {
+      if (!THROW.length) {
+        emptyNote('Loading projector database (' + THROW.length + ' models) - results will appear automatically.');
       if (!suggestTimer) {
         suggestTimer = true;
         var s = document.createElement('script');
@@ -208,6 +209,9 @@
     });
     suggest.hidden = false;
     modelInput.setAttribute('aria-expanded', 'true');
+    } catch (err) {
+      emptyNote('Search error: ' + (err && err.message ? err.message : err));
+    }
   }
 
   modelInput.addEventListener('input', function () {
