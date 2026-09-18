@@ -2318,8 +2318,17 @@
       });
     }
     if (screenStyle === 'pulldown') {
-      el3('rect', { x: (sx - 8).toFixed(1), y: (sy - 16).toFixed(1), width: (scrW + 16).toFixed(1), height: 13, rx: 6,
+      // tube mounted just under the ceiling; black leader drops from the tube to the
+      // viewing area, so switching styles visibly changes the distance from the ceiling
+      var caseH = 13;
+      var caseY = Math.min(ceilY + 6, sy - caseH - 4);
+      el3('rect', { x: (sx - 8).toFixed(1), y: caseY.toFixed(1), width: (scrW + 16).toFixed(1), height: caseH, rx: 6,
         fill: caseFill, stroke: NAVY, 'stroke-width': 1.5 });
+      var leadTop = caseY + caseH, leadBot = sy;
+      if (leadBot - leadTop > 3) {
+        el3('rect', { x: sx.toFixed(1), y: leadTop.toFixed(1), width: scrW.toFixed(1),
+          height: (leadBot - leadTop).toFixed(1), fill: night ? '#04060c' : '#151515' });
+      }
     }
     el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
       fill: face, stroke: frameCol, 'stroke-width': screenStyle === 'acoustic' ? 5 : 3 });
