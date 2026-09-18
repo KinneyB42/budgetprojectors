@@ -1607,6 +1607,13 @@
           bTag.appendChild(bT2);
         }
       }
+      // seating position in the white margin, not inside the 3D render
+      if (o.seat > 0) {
+        var sTag = el('text', { x: 16, y: 62, 'font-size': 13, 'font-weight': '600', fill: pal.label });
+        var sT1 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        sT1.textContent = (o.golf ? 'Hitting distance ' : 'Seating ') + dispDist(o.seat) + ' from screen';
+        sTag.appendChild(sT1);
+      }
       // light cone: lens to screen corners
       var lens = [pxx, pyy, pzz];
       var sc = [[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]];
@@ -1670,7 +1677,7 @@
           box(sx, yc, 0.7, 1.7, 1.7, 1.4, S[0], S[1], S[2]); // seat
           box(sx + 0.95, yc, 1.6, 0.45, 1.7, 3.2, S[0], S[1], S[2]); // backrest
         }
-        txt(sx, yc, fz, fname + ' · ' + dispDist(o.seat), 11);
+        txt(sx, yc, fz, fname, 11);
       }
       // floor lamp in the back corner: green when the lights are on, red when off
       if (hasScreen && !o.outdoor) {
