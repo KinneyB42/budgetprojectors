@@ -133,6 +133,20 @@
           <button type="button" class="calc__chip" data-pos="ceiling">Ceiling Mount</button>
           <button type="button" class="calc__chip" data-pos="rear">Rear Projection</button>
         </div>
+        <div id="calc-mounttype-wrap" hidden>
+          <div class="calc__label">Ceiling mount type</div>
+          <div class="calc__chips" id="calc-mounttype">
+            <button type="button" class="calc__chip chosen" data-mt="flush">Flush mount</button>
+            <button type="button" class="calc__chip" data-mt="pole">Pole mount</button>
+          </div>
+          <div id="calc-polelen-wrap" hidden style="margin-top:8px">
+            <label for="calc-pole-len">Pole length (<span id="calc-polelen-unit">in</span>)</label>
+            <div class="calc__slider-row">
+              <input type="number" id="calc-pole-len" min="2" max="48" step="1" value="6" inputmode="decimal">
+            </div>
+            <p class="calc__hint">Most ceiling mounts use 1.5 in NPT pipe — this is the length you need.</p>
+          </div>
+        </div>
         <div class="calc__chips" style="margin-top:8px">
           <button type="button" class="calc__chip" id="calc-shift-chip" aria-pressed="false">My projector has lens shift</button>
         </div>
@@ -254,6 +268,7 @@
             <button type="button" class="calc__chip chosen" data-view="side" aria-pressed="true">Side</button>
             <button type="button" class="calc__chip chosen" data-view="viewer" aria-pressed="true">Viewer</button>
             <button type="button" class="calc__chip chosen" data-view="ceiling" aria-pressed="true">Ceiling</button>
+            <button type="button" class="calc__chip chosen adv-only" data-view="mounting" aria-pressed="true">Mounting</button>
             <button type="button" class="calc__chip chosen" id="calc-views-all" aria-pressed="true">All</button>
           </div>
         </div>
@@ -273,7 +288,7 @@
           <svg id="calc-svg-ceiling" viewBox="0 0 660 360" role="img" aria-label="Ceiling view: projector mounting spots seen from below"></svg>
           <figcaption>Ceiling view</figcaption>
         </figure>
-        <figure class="calc__fig adv-only">
+        <figure class="calc__fig adv-only" data-viewfig="mounting">
           <svg id="calc-svg-mount" viewBox="0 0 660 380" role="img" aria-label="Screen mounting height guide"></svg>
           <svg id="calc-svg-drop" viewBox="0 0 660 300" role="img" aria-label="Ceiling mount drop simulator"></svg>
           <figcaption>Mounting view
@@ -504,7 +519,6 @@
     <h2>Export your golf simulator</h2>
     <p class="lede">Save your full simulator plan as a file: your projector pick, placement, measurements, the 3D views, setup steps, and recommended accessories, watermarked by BudgetProjectors.org.</p>
     <div class="golf-export-buttons">
-      <button type="button" class="calc__chip" id="golf-export-jpg">JPG</button>
       <button type="button" class="calc__chip" id="golf-export-png">PNG</button>
       <button type="button" class="calc__chip" id="golf-export-pdf">PDF</button>
     </div>
@@ -529,7 +543,7 @@
 </footer>
 
 <script src="js/throw-data.js?v=20260918m"></script>
-<script src="js/main.js?v=20260919i"></script>
+<script src="js/main.js?v=20260919j"></script>
 <script src="js/golf.js?v=20260918h"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>

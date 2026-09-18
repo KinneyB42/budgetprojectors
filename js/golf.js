@@ -851,7 +851,7 @@
     svgSide.innerHTML = parts.join('');
   }
 
-  /* ---------- export: JPG / PNG / PDF ---------- */
+  /* ---------- export: PNG / PDF ---------- */
   var MOUNT_LIST = 'https://amzn.to/4vALW2k';
   var CABLE_LIST = 'https://amzn.to/4oFKjxP';
   var HDMI_LIST = 'https://www.amazon.com/shop/brandonkinney/list/T1MTOGHLPMRU?ref_=aipsflist';
@@ -1106,8 +1106,7 @@
   }
 
   /* ---------- init ---------- */
-  var golfJpgBtn = $('golf-export-jpg'), golfPngBtn = $('golf-export-png'), golfPdfBtn = $('golf-export-pdf');
-  if (golfJpgBtn) golfJpgBtn.addEventListener('click', function () { exportGolfImage('jpg'); });
+  var golfPngBtn = $('golf-export-png'), golfPdfBtn = $('golf-export-pdf');
   if (golfPngBtn) golfPngBtn.addEventListener('click', function () { exportGolfImage('png'); });
   if (golfPdfBtn) golfPdfBtn.addEventListener('click', exportGolfPdf);
   recalc();

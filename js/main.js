@@ -446,10 +446,14 @@
     if (eu) eu.textContent = m ? 'cm' : 'in';
     var pu = document.getElementById('calc-pipe-unit');
     if (pu) pu.textContent = m ? 'cm' : 'in';
+    var plu = document.getElementById('calc-polelen-unit');
+    if (plu) plu.textContent = m ? 'cm' : 'in';
     var ei = document.getElementById('calc-eye-height');
     if (ei) { ei.min = m ? 51 : 20; ei.max = m ? 203 : 80; }
     var pi = document.getElementById('calc-pipe-drop');
     if (pi) { pi.min = m ? 5 : 2; pi.max = m ? 122 : 48; }
+    var pli = document.getElementById('calc-pole-len');
+    if (pli) { pli.min = m ? 5 : 2; pli.max = m ? 122 : 48; }
   }
   function setUnit(u, convert) {
     if (u !== 'ft' && u !== 'm') return;
@@ -461,7 +465,7 @@
         if (!(v >= 0)) return;
         el.value = toM ? fmt(v * M_PER_FT, 2) : fmt(v / M_PER_FT, 2);
       });
-      [eyeInput, pipeInput].forEach(function (el) {
+      [eyeInput, pipeInput, poleLenInput].forEach(function (el) {
         if (!el || el.value === '') return;
         var v = parseFloat(el.value, 10);
         if (!(v >= 0)) return;
@@ -489,6 +493,7 @@
       document.querySelectorAll('#calc-projpos .calc__chip').forEach(function (c) {
         c.classList.toggle('chosen', c === chip);
       });
+      syncMountTypeUI();
       recalc();
     });
   });
@@ -628,11 +633,18 @@
     var ust = !!(o.r && o.r[1] < 1);
     var ppos = !ust ? (o.projPos || 'behind') : 'behind';
     var pzz = (o.pz != null) ? o.pz : (ust ? 1 : zc);
-    if (ppos === 'ceiling' && H > 0) pzz = H - 1.0;
+    if (ppos === 'ceiling' && H > 0) pzz = H - ceilingDropFt();
     else if (ppos === 'table') pzz = 2.475;
     else if (ppos === 'rear') pzz = zc;
     if (shiftOn) pzz += (shiftPct / 100) * sh;
     return { ppos: ppos, z: pzz, ust: ust };
+  }
+
+  /* Ceiling-mount drop in feet: a flush bracket holds the lens about 4 in below
+     the ceiling; a pole mount drops it by the editable pole length. */
+  function ceilingDropFt() {
+    if (mountType === 'pole') return Math.max(pipeDropIn(), 2) / 12;
+    return 4 / 12;
   }
 
   function roomObstacles(o) {
@@ -699,8 +711,8 @@
   }
 
   /* ---------- View toggles: show/hide each render individually, or all at once ---------- */
-  var viewIds = ['3d', 'side', 'viewer', 'ceiling'];
-  var viewState = { '3d': true, side: true, viewer: true, ceiling: true };
+  var viewIds = ['3d', 'side', 'viewer', 'ceiling', 'mounting'];
+  var viewState = { '3d': true, side: true, viewer: true, ceiling: true, mounting: true };
   try {
     var vsSaved = JSON.parse(localStorage.getItem('calc-views') || 'null');
     if (vsSaved) viewIds.forEach(function (id) { if (vsSaved[id] === false) viewState[id] = false; });
@@ -765,6 +777,10 @@
     if (compareC) { enc('cc', compareC.b + ' ' + compareC.m); if (modelLenses(compareC)) enc('ccl', compareLens.c); }
     var seat = inFt(seatInput); if (seat > 0) enc('seat', r2(seat));
     enc('pp', projPos);
+    if (projPos === 'ceiling') {
+      enc('mt', mountType);
+      if (mountType === 'pole') enc('pd', Math.round(pipeDropIn() * 10) / 10);
+    }
     if (roomType !== 'outdoors') {
       var L = inFt(lenInput); if (L > 0) enc('L', r2(L));
       var Wd = inFt(widInput); if (Wd > 0) enc('W', r2(Wd));
@@ -887,6 +903,13 @@
         c.classList.toggle('chosen', c.getAttribute('data-pos') === p.pp);
       });
     }
+    if (p.mt === 'pole' || p.mt === 'flush') mountType = p.mt;
+    if (!isNaN(num('pd'))) {
+      var pdDisp = unit === 'm' ? fmt(num('pd') * 2.54, 0) : fmt(num('pd'), 0);
+      if (pipeInput) pipeInput.value = pdDisp;
+      if (poleLenInput) poleLenInput.value = pdDisp;
+    }
+    syncMountTypeUI();
     if (!isNaN(num('gn')) && gainInput) gainInput.value = p.gn;
     if (p.st === 'alr') setScreenType('alr');
     if (p.ss && ['fixed', 'pulldown', 'acoustic', 'floor', 'portable'].indexOf(p.ss) >= 0) {
@@ -1549,8 +1572,9 @@
         (ma.warn ? ' ' + ma.warn + '.' : '');
       bits.push('Screen mounting: ' + mountStr);
       if (selectedModel) {
-        var da = dropAdvice(drawO, ma, pipeDropIn());
-        dropStr = 'Ceiling-mount drop: ' + da.text;
+        var isFlushMt = mountType !== 'pole';
+        var da = dropAdvice(drawO, ma, isFlushMt ? 4 : pipeDropIn(), isFlushMt);
+        dropStr = (isFlushMt ? 'Flush-mount drop: ' : 'Pole-mount drop: ') + da.text;
         bits.push(dropStr);
       }
     }
@@ -1600,7 +1624,7 @@
     var imgRef = 'a ' + fmt(diag, 0) + '&Prime; screen';
     var throwStr = fmtDist(imgWIn * r[0]);
     var placeStr;
-    var posWord = (!ust && projPos === 'ceiling') ? 'Ceiling-mount' : 'Place';
+    var posWord = (!ust && projPos === 'ceiling') ? (mountType === 'pole' ? 'Pole-mount' : 'Flush-mount') : 'Place';
     var posTail = (!ust && projPos === 'table') ? ' on a table' : '';
     if (reverseMode) {
       placeStr = 'At a ' + dispDist(tdFt) + ' throw, the ' + modelName + ' fills a ' +
@@ -1933,7 +1957,11 @@
       poly([[zA,yc-1.1,0.02],[zB,yc-1.1,0.02],[zB,yc+1.1,0.02],[zA,yc+1.1,0.02]], pal.zone, { opacity: pal.zoneOp });
       // projector (position follows the projector-position setting)
       if (ppos === 'ceiling' && H > 0) {
-        if (H - pzz > 0.15) box(pxx, pyy, (pzz + H) / 2, 0.18, 0.18, H - pzz, pal.stand[0], pal.stand[1], pal.stand[2]); // mount pole
+        var cdrop = H - pzz;
+        if (cdrop > 0.15) {
+          if (mountType === 'pole') box(pxx, pyy, (pzz + H) / 2, 0.18, 0.18, cdrop, pal.stand[0], pal.stand[1], pal.stand[2]); // mount pole
+          else box(pxx, pyy, (pzz + H) / 2, 0.55, 0.45, cdrop, pal.stand[0], pal.stand[1], pal.stand[2]); // flush-mount bracket
+        }
       } else if (ppos === 'table') {
         if (shiftOn && Math.abs(pzz - 2.475) > 0.05) {
           box(pxx, pyy, pzz / 2, 0.18, 0.18, pzz, pal.stand[0], pal.stand[1], pal.stand[2]); // adjustable stand
@@ -2104,8 +2132,10 @@
         var cols = xi === 0 ? ['#2e7d5b', '#1d5c40', '#123c29'] : ['#c07a1e', '#8f5a12', '#5f3c0b'];
         var ex = xp.px, ey = xp.py != null ? xp.py : yc, ez;
         if (!xp.ust && xp.pos === 'ceiling' && H > 0) {
-          ez = H - 1.0;
-          box(ex, ey, (ez + H) / 2, 0.18, 0.18, H - ez, pal.stand[0], pal.stand[1], pal.stand[2]);
+          ez = H - ceilingDropFt();
+          var xdrop = H - ez;
+          if (mountType === 'pole') box(ex, ey, (ez + H) / 2, 0.18, 0.18, xdrop, pal.stand[0], pal.stand[1], pal.stand[2]);
+          else box(ex, ey, (ez + H) / 2, 0.55, 0.45, xdrop, pal.stand[0], pal.stand[1], pal.stand[2]); // flush-mount bracket
         } else if (xp.pmount && H > 0) {
           ez = xp.pz;
           box(ex, ey, (ez + H) / 2, 0.18, 0.18, H - ez, pal.stand[0], pal.stand[1], pal.stand[2]);
@@ -2838,7 +2868,46 @@
   }
   function dispIn(inches) { return unit === 'm' ? fmt(inches * 2.54, 0) + ' cm' : fmt(inches, 0) + ' in'; }
   if (eyeInput) eyeInput.addEventListener('input', function () { recalc(); });
-  if (pipeInput) pipeInput.addEventListener('input', function () { recalc(); });
+  var poleLenInput = document.getElementById('calc-pole-len');
+  if (pipeInput) pipeInput.addEventListener('input', function () {
+    if (poleLenInput && poleLenInput.value !== pipeInput.value) poleLenInput.value = pipeInput.value;
+    recalc();
+  });
+  if (poleLenInput) {
+    poleLenInput.value = pipeInput ? pipeInput.value : poleLenInput.value;
+    poleLenInput.addEventListener('input', function () {
+      if (pipeInput && pipeInput.value !== poleLenInput.value) pipeInput.value = poleLenInput.value;
+      recalc();
+    });
+  }
+
+  /* ---------- Ceiling mount type: flush mount vs pole mount ----------
+     Shown under the projector-position chips when ceiling is picked. The pole
+     length shares one value with the advanced mount-pipe input above. */
+  var mountType = 'flush';
+  try {
+    var mtSaved = localStorage.getItem('calc-mounttype');
+    if (mtSaved === 'pole' || mtSaved === 'flush') mountType = mtSaved;
+  } catch (e) {}
+  var mountTypeWrap = document.getElementById('calc-mounttype-wrap');
+  var poleLenWrap = document.getElementById('calc-polelen-wrap');
+  function syncMountTypeUI() {
+    var isCeil = projPos === 'ceiling';
+    if (mountTypeWrap) mountTypeWrap.hidden = !isCeil;
+    document.querySelectorAll('#calc-mounttype .calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', c.getAttribute('data-mt') === mountType);
+    });
+    if (poleLenWrap) poleLenWrap.hidden = !(isCeil && mountType === 'pole');
+    try { localStorage.setItem('calc-mounttype', mountType); } catch (e2) {}
+  }
+  document.querySelectorAll('#calc-mounttype .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      mountType = chip.getAttribute('data-mt');
+      syncMountTypeUI();
+      recalc();
+    });
+  });
+  syncMountTypeUI();
   function mountAdvice(o, eyeIn) {
     var scrHIn = o.shFt * 12;
     var ceilKnown = !o.outdoor && o.H >= 0 && o.H > 0;
@@ -2856,19 +2925,21 @@
       botGapIn: placeable ? botGapIn : 0, topGapIn: topGapIn, centerIn: centerIn,
       placeable: placeable, warn: warn };
   }
-  function dropAdvice(o, ma, pipeIn) {
+  function dropAdvice(o, ma, pipeIn, isFlush) {
     var sv = (o.sv && o.sv.length === 2) ? o.sv : [0, 0];
     var vHas = (sv[0] !== 0 || sv[1] !== 0);
     var imgHIn = ma.scrHIn, zcIn = ma.centerIn, ceilIn = ma.ceilFt * 12;
     var noModel = !o.r;
+    var haveTxt = isFlush ? 'your flush mount' : 'your ' + dispIn(pipeIn) + ' pipe';
     if (noModel) return { vHas: false, noModel: true, text: 'Pick a projector model to simulate the mount drop.' };
     if (!vHas) {
       var needIn = ceilIn - zcIn;
       var ok = Math.abs(pipeIn - needIn) <= 1;
       return { vHas: false, noModel: false, needIn: needIn, ok: ok,
-        text: ok ? 'Your ' + dispIn(pipeIn) + ' pipe works — no lens shift, so the lens must sit level with the screen center.' :
+        text: ok ? 'Your ' + (isFlush ? 'flush mount' : dispIn(pipeIn) + ' pipe') + ' works — no lens shift, so the lens must sit level with the screen center.' :
           'No lens shift on this model: the lens must sit level with the screen center, so you need about ' + dispIn(needIn) + ' of drop — ' +
-          (pipeIn < needIn ? 'add an extension tube.' : 'shorten the pipe.') +
+          (isFlush ? 'switch to a pole mount with about ' + dispIn(needIn) + ' of pipe.'
+                   : (pipeIn < needIn ? 'add an extension tube.' : 'shorten the pipe.')) +
           ' Check the manufacture sheet for this model\u2019s fixed image offset.' };
     }
     var sMin = sv[0] / 100, sMax = sv[1] / 100;
@@ -2879,11 +2950,11 @@
     var span = Math.max(Math.abs(sv[0]), Math.abs(sv[1]));
     var ok2 = pipeIn >= dMinIn - 0.5 && pipeIn <= dMaxIn + 0.5;
     var text;
-    if (!ok2 && pipeIn < dMinIn) text = 'Too short — with this screen position the lens needs at least ' + dispIn(dMinIn) + ' of drop (' + dispIn(dMinIn - pipeIn) + ' more than your pipe). Add an extension tube.';
-    else if (!ok2) text = 'Too long — the most drop this shift range allows here is ' + dispIn(dMaxIn) + '. Shorten the pipe.';
+    if (!ok2 && pipeIn < dMinIn) text = 'Too short — with this screen position the lens needs at least ' + dispIn(dMinIn) + ' of drop (' + dispIn(dMinIn - pipeIn) + ' more than ' + haveTxt + '). ' + (isFlush ? 'Switch to a pole mount.' : 'Add an extension tube.');
+    else if (!ok2) text = 'Too long — the most drop this shift range allows here is ' + dispIn(dMaxIn) + '. ' + (isFlush ? 'A flush mount hangs too low here — lower the screen and re-check.' : 'Shorten the pipe.');
     else {
-      text = 'Your ' + dispIn(pipeIn) + ' pipe works \u2014 it needs ' + fmt(Math.abs(sNeed), 0) + '% shift (range \u00B1' + fmt(span, 0) + '%).';
-      if (Math.abs(sNeed) > 0.85 * span) text += ' That is near the shift limit \u2014 a longer pipe would give you more headroom.';
+      text = 'Your ' + (isFlush ? 'flush mount' : dispIn(pipeIn) + ' pipe') + ' works \u2014 it needs ' + fmt(Math.abs(sNeed), 0) + '% shift (range \u00B1' + fmt(span, 0) + '%).';
+      if (Math.abs(sNeed) > 0.85 * span) text += ' That is near the shift limit \u2014 ' + (isFlush ? 'a pole mount would give you more headroom.' : 'a longer pipe would give you more headroom.');
     }
     return { vHas: true, noModel: false, dMinIn: dMinIn, dMaxIn: dMaxIn, zlIn: zlIn,
       zlLo: zlLo, zlHi: zlHi, sNeed: sNeed, span: span, ok: ok2, text: text };
@@ -2994,7 +3065,8 @@
     }
     var eyeIn = eyeHeightIn(), pipeIn = pipeDropIn();
     var ma = mountAdvice(o, eyeIn);
-    var da = dropAdvice(o, ma, pipeIn);
+    var isFlushDv = mountType !== 'pole';
+    var da = dropAdvice(o, ma, isFlushDv ? 4 : pipeIn, isFlushDv);
     var ceilIn = ma.ceilFt * 12, scrHIn = ma.scrHIn;
     var vLines = wrapText(da.text, '12.5px Arial,sans-serif', 600, 3);
     var cy = 22 + vLines.length * 16, fy = 248;
@@ -3027,7 +3099,7 @@
     el5('line', { x1: lensX, y1: cy, x2: lensX, y2: Y(zlIn).toFixed(1), stroke: ink, 'stroke-width': 3 });
     el5('rect', { x: lensX - 22, y: Y(zlIn) - 7, width: 44, height: 15, rx: 3, fill: ink });
     el5('circle', { cx: lensX, cy: Y(zlIn) + 1, r: 3.5, fill: night ? '#0e1320' : '#ffffff' });
-    tx(lensX, Y(zlIn) + 30, 'your pipe: ' + dispIn(pipeIn), 12, 'middle', ink);
+    tx(lensX, Y(zlIn) + 30, isFlushDv ? 'your flush mount: about 4 in' : 'your pipe: ' + dispIn(pipeIn), 12, 'middle', ink);
     // beam: lens -> screen top/bottom
     el5('line', { x1: lensX, y1: Y(zlIn).toFixed(1), x2: scrX, y2: Y(topIn).toFixed(1),
       stroke: mut, 'stroke-width': 1.2, 'stroke-dasharray': '6 4' });
