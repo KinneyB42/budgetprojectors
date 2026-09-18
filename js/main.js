@@ -2499,7 +2499,13 @@
     }
     el3('rect', { x: 0, y: 0, width: VW, height: VH, fill: night ? '#0e1320' : '#e8e2d4' });
     // room shell: side walls + floor, first-person from the couch
-    var floorY = Math.round(VH * 0.70);
+    // Floor line from real perspective: the floor meets the wall behind the screen
+    // at the viewing angle from eye height down to the floor at the seat distance,
+    // so the screen's height off the floor reads correctly instead of crowding it.
+    var seatFtV = (o.seat > 0) ? o.seat : 12;
+    var vFovDeg = 2 * Math.atan(VH / VW) * 180 / Math.PI; // horizontal FOV is 90 deg
+    var floorY = Math.round(VH / 2 + Math.atan((eyeHeightIn() / 12) / seatFtV) * 180 / Math.PI * (VH / vFovDeg));
+    floorY = Math.max(200, Math.min(floorY, VH - 24));
     var wallTone = night ? '#141c30' : '#d9d2c0';
     var floorTone = night ? '#0b101d' : '#c9c0a9';
     var trimCol = night ? '#232f4d' : '#a89e86';
