@@ -409,6 +409,7 @@
     if (outdoor && projPos === 'ceiling') setProjPos('table');
     if (outdoor && (screenStyle === 'acoustic' || screenStyle === 'floor')) setScreenStyle('fixed');
     if (outdoor && speakerMode !== 'none') setSpeakerMode('none'); // tripods are drawn automatically
+    applyViewToggles();
   }
 
   document.querySelectorAll('.calc__chip[data-room]').forEach(function (chip) {
@@ -755,11 +756,14 @@
     if (vsSaved) viewIds.forEach(function (id) { if (vsSaved[id] === false) viewState[id] = false; });
   } catch (e) {}
   function applyViewToggles() {
+    var outdoor = roomType === 'outdoors';
     viewIds.forEach(function (id) {
+      var gated = outdoor && (id === 'ceiling' || id === 'mounting'); // no ceiling outdoors
       var fig = document.querySelector('[data-viewfig="' + id + '"]');
-      if (fig) fig.style.display = viewState[id] ? '' : 'none';
+      if (fig) fig.style.display = (!gated && viewState[id]) ? '' : 'none';
       var chip = document.querySelector('#calc-view-toggles [data-view="' + id + '"]');
       if (chip) {
+        chip.style.display = gated ? 'none' : '';
         chip.classList.toggle('chosen', !!viewState[id]);
         chip.setAttribute('aria-pressed', viewState[id] ? 'true' : 'false');
       }
