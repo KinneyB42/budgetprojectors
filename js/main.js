@@ -586,7 +586,7 @@
     function num(k) { var v = parseFloat(p[k], 10); return v >= 0 ? v : NaN; }
     function toDisp(ft) { return unit === 'm' ? fmt(ft * M_PER_FT, 2) : String(Math.round(ft * 100) / 100); }
     // Links carrying advanced-only settings open in Advanced mode.
-    if (p.g === '1' || p.dir === '1' || p.cb || p.cc || p.cbl || p.ccl || p.gn || p.pp || p.gp || p.gw || p.gh || p.ga) setAdvMode(true);
+    if (p.g === '1' || p.dir === '1' || p.cb || p.cc || p.cbl || p.ccl || p.gn || p.gp || p.gw || p.gh || p.ga) setAdvMode(true);
     if (p.u === 'm' || p.u === 'ft') setUnit(p.u, false);
     if (p.m) {
       var found = null;
