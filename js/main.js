@@ -907,15 +907,18 @@
     }
     var svg2 = document.getElementById('calc-svg-side');
     var svg3 = document.getElementById('calc-svg-viewer');
-    var svg4 = document.getElementById('calc-svg-mount');
-    var svg5 = document.getElementById('calc-svg-drop');
+    var svg4 = advMode ? document.getElementById('calc-svg-mount') : null;
+    var svg5 = advMode ? document.getElementById('calc-svg-drop') : null;
     rasterize(svg, 1320, 880, function (img1, url1) {
       function step2(img2, url2) {
         function step3(img3, url3) {
           function step4(img4, url4) {
         function compose(img5, url5) {
         try {
-          var CW = 1600, CH = 2560, PW = 540;
+          var views = [[img1, 660, 440], [img2, 660, 380], [img3, 660, 360], [img4, 660, 380], [img5, 660, 300]]
+            .filter(function (v) { return !!v[0]; });
+          var CW = 1600, PW = 540, PITCH = 500;
+          var CH = 60 + views.length * PITCH;
           var cv = document.createElement('canvas');
           cv.width = CW; cv.height = CH;
           var cx = cv.getContext('2d');
@@ -933,11 +936,8 @@
             var dw = vw * s, dh = vh * s;
             cx.drawImage(img, PW + (RW - dw) / 2, slotY + (480 - dh) / 2, dw, dh);
           }
-          place(img1, 660, 440, 30);
-          place(img2, 660, 380, 530);
-          place(img3, 660, 360, 1030);
-          place(img4, 660, 380, 1530);
-          place(img5, 660, 300, 2030);
+          var slotY = 30;
+          views.forEach(function (v) { place(v[0], v[1], v[2], slotY); slotY += PITCH; });
           // measurements text
           var S = planSummary;
           function row(label, value, y) {
@@ -1055,19 +1055,19 @@
       slot3.appendChild(clone3);
     }
     var slot4 = document.getElementById('cp-view-mount');
-    var svg4 = document.getElementById('calc-svg-mount');
+    var svg4 = advMode ? document.getElementById('calc-svg-mount') : null;
     if (slot4 && svg4) {
       var clone4 = svg4.cloneNode(true);
       clone4.removeAttribute('id');
       slot4.appendChild(clone4);
-    }
+    } else if (slot4) { slot4.style.display = 'none'; slot4.previousElementSibling.style.display = 'none'; }
     var slot5 = document.getElementById('cp-view-drop');
-    var svg5 = document.getElementById('calc-svg-drop');
+    var svg5 = advMode ? document.getElementById('calc-svg-drop') : null;
     if (slot5 && svg5) {
       var clone5 = svg5.cloneNode(true);
       clone5.removeAttribute('id');
       slot5.appendChild(clone5);
-    }
+    } else if (slot5) { slot5.style.display = 'none'; slot5.previousElementSibling.style.display = 'none'; }
     document.body.classList.add('printing-calc');
     window.print();
   }
@@ -1468,7 +1468,7 @@
       }
     }
     var mountStr = '', dropStr = '';
-    if (scrHIn > 0) {
+    if (advMode && scrHIn > 0) {
       var eyeIn = eyeHeightIn();
       var ma = mountAdvice(drawO, eyeIn);
       mountStr = 'Center the screen at seated eye level (' + dispIn(eyeIn) + '): bottom ' +
@@ -2359,7 +2359,7 @@
     watermark3();
   }
 
-  function drawAll(o) { drawViz(o); drawSideViz(o); drawViewerViz(o); drawMountViz(o); drawDropViz(o); }
+  function drawAll(o) { drawViz(o); drawSideViz(o); drawViewerViz(o); if (advMode) { drawMountViz(o); drawDropViz(o); } }
 
   /* ---------- Mounting guidance: screen height + projector drop simulator ----------
      Screen: center it at seated eye level. Projector drop: with the screen placed,
@@ -2421,7 +2421,10 @@
     var text;
     if (!ok2 && pipeIn < dMinIn) text = 'Too short — with this screen position the lens needs at least ' + dispIn(dMinIn) + ' of drop (' + dispIn(dMinIn - pipeIn) + ' more than your pipe). Add an extension tube.';
     else if (!ok2) text = 'Too long — the most drop this shift range allows here is ' + dispIn(dMaxIn) + '. Shorten the pipe.';
-    else text = 'Your ' + dispIn(pipeIn) + ' pipe works — it uses ' + fmt(Math.abs(sNeed), 0) + '% of the \u00B1' + fmt(span, 0) + '% vertical shift range.';
+    else {
+      text = 'Your ' + dispIn(pipeIn) + ' pipe works \u2014 it needs ' + fmt(Math.abs(sNeed), 0) + '% shift (range \u00B1' + fmt(span, 0) + '%).';
+      if (Math.abs(sNeed) > 0.85 * span) text += ' That is near the shift limit \u2014 a longer pipe would give you more headroom.';
+    }
     return { vHas: true, noModel: false, dMinIn: dMinIn, dMaxIn: dMaxIn, zlIn: zlIn,
       zlLo: zlLo, zlHi: zlHi, sNeed: sNeed, span: span, ok: ok2, text: text };
   }
