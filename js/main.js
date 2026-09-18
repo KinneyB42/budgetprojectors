@@ -115,6 +115,7 @@
     lensSelect.addEventListener('change', function () {
       selectedLens = parseInt(lensSelect.value, 10) || 0;
       resetZoom();
+      if (zoomLocked) needLockCapture = true;
       refreshSelectedLine();
       recalc();
     });
@@ -125,7 +126,7 @@
   // zoom range the projector sits. 0 = wide (min throw), 100 = tele (max throw).
   var zoomWrap = document.getElementById('calc-zoom-wrap');
   var zoomInput = document.getElementById('calc-zoom');
-  var zoomVal = document.getElementById('calc-zoom-val');
+  var zoomNum = document.getElementById('calc-zoom-num');
 
   function zoomFrac() {
     if (!zoomInput) return 0;
@@ -137,17 +138,76 @@
     return imgWIn / 12 * (r[0] + zoomFrac() * (r[1] - r[0]));
   }
   function resetZoom() { if (zoomInput) zoomInput.value = 0; }
+  function setZoomPercent(pct) {
+    if (!zoomInput) return;
+    zoomInput.value = Math.max(0, Math.min(100, Math.round(pct)));
+  }
+  function dispThrow(dFt) { return unit === 'm' ? fmt(dFt * M_PER_FT, 2) : fmt(dFt, 1); }
+  function syncZoomNum(r, imgWIn) {
+    if (!zoomNum) return;
+    if (document.activeElement === zoomNum) return; // don't clobber typing
+    var near = imgWIn * r[0] / 12, far = imgWIn * r[1] / 12;
+    zoomNum.min = dispThrow(near);
+    zoomNum.max = dispThrow(far);
+    zoomNum.value = dispThrow(zoomThrowFt(r, imgWIn));
+  }
   function syncZoom(r, imgWIn) {
     if (!zoomWrap || !zoomInput) return;
     var show = !!r && r[1] > r[0] && !reverseMode && !golfMode && imgWIn > 0;
     zoomWrap.hidden = !show;
-    if (show) {
-      if (zoomVal) zoomVal.textContent = fmtDist(zoomThrowFt(r, imgWIn) * 12);
-    }
+    if (zoomLockRow) zoomLockRow.hidden = !show;
+    if (show) syncZoomNum(r, imgWIn);
   }
 
   if (zoomInput) {
-    zoomInput.addEventListener('input', recalc);
+    zoomInput.addEventListener('input', function () { lastMoved = 'zoom'; recalc(); });
+  }
+  if (zoomNum) {
+    // Manual throw distance: typing a number places the projector there directly.
+    zoomNum.addEventListener('input', function () {
+      var v = parseFloat(zoomNum.value, 10);
+      if (!(v > 0)) return;
+      var r = currentRatio();
+      var dg = sizeInput ? parseFloat(sizeInput.value, 10) : NaN;
+      if (!r || r[1] <= r[0] || !(dg > 0)) return;
+      var imgWIn = dg * widthFactor();
+      var near = imgWIn * r[0] / 12, far = imgWIn * r[1] / 12;
+      var c = Math.min(far, Math.max(near, toFt(v)));
+      setZoomPercent((c - near) / (far - near) * 100);
+      if (zoomLocked) { lockedD = c; lastMoved = null; } // explicit placement moves the locked point
+      else lastMoved = 'zoom';
+      recalc();
+    });
+  }
+
+  /* ---------- Image size / zoom lock ---------- */
+  // When locked, the projector's throw distance stays fixed: dragging the screen
+  // size slider drives the zoom slider to compensate, and vice versa.
+  var zoomLockRow = document.getElementById('calc-zoom-lockrow');
+  var zoomLockBtn = document.getElementById('calc-zoom-lock');
+  var zoomLocked = false;
+  var lockedD = 0;      // throw distance held fixed while locked, ft
+  var lastMoved = null; // 'size' | 'zoom' — which slider the user just dragged
+  var needLockCapture = false;
+
+  function widthFactor() {
+    var a = ASPECTS[stdAspect] || ASPECTS['16:9'];
+    var ad = Math.sqrt(a[0] * a[0] + a[1] * a[1]);
+    return a[0] / ad; // image-width inches per diagonal inch
+  }
+  function setZoomLocked(on) {
+    zoomLocked = on;
+    if (zoomLockBtn) {
+      zoomLockBtn.classList.toggle('chosen', on);
+      zoomLockBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    if (on) needLockCapture = true; // capture the current throw distance on next recalc
+  }
+  if (zoomLockBtn) {
+    zoomLockBtn.addEventListener('click', function () {
+      setZoomLocked(!zoomLocked);
+      recalc();
+    });
   }
 
   function clearModelChips() {
@@ -171,6 +231,7 @@
     selectedModel = entry;
     selectedLens = 0;
     resetZoom();
+    if (zoomLocked) needLockCapture = true; // re-lock at the new model's position
     if (modelInput) modelInput.value = entry.b + ' ' + entry.m;
     if (suggest) { suggest.hidden = true; suggest.innerHTML = ''; }
     if (manualBox) manualBox.hidden = true;
@@ -400,7 +461,8 @@
       ['calc-seat', golfMode ? 'Hitting distance from screen' : 'Seating distance', m ? 'e.g. 3' : 'e.g. 10'],
       ['calc-screen-w', 'Screen width', m ? 'e.g. 3' : 'e.g. 10'],
       ['calc-screen-h', 'Screen height', m ? 'e.g. 2.3' : 'e.g. 7.5'],
-      ['calc-throwdist', 'Throw distance', m ? 'e.g. 3.7' : 'e.g. 12']
+      ['calc-throwdist', 'Throw distance', m ? 'e.g. 3.7' : 'e.g. 12'],
+      ['calc-zoom', 'Lens zoom', null]
     ];
     map.forEach(function (row) {
       var lab = document.querySelector('label[for="' + row[0] + '"]');
@@ -522,6 +584,7 @@
     if (lumensInput && parseFloat(lumensInput.value, 10) > 0) enc('lm', Math.round(parseFloat(lumensInput.value, 10)));
     if (gainInput && parseFloat(gainInput.value, 10) > 0) enc('gn', parseFloat(gainInput.value, 10));
     if (zoomFrac() > 0) enc('z', Math.round(zoomFrac() * 100));
+    if (zoomLocked) enc('lk', '1');
     enc('li', lightsOn ? '1' : '0');
     enc('sun', sunOn ? '1' : '0');
     return window.location.href.split('#')[0] + '#calc=' + parts.join(';');
@@ -643,6 +706,7 @@
     if (!isNaN(num('lm')) && lumensInput) lumensInput.value = Math.round(num('lm'));
     if (!isNaN(num('gn')) && gainInput) gainInput.value = p.gn;
     if (!isNaN(num('z')) && zoomInput) zoomInput.value = Math.max(0, Math.min(100, Math.round(num('z'))));
+    if (p.lk === '1') setZoomLocked(true);
     if (p.li === '0' && lightsOn && lightsToggle) lightsToggle.click();
     if (p.li === '1' && !lightsOn && lightsToggle) lightsToggle.click();
     if (p.sun === '1' && !sunOn && sunToggle) sunToggle.click();
@@ -739,16 +803,27 @@
   var jpgBtn = document.getElementById('calc-export-jpg');
   if (jpgBtn) jpgBtn.addEventListener('click', function () { exportImage('jpg'); });
 
-  var sizeVal = document.getElementById('calc-size-val');
+  var sizeNum = document.getElementById('calc-size-num');
   function syncSizeVal() {
-    if (sizeInput && sizeVal) sizeVal.textContent = sizeInput.value + '″';
+    // Don't clobber the field while the user is typing in it.
+    if (sizeInput && sizeNum && document.activeElement !== sizeNum) sizeNum.value = sizeInput.value;
   }
   [lenInput, widInput, ceilInput, seatInput].forEach(function (el) {
     if (el) el.addEventListener('input', recalc);
   });
   if (sizeInput) {
-    sizeInput.addEventListener('input', function () { syncSizeVal(); recalc(); });
+    sizeInput.addEventListener('input', function () { lastMoved = 'size'; syncSizeVal(); recalc(); });
     syncSizeVal();
+  }
+  if (sizeNum) {
+    // Manual screen size: typing a number moves the slider there directly.
+    sizeNum.addEventListener('input', function () {
+      var v = parseFloat(sizeNum.value, 10);
+      if (!(v > 0) || !sizeInput) return;
+      sizeInput.value = Math.max(0, Math.min(300, Math.round(v)));
+      lastMoved = 'size';
+      recalc();
+    });
   }
   [lumensInput, gainInput].forEach(function (el) {
     if (el) el.addEventListener('input', recalc);
@@ -929,6 +1004,31 @@
     // No hidden preset: without user-entered dims the fit simply cannot be judged.
     var dimsKnown = outdoor || (L > 0 && W > 0);
 
+    // Zoom lock: hold the projector's throw distance fixed by driving the other slider.
+    if (zoomLocked && lockedD > 0 && !reverseMode && !golfMode && lastMoved && sizeInput) {
+      if (r && r[1] > r[0]) {
+        if (lastMoved === 'size') {
+          var dgL = parseFloat(sizeInput.value, 10);
+          if (dgL > 0) {
+            var wFtS = dgL * widthFactor() / 12;
+            var rNeed = lockedD / wFtS;
+            var rc = Math.min(r[1], Math.max(r[0], rNeed));
+            setZoomPercent((rc - r[0]) / (r[1] - r[0]) * 100);
+            if (rc !== rNeed) lockedD = wFtS * rc; // zoom ran out: projector moves, re-lock here
+          }
+        } else if (lastMoved === 'zoom') {
+          var rSel = r[0] + zoomFrac() * (r[1] - r[0]);
+          var diagNeed = (lockedD / rSel * 12) / widthFactor();
+          var dc = Math.min(300, Math.max(20, diagNeed));
+          sizeInput.value = Math.round(dc);
+          syncSizeVal();
+          if (dc !== diagNeed) lockedD = (dc * widthFactor() / 12) * rSel; // screen ran out: re-lock here
+        }
+      }
+      lastMoved = null;
+      diag = sizeInput ? parseFloat(sizeInput.value, 10) : NaN; // re-read: the lock may have moved it
+    }
+
     if (!r) {
       drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: null, seat: seat, room: roomType, golf: golfMode });
       planResult.innerHTML = '<strong>Pick your projector model</strong>' +
@@ -1010,6 +1110,7 @@
     var far = imgWIn * r[1] / 12; // ft
     // Projector position on the zoom slider; the slider only applies in standard screen-size mode.
     var throwD = (reverseMode || golfMode) ? near : near + zoomFrac() * (far - near); // ft
+    if (needLockCapture) { lockedD = throwD; needLockCapture = false; }
     var modelName = selectedModel ? selectedModel.b + ' ' + selectedModel.m + (selectedLensName() ? ' · ' + selectedLensName() : '') : 'throw ' + ratioLabel(r);
 
     // Golf-sim projector placement (also drives the 3D projector position).
