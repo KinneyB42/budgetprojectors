@@ -1115,6 +1115,8 @@
       c.classList.toggle('chosen', c.getAttribute('data-st') === screenType);
     });
     try { localStorage.setItem('calc-screentype', screenType); } catch (e) {}
+    var alrNote = document.getElementById('calc-alr-note');
+    if (alrNote) alrNote.style.display = screenType === 'alr' ? '' : 'none';
   }
   document.querySelectorAll('#calc-screentype .calc__chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
