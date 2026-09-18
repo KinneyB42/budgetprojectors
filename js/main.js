@@ -1629,12 +1629,14 @@
   var NAVY = '#0c2244', MUTED = '#5c5c5c';
 
   // Color-key legend entries for the tagged projectors (A = first, B/C = compare).
-  function compareLegendItems(o, cols) {
+  // mainOnly=true lists just the main projector (views that don't draw B/C bodies).
+  function compareLegendItems(o, cols, mainOnly) {
     var items = [];
-    var cmp = (o.extraProj || []).length > 0;
+    var cmp = !mainOnly && (o.extraProj || []).length > 0;
     var mainName = selectedModel ? (selectedModel.b + ' ' + selectedModel.m) : null;
     if (!mainName && !o.r) return items;
     items.push({ col: cols.a, label: (cmp ? 'A · ' : '') + (mainName || 'Manual throw ratio') });
+    if (mainOnly) return items;
     (o.extraProj || []).forEach(function (xp, xi) {
       items.push({ col: xi === 0 ? cols.b : cols.c, label: xp.tag + ' · ' + compareFullName(xi === 0 ? 'b' : 'c') });
     });
@@ -2158,7 +2160,7 @@
     var xMin = isRear ? pxx - 1.5 : 0;
     var xMax = Math.max(L || 10, pxx > 0 ? pxx : 0);
     var zTop = hKnown ? H : Math.max(z0 + sh + 1, pzz + 1.5, 6);
-    var padL = 66, padR = 26, padT = 28, padB = 64;
+    var padL = 66, padR = 26, padT = 28, padB = 88;
     var s = Math.min((VW - padL - padR) / (xMax - xMin), (VH - padT - padB) / zTop);
     var ox = padL, oy = VH - padB;
     function X(x) { return ox + (x - xMin) * s; }
@@ -2250,6 +2252,8 @@
     dim(X(0), oy + 20, X(pxx), oy + 20, dispDist(Math.abs(pxx)) + ' throw' + (isRear ? ' (behind screen)' : ''));
     dim(X(0), oy + 40, X(L), oy + 40, dispShort(L) + (o.outdoor ? '' : ' long'));
     if (hKnown) dimV(X(0) - 26, Z(H), oy, dispShort(H) + ' ceiling');
+    // legend at the bottom: color key for the projector
+    drawLegend(el2, compareLegendItems(o, { a: night ? '#3b5a94' : NAVY, b: '#2e7d5b', c: '#c07a1e' }, true), 16, VH - 14, 470, mut, false);
     var wmt = tx(VW - 12, VH - 10, 'BudgetProjectors.org', 13, 'end', mut);
     wmt.setAttribute('opacity', 0.55);
   }
@@ -2331,7 +2335,8 @@
 
     var sw = o.swFt, sh = o.shFt, seat = o.seat;
     function watermark3() {
-      var w = tx3(VW - 12, VH - 12, 'BudgetProjectors.org', 13, 'end', mut);
+      // top-right: the bottom-center caption stack occupies the bottom corners
+      var w = tx3(VW - 12, 24, 'BudgetProjectors.org', 13, 'end', mut);
       w.setAttribute('opacity', 0.55);
     }
     if (!(sw > 0 && sh > 0)) {
@@ -2553,6 +2558,8 @@
     capY -= 18;
     if (sunOn) tx3(VW / 2, capY, 'Simulated sunlight — actual brightness varies by room', 11, 'middle',
       night ? '#dbe2f0' : '#8a6a2a');
+    // legend at the top-left: color key for the projector
+    drawLegend(el3, compareLegendItems(o, { a: projBodyC, b: '#2e7d5b', c: '#c07a1e' }, true), 16, 26, 400, mut, false);
     watermark3();
   }
 
