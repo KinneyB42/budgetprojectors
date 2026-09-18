@@ -2586,10 +2586,11 @@
           fill: spkCone, opacity: 0.5 });
       });
     }
-    // center channel behind the screen (acoustic-transparent): drawn over the image
-    // with reduced opacity and a dashed outline so it reads as "behind"; follows the
-    // shifted image position. Only for wall/tower speaker layouts.
-    if (speakerMode === 'wall' || speakerMode === 'tower') {
+    // center channel: behind the screen (acoustic-transparent) for wall layouts,
+    // under the screen for tower layouts
+    if (speakerMode === 'wall') {
+      // drawn over the image with reduced opacity and a dashed outline so it
+      // reads as "behind"; follows the shifted image position
       var ccw = scrW * 0.28, cch = 22;
       var ccx = sx + scrW / 2 - ccw / 2, ccy = VH / 2 - cch / 2;
       el3('rect', { x: ccx.toFixed(1), y: ccy.toFixed(1), width: ccw.toFixed(1), height: cch,
@@ -2598,6 +2599,19 @@
         el3('circle', { cx: (ccx + ccw * f).toFixed(1), cy: (VH / 2).toFixed(1), r: 6, fill: spkCone, opacity: 0.5 });
       });
       tx3(sx + scrW / 2, ccy + cch + 15, 'center channel (behind screen)', 11, 'middle',
+        night ? '#dbe2f0' : NAVY);
+    } else if (speakerMode === 'tower') {
+      // center channel sits under the screen, clamped above the floor line
+      var tcw = scrW * 0.34, tch = 26;
+      var tcx = sx + scrW / 2 - tcw / 2;
+      var tcy = Math.min(sy + scrH + 10, floorY - tch - 4);
+      el3('rect', { x: tcx.toFixed(1), y: tcy.toFixed(1), width: tcw.toFixed(1), height: tch,
+        rx: 8, fill: spkFill, stroke: NAVY, 'stroke-width': 1.5 });
+      [0.25, 0.5, 0.75].forEach(function (f) {
+        el3('circle', { cx: (tcx + tcw * f).toFixed(1), cy: (tcy + tch / 2).toFixed(1), r: 7,
+          fill: spkCone, opacity: 0.5 });
+      });
+      tx3(sx + scrW / 2, tcy + tch + 15, 'center channel', 11, 'middle',
         night ? '#dbe2f0' : NAVY);
     }
     // ambient washout on the screen face: sunlight hits far harder than indoor lamps,
