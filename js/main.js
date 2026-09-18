@@ -1344,7 +1344,9 @@
       txt(pxx, pyy, pzz + 0.9, 'projector', 11);
       var rangeLabel = fmtDist(imgWIn * o.r[0]);
       if (o.r[1] !== o.r[0]) rangeLabel += '–' + fmtDist(imgWIn * o.r[1]);
-      txt((near + far) / 2, yc - 1.5, 0.05, rangeLabel, 11);
+      // throw range in the white margin outside the 3D render, not under the unit
+      var throwTag = el('text', { x: 16, y: 26, 'font-size': 13, 'font-weight': '600', fill: pal.label });
+      throwTag.textContent = 'Throw ' + rangeLabel;
       // light cone: lens to screen corners
       var lens = [pxx, pyy, pzz];
       var sc = [[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]];
