@@ -532,10 +532,20 @@
       }
     }
 
+    /* Drawings use a typical room until the user enters their own; warnings only use entered dimensions. */
+    var drl = rl > 0 ? rl : Math.max(17, projDist + 5, (hit > 0 ? hit : 0) + 5);
+    var drw = rw > 0 ? rw : 12;
+    var dch = ch > 0 ? ch : 10;
+    var roomAssumed = !(rl > 0) || !(rw > 0) || !(ch > 0);
+    if (roomAssumed) {
+      out.push('<p style="color:' + MUTED + '"><em>Room views show a typical ' + ft(drl) + ' x ' + ft(drw) +
+        ' room with a ' + ft(dch) + ' ceiling until you enter your dimensions.</em></p>');
+    }
+
     results.innerHTML = out.join('');
-    drawTop(r, sw, sh, rl, rw, hit, projDist, openerD);
+    drawTop(r, sw, sh, drl, drw, hit, projDist, openerD);
     drawFront(sw, sh, drawW, drawH, unusedSide, overflow, projDist);
-    if (svgSide) drawSide(sw, sh, rl, ch, hit, projDist, drawW, drawH, openerD, projH, drawGh, hasGh, fmtHt);
+    if (svgSide) drawSide(sw, sh, drl, dch, hit, projDist, drawW, drawH, openerD, projH, drawGh, hasGh, fmtHt);
   }
 
   /* ---------- SVG A: top-down ---------- */
@@ -788,9 +798,9 @@
       }
     }
 
-    // projector (height depends on placement)
+    // projector (height depends on placement; falls back to the drawn ceiling)
     if (projDist > 0 && projDist < rl + 2) {
-      var ph = projH;
+      var ph = (projH > 0) ? projH : ch - 0.8;
       var px = X(projDist), py = Y(ph);
       parts.push('<line x1="' + px.toFixed(1) + '" y1="' + py.toFixed(1) +
         '" x2="' + X(0).toFixed(1) + '" y2="' + Y(sh / 2).toFixed(1) +
