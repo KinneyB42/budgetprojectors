@@ -2533,8 +2533,11 @@
       el3('line', { x1: 58, y1: floorY, x2: VW - 58, y2: floorY,
         stroke: trimCol, 'stroke-width': 2, opacity: 0.8 });
     }
-    // ceiling band across the top of the room (no ceiling outdoors)
-    var ceilY = 56;
+    // ceiling band from real perspective (no ceiling outdoors): the ceiling meets
+    // the front wall at the viewing angle from eye height up to the ceiling height
+    var ceilHtFt = (!o.outdoor && o.H > 0) ? o.H : 9;
+    var ceilY = Math.round(VH / 2 - Math.atan((ceilHtFt - eyeHeightIn() / 12) / seatFtV) * 180 / Math.PI * (VH / vFovDeg));
+    ceilY = Math.max(8, Math.min(ceilY, 200));
     if (!o.outdoor) {
       var ceilTone = night ? '#1a2340' : '#e6dfcc';
       el3('polygon', { points: '0,0 ' + VW + ',0 ' + (VW - 58) + ',' + ceilY + ' 58,' + ceilY, fill: ceilTone });
@@ -2735,7 +2738,10 @@
     } else if (pposV === 'ceiling') {
       var pipeInV = pipeDropIn();
       var pipePx = Math.max(12, Math.min(44, 10 + pipeInV * 0.6));
-      var pcx = VW / 2, pTopV = 4, pBodyY = pTopV + pipePx;
+      // hang from the ceiling band so the mount tracks the real ceiling height;
+      // if the ceiling sits too low to clear the screen, keep the top indicator
+      var pcx = VW / 2, pTopV = ceilY, pBodyY = pTopV + pipePx;
+      if (pBodyY > sy - 64) { pTopV = 4; pBodyY = pTopV + pipePx; }
       el3('line', { x1: pcx, y1: pTopV, x2: pcx, y2: pBodyY, stroke: projTrimC, 'stroke-width': 5 });
       el3('rect', { x: (pcx - 32).toFixed(1), y: pBodyY.toFixed(1), width: 64, height: 24, rx: 5, fill: projBodyC });
       projLens3(pcx, pBodyY + 12, 6.5);
@@ -2744,12 +2750,22 @@
         11, 'middle', mut);
     } else if (pposV === 'table') {
       var ttx = VW / 2;
-      el3('rect', { x: (ttx - 24).toFixed(1), y: (floorY - 48).toFixed(1), width: 48, height: 14, rx: 3, fill: projBodyC });
-      projLens3(ttx, floorY - 41, 4.5);
-      el3('rect', { x: (ttx - 30).toFixed(1), y: (floorY - 34).toFixed(1), width: 60, height: 6, rx: 2, fill: projTrimC });
-      el3('line', { x1: ttx - 24, y1: floorY - 28, x2: ttx - 24, y2: floorY, stroke: projTrimC, 'stroke-width': 4 });
-      el3('line', { x1: ttx + 24, y1: floorY - 28, x2: ttx + 24, y2: floorY, stroke: projTrimC, 'stroke-width': 4 });
-      tx3(ttx, floorY + 18, 'projector on table', 11, 'middle', mut);
+      var projDistV = (o.throwD > 0) ? o.throwD : (o.px || 0);
+      if (projDistV > seat) {
+        // the table sits behind the viewer: small indicator, like the shelf
+        el3('line', { x1: ttx - 24, y1: 6, x2: ttx + 24, y2: 6, stroke: projTrimC, 'stroke-width': 5,
+          opacity: 0.45, 'stroke-dasharray': '5 4' });
+        el3('rect', { x: (ttx - 24).toFixed(1), y: 22, width: 48, height: 14, rx: 3, fill: projBodyC, opacity: 0.5 });
+        projLens3(ttx, 29, 4.5, 0.6);
+        tx3(ttx, 58, 'projector on a table behind you', 11, 'middle', mut);
+      } else {
+        el3('rect', { x: (ttx - 24).toFixed(1), y: (floorY - 48).toFixed(1), width: 48, height: 14, rx: 3, fill: projBodyC });
+        projLens3(ttx, floorY - 41, 4.5);
+        el3('rect', { x: (ttx - 30).toFixed(1), y: (floorY - 34).toFixed(1), width: 60, height: 6, rx: 2, fill: projTrimC });
+        el3('line', { x1: ttx - 24, y1: floorY - 28, x2: ttx - 24, y2: floorY, stroke: projTrimC, 'stroke-width': 4 });
+        el3('line', { x1: ttx + 24, y1: floorY - 28, x2: ttx + 24, y2: floorY, stroke: projTrimC, 'stroke-width': 4 });
+        tx3(ttx, floorY + 18, 'projector on table', 11, 'middle', mut);
+      }
     } else if (pposV === 'behind') {
       var bbx = VW / 2;
       el3('line', { x1: bbx, y1: 6, x2: bbx, y2: 22, stroke: projTrimC, 'stroke-width': 5,
