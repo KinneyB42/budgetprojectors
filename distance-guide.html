@@ -247,19 +247,29 @@
         </div>
       </div>
       <div class="calc__viz">
-        <figure class="calc__fig">
+        <div class="calc__viz-head">
+          <span class="calc__viz-title">Views</span>
+          <div class="calc__viz-toggles" id="calc-view-toggles">
+            <button type="button" class="calc__chip chosen" data-view="3d" aria-pressed="true">3D</button>
+            <button type="button" class="calc__chip chosen" data-view="side" aria-pressed="true">Side</button>
+            <button type="button" class="calc__chip chosen" data-view="viewer" aria-pressed="true">Viewer</button>
+            <button type="button" class="calc__chip chosen" data-view="ceiling" aria-pressed="true">Ceiling</button>
+            <button type="button" class="calc__chip chosen" id="calc-views-all" aria-pressed="true">All</button>
+          </div>
+        </div>
+        <figure class="calc__fig" data-viewfig="3d">
           <svg id="calc-svg" viewBox="0 0 660 440" role="img" aria-label="3D room visualization"></svg>
           <figcaption>3D view</figcaption>
         </figure>
-        <figure class="calc__fig">
+        <figure class="calc__fig" data-viewfig="side">
           <svg id="calc-svg-side" viewBox="0 0 660 380" role="img" aria-label="Side view of the room"></svg>
           <figcaption>Side view</figcaption>
         </figure>
-        <figure class="calc__fig">
+        <figure class="calc__fig" data-viewfig="viewer">
           <svg id="calc-svg-viewer" viewBox="0 0 660 360" role="img" aria-label="Viewer perspective from the seating position"></svg>
           <figcaption>Viewer view</figcaption>
         </figure>
-        <figure class="calc__fig">
+        <figure class="calc__fig" data-viewfig="ceiling">
           <svg id="calc-svg-ceiling" viewBox="0 0 660 360" role="img" aria-label="Ceiling view: projector mounting spots seen from below"></svg>
           <figcaption>Ceiling view</figcaption>
         </figure>
@@ -519,7 +529,7 @@
 </footer>
 
 <script src="js/throw-data.js?v=20260918m"></script>
-<script src="js/main.js?v=20260919g"></script>
+<script src="js/main.js?v=20260919h"></script>
 <script src="js/golf.js?v=20260918h"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>

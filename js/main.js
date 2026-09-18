@@ -698,6 +698,48 @@
     });
   }
 
+  /* ---------- View toggles: show/hide each render individually, or all at once ---------- */
+  var viewIds = ['3d', 'side', 'viewer', 'ceiling'];
+  var viewState = { '3d': true, side: true, viewer: true, ceiling: true };
+  try {
+    var vsSaved = JSON.parse(localStorage.getItem('calc-views') || 'null');
+    if (vsSaved) viewIds.forEach(function (id) { if (vsSaved[id] === false) viewState[id] = false; });
+  } catch (e) {}
+  function applyViewToggles() {
+    viewIds.forEach(function (id) {
+      var fig = document.querySelector('[data-viewfig="' + id + '"]');
+      if (fig) fig.style.display = viewState[id] ? '' : 'none';
+      var chip = document.querySelector('#calc-view-toggles [data-view="' + id + '"]');
+      if (chip) {
+        chip.classList.toggle('chosen', !!viewState[id]);
+        chip.setAttribute('aria-pressed', viewState[id] ? 'true' : 'false');
+      }
+    });
+    var allOn = viewIds.every(function (id) { return viewState[id]; });
+    var allChip = document.getElementById('calc-views-all');
+    if (allChip) {
+      allChip.classList.toggle('chosen', allOn);
+      allChip.setAttribute('aria-pressed', allOn ? 'true' : 'false');
+    }
+    try { localStorage.setItem('calc-views', JSON.stringify(viewState)); } catch (e2) {}
+  }
+  var viewToggleWrap = document.getElementById('calc-view-toggles');
+  if (viewToggleWrap) {
+    viewToggleWrap.addEventListener('click', function (ev) {
+      var btn = ev.target.closest ? ev.target.closest('button') : null;
+      if (!btn) return;
+      if (btn.id === 'calc-views-all') {
+        var turnOn = !viewIds.every(function (id) { return viewState[id]; });
+        viewIds.forEach(function (id) { viewState[id] = turnOn; });
+      } else if (btn.hasAttribute('data-view')) {
+        var vid = btn.getAttribute('data-view');
+        viewState[vid] = !viewState[vid];
+      }
+      applyViewToggles();
+    });
+  }
+  applyViewToggles();
+
   /* ---------- Shareable links: encode the whole setup in the URL hash ---------- */
   function buildShareLink() {
     var parts = [];
