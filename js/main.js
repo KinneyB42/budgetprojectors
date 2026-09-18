@@ -1025,6 +1025,9 @@
     var dimsKnown = outdoor || (L > 0 && W > 0);
 
     // Zoom lock: hold the projector's throw distance fixed by driving the other slider.
+    // The lock is absolute: the projector never moves while locked. If the requested
+    // size runs past the zoom range, the zoom pegs at its limit and the verdict says so.
+    var lockPegged = false;
     if (lockMode === 'projector' && lockedD > 0 && !reverseMode && !golfMode && lastMoved && sizeInput) {
       if (r && r[1] > r[0]) {
         if (lastMoved === 'size') {
@@ -1034,7 +1037,7 @@
             var rNeed = lockedD / wFtS;
             var rc = Math.min(r[1], Math.max(r[0], rNeed));
             setZoomPercent((rc - r[0]) / (r[1] - r[0]) * 100);
-            if (rc !== rNeed) lockedD = wFtS * rc; // zoom ran out: projector moves, re-lock here
+            if (rc !== rNeed) lockPegged = true;
           }
         } else if (lastMoved === 'zoom') {
           var rSel = r[0] + zoomFrac() * (r[1] - r[0]);
@@ -1042,7 +1045,7 @@
           var dc = Math.min(300, Math.max(20, diagNeed));
           sizeInput.value = Math.round(dc);
           syncSizeVal();
-          if (dc !== diagNeed) lockedD = (dc * widthFactor() / 12) * rSel; // screen ran out: re-lock here
+          if (dc !== diagNeed) lockPegged = true;
         }
       }
       lastMoved = null;
@@ -1131,6 +1134,9 @@
     // Projector position on the zoom slider; the slider only applies in standard screen-size mode.
     var throwD = (reverseMode || golfMode) ? near : near + zoomFrac() * (far - near); // ft
     if (needLockCapture) { lockedD = throwD; needLockCapture = false; }
+    // Absolute projector lock: the projector never moves while locked, even when the
+    // zoom pegs at its limit (the verdict below names what the lens can actually fill).
+    if (lockMode === 'projector' && lockedD > 0 && !reverseMode && !golfMode) throwD = lockedD;
     var modelName = selectedModel ? selectedModel.b + ' ' + selectedModel.m + (selectedLensName() ? ' · ' + selectedLensName() : '') : 'throw ' + ratioLabel(r);
 
     // Golf-sim projector placement (also drives the 3D projector position).
@@ -1180,10 +1186,12 @@
     if (!(effLumens > 0) && selectedModel && selectedModel.lm > 0) effLumens = selectedModel.lm;
 
     syncZoom(r, imgWIn);
+    var zoomPct = (zoomWrap && !zoomWrap.hidden) ? Math.round(zoomFrac() * 100) : -1;
     drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
       scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType, golf: golfMode,
       px: px, py: py, pz: pz, pmount: pmount, projPos: projPos, extraProj: extraProj,
-      throwD: throwD, lumens: effLumens > 0 ? effLumens : 0 });
+      throwD: throwD, zpct: zoomPct, projLocked: lockMode === 'projector',
+      lumens: effLumens > 0 ? effLumens : 0 });
 
     // Reference viewing distance from viewing angle: 36 deg (immersive) to 30 deg (SMPTE minimum).
     var dClose = (imgWIn / 2) / Math.tan(18 * Math.PI / 180) / 12; // ft
@@ -1240,6 +1248,13 @@
       }
     } else {
       bits.push('No walls to worry about outdoors, just keep the throw path clear.');
+    }
+    // Projector locked and the lens ran out of zoom: name what it can actually fill from here.
+    if (lockMode === 'projector' && lockPegged && r && r[1] > r[0] && lockedD > 0) {
+      var lockMinDg = (lockedD / r[1] * 12) / widthFactor();
+      var lockMaxDg = (lockedD / r[0] * 12) / widthFactor();
+      bits.push('Locked at ' + dispDist(lockedD) + ', the lens zoom runs out here: from this spot it can fill about ' +
+        fmt(lockMinDg, 0) + '&ndash;' + fmt(lockMaxDg, 0) + '&Prime;.');
     }
     if (!outdoor && H > 0 && scrHIn > 0 && scrHIn / 12 > H - 1) {
       bits.push('Vertical fit: that screen is ' + dispDist(scrHIn / 12) + ' tall and your ceiling is ' +
@@ -1538,8 +1553,19 @@
       // throw range in the white margin outside the 3D render, not under the unit
       var throwTag = el('text', { x: 16, y: 26, 'font-size': 13, 'font-weight': '600', fill: pal.label });
       var tThrow = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-      tThrow.textContent = 'Throw ' + rangeLabel;
+      // Projector locked: the throw is fixed, so name it and visualize the lens zoom
+      // position instead of the range; the projector itself never moves.
+      if (o.projLocked && o.throwD > 0) {
+        tThrow.textContent = '🔒 Throw ' + fmtDist(o.throwD * 12);
+      } else {
+        tThrow.textContent = 'Throw ' + rangeLabel;
+      }
       throwTag.appendChild(tThrow);
+      if (o.zpct >= 0) {
+        var tZoom = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tZoom.textContent = ' · Zoom ' + o.zpct + '%';
+        throwTag.appendChild(tZoom);
+      }
       // Only judge the fit when the user has entered a room length.
       if (!o.outdoor && o.L > 0) {
         // Judge the selected zoom position, not the far end of the zoom range.
