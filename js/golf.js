@@ -43,6 +43,9 @@
   var zoomVal = $('golf-zoom-val');
   var distSlider = $('golf-dist');
   var distVal = $('golf-dist-val');
+  /* If the page HTML is older than this script (stale cache), the sliders may
+     not exist: guard everything so the calculator still works. */
+  var hasSliders = !!(zoomWrap && zoomSlider && zoomVal && distSlider && distVal);
   var screenW = $('golf-screen-w');
   var screenH = $('golf-screen-h');
   var screenPresets = $('golf-screen-presets');
@@ -148,7 +151,7 @@
     modelInput.setAttribute('aria-expanded', 'false');
     syncLensPicker();
     zoomPct = 50;
-    zoomSlider.value = 50;
+    if (hasSliders) zoomSlider.value = 50;
     resetDistToFill(currentRatio());
     refreshLumensDisplay();
     refreshSelectedLine();
@@ -296,6 +299,7 @@
     return r[0] + (r[1] - r[0]) * zoomPct / 100;
   }
   function syncZoomUI(r) {
+    if (!hasSliders) return;
     var zoomable = !!(r && r[0] !== r[1]);
     zoomWrap.hidden = !zoomable;
     if (zoomable) zoomVal.textContent = fmt(ratioAtZoom(r), 2) + ':1';
@@ -304,17 +308,19 @@
     var sw = parseFloat(screenW.value, 10);
     if (r && sw > 0) {
       projDist = sw * ratioAtZoom(r);
-      distSlider.value = projDist;
+      if (hasSliders) distSlider.value = projDist;
     }
   }
-  zoomSlider.addEventListener('input', function () {
-    zoomPct = parseInt(zoomSlider.value, 10) || 0;
-    recalc();
-  });
-  distSlider.addEventListener('input', function () {
-    projDist = parseFloat(distSlider.value, 10) || 0;
-    recalc();
-  });
+  if (hasSliders) {
+    zoomSlider.addEventListener('input', function () {
+      zoomPct = parseInt(zoomSlider.value, 10) || 0;
+      recalc();
+    });
+    distSlider.addEventListener('input', function () {
+      projDist = parseFloat(distSlider.value, 10) || 0;
+      recalc();
+    });
+  }
 
   /* ---------- chip groups ---------- */
   function chipGroup(containerId, attr, cb) {
@@ -418,12 +424,16 @@
     /* Distance slider bounds: the room caps it (minus the opener for ceiling mounts). */
     var openerD = (roomType === 'garage' && opener) ? parseFloat(openerDist.value, 10) : 0;
     var tdFar = sw * r[1];
-    var maxD = rl > 0 ? rl : Math.ceil(tdFar * 1.25);
-    distSlider.max = maxD;
-    if (!(projDist > 0)) projDist = Math.min(sw * ratio, maxD);
-    if (projDist > maxD) projDist = maxD;
-    distSlider.value = projDist;
-    distVal.textContent = ft(projDist);
+    if (hasSliders) {
+      var maxD = rl > 0 ? rl : Math.ceil(tdFar * 1.25);
+      distSlider.max = maxD;
+      if (!(projDist > 0)) projDist = Math.min(sw * ratio, maxD);
+      if (projDist > maxD) projDist = maxD;
+      distSlider.value = projDist;
+      distVal.textContent = ft(projDist);
+    } else if (!(projDist > 0)) {
+      projDist = sw * ratio; // no sliders on this page version: auto-fill
+    }
 
     /* Image size from the two sliders. */
     var imageW = projDist / ratio;
