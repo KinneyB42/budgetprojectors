@@ -1545,7 +1545,8 @@
         sp.pos = xust ? 'behind' : projPos;
         sp.pz = sp.pos === 'table' ? 2.475 : null;
         sp.lm = (entry && entry.lm) || 0; // published lumens for the on-render data line
-        sp.fit = (!xust && !outdoor && L > 0) ? (nX <= L) : null; // wide-end throw fits the room
+        sp.fit = (!outdoor && L > 0) ? (nX <= L) : null; // wide-end throw fits the room
+        if (t[1] !== t[0]) sp.zpct = 0; // compare models sit at the wide end of their zoom
         extraProj.push(sp);
       });
     }
@@ -2108,8 +2109,10 @@
           ? (((o.throwD > 0) ? o.throwD : far) <= o.L) : null;
         dataLine(26, 'A', pal.proj[0], aThrow, o.lumens, aFit);
         (o.extraProj || []).forEach(function (xp, xi) {
+          var xpThrow = 'Throw ' + xp.dist;
+          if (xp.zpct >= 0) xpThrow += ' · Zoom ' + xp.zpct + '%';
           dataLine(44 + xi * 18, xp.tag, xi === 0 ? '#2e7d5b' : '#c07a1e',
-            'Throw ' + xp.dist, xp.lm || 0, xp.fit);
+            xpThrow, xp.lm || 0, xp.fit);
         });
         if (o.seat > 0) {
           var sTagC = el('text', { x: 16, y: 44 + cmpCount * 18, 'font-size': 13, 'font-weight': '600', fill: pal.label });
@@ -3086,7 +3089,7 @@
     var scrTopY = Y(scrTopIn);
     el4('rect', { x: sx.toFixed(1), y: scrTopY.toFixed(1),
       width: scrWpx.toFixed(1), height: scrHpx.toFixed(1), fill: scrFill, stroke: ink, 'stroke-width': 2 });
-    if (o.scrLabel) tx(330, scrTopY - 10, o.scrLabel, 12, 'middle', ink);
+    if (o.scrLabel) tx(330, scrTopY - 10, o.scrLabel.replace(/&Prime;/g, '″'), 12, 'middle', ink);
     // floor + ceiling
     el4('line', { x1: wallL - 24, y1: fy, x2: wallR + 24, y2: fy, stroke: ink, 'stroke-width': 3 });
     tx(wallR + 30, fy + 4, 'Floor', 12, 'start', mut);
