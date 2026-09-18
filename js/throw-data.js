@@ -1,5 +1,5 @@
 /* Generated from throw-ratios.json — do not edit by hand. */
-/* Models with a published throw ratio (official or ProjectorCentral fallback). */
+/* Models with a published throw ratio. */
 /* Pinned first: JMGO IRIS ULTRA, JMGO IRIS ULTRA MAX. */
 window.THROW_DATA = [
   {b: "JMGO", m: "IRIS ULTRA", t: [0.88, 1.7]},
@@ -5094,4 +5094,6 @@ window.THROW_DATA = [
   {b: "ZTE", m: "Spro", t: [1.66, 1.66]},
   {b: "Zenith", m: "LXG-120", t: [2.07, 2.69]},
   {b: "Zenith", m: "LXG-200", t: [1.95, 2.54]},
+  {b: "Sony", m: "VPL-VW385ES", t: [1.36, 2.79]},
+  {b: "Sony", m: "VPL-HW65ES", t: [1.36, 2.16]},
 ];
