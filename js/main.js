@@ -125,6 +125,17 @@
     });
   }
 
+  function clearModel() {
+    selectedModel = null;
+    selectedLens = 0;
+    syncLensPicker();
+    if (modelInput) modelInput.value = '';
+    if (selectedLine) selectedLine.hidden = true;
+    clearModelChips();
+    if (suggest) suggest.hidden = true;
+    recalc();
+  }
+
   function chooseModel(entry, chip) {
     selectedModel = entry;
     selectedLens = 0;
@@ -185,6 +196,10 @@
 
   document.querySelectorAll('.calc__chip[data-model]').forEach(function (chip) {
     chip.addEventListener('click', function () {
+      if (chip.classList.contains('chosen')) {
+        clearModel();
+        return;
+      }
       var want = chip.getAttribute('data-model');
       var found = null;
       THROW.forEach(function (x) {
@@ -196,15 +211,8 @@
 
   if (manualToggle) {
     manualToggle.addEventListener('click', function () {
-      selectedModel = null;
-      selectedLens = 0;
-      syncLensPicker();
-      if (modelInput) modelInput.value = '';
-      if (selectedLine) selectedLine.hidden = true;
-      clearModelChips();
-      if (suggest) suggest.hidden = true;
+      clearModel();
       manualBox.hidden = !manualBox.hidden;
-      recalc();
     });
   }
   [ratioMinInput, ratioMaxInput].forEach(function (el) {
