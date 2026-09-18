@@ -258,6 +258,20 @@
           <svg id="calc-svg-viewer" viewBox="0 0 660 360" role="img" aria-label="Viewer perspective from the seating position"></svg>
           <figcaption>Viewer view</figcaption>
         </figure>
+        <figure class="calc__fig">
+          <svg id="calc-svg-mount" viewBox="0 0 660 380" role="img" aria-label="Screen mounting height guide"></svg>
+          <svg id="calc-svg-drop" viewBox="0 0 660 300" role="img" aria-label="Ceiling mount drop simulator"></svg>
+          <figcaption>Mounting view
+            <label class="calc__eye">seated eye height
+              <input id="calc-eye-height" type="number" min="20" max="80" step="1" value="42" inputmode="numeric">
+              <span id="calc-eye-unit">in</span>
+            </label>
+            <label class="calc__eye" title="Most ceiling mounts use 1.5 in NPT pipe — this is the length you need">mount pipe
+              <input id="calc-pipe-drop" type="number" min="2" max="48" step="1" value="6" inputmode="numeric">
+              <span id="calc-pipe-unit">in</span>
+            </label>
+          </figcaption>
+        </figure>
       </div>
       <div class="calc__export-row">
         <span class="calc__export-label">Export</span>
@@ -500,7 +514,7 @@
 </footer>
 
 <script src="js/throw-data.js?v=20260918m"></script>
-<script src="js/main.js?v=20260918l"></script>
+<script src="js/main.js?v=20260918n"></script>
 <script src="js/golf.js?v=20260918h"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>

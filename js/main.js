@@ -433,8 +433,7 @@
       }
     });
     DIM_INPUTS.forEach(function (d) {
-      var inp = document.getElementById(d[0]);
-      if (!inp) return;
+      var inp = document.getElementById(d[0]);      if (!inp) return;
       if (m) {
         inp.min = fmt(d[1] * M_PER_FT, 1);
         inp.max = fmt(d[2] * M_PER_FT, 0);
@@ -443,6 +442,14 @@
         inp.min = d[1]; inp.max = d[2]; inp.step = d[3];
       }
     });
+    var eu = document.getElementById('calc-eye-unit');
+    if (eu) eu.textContent = m ? 'cm' : 'in';
+    var pu = document.getElementById('calc-pipe-unit');
+    if (pu) pu.textContent = m ? 'cm' : 'in';
+    var ei = document.getElementById('calc-eye-height');
+    if (ei) { ei.min = m ? 51 : 20; ei.max = m ? 203 : 80; }
+    var pi = document.getElementById('calc-pipe-drop');
+    if (pi) { pi.min = m ? 5 : 2; pi.max = m ? 122 : 48; }
   }
   function setUnit(u, convert) {
     if (u !== 'ft' && u !== 'm') return;
@@ -453,6 +460,12 @@
         var v = parseFloat(el.value, 10);
         if (!(v >= 0)) return;
         el.value = toM ? fmt(v * M_PER_FT, 2) : fmt(v / M_PER_FT, 2);
+      });
+      [eyeInput, pipeInput].forEach(function (el) {
+        if (!el || el.value === '') return;
+        var v = parseFloat(el.value, 10);
+        if (!(v >= 0)) return;
+        el.value = toM ? fmt(v * 2.54, 0) : fmt(v / 2.54, 0);
       });
     }
     unit = u;
@@ -894,11 +907,15 @@
     }
     var svg2 = document.getElementById('calc-svg-side');
     var svg3 = document.getElementById('calc-svg-viewer');
+    var svg4 = document.getElementById('calc-svg-mount');
+    var svg5 = document.getElementById('calc-svg-drop');
     rasterize(svg, 1320, 880, function (img1, url1) {
       function step2(img2, url2) {
-        function compose(img3, url3) {
+        function step3(img3, url3) {
+          function step4(img4, url4) {
+        function compose(img5, url5) {
         try {
-          var CW = 1600, CH = 1560, PW = 540;
+          var CW = 1600, CH = 2560, PW = 540;
           var cv = document.createElement('canvas');
           cv.width = CW; cv.height = CH;
           var cx = cv.getContext('2d');
@@ -919,6 +936,8 @@
           place(img1, 660, 440, 30);
           place(img2, 660, 380, 530);
           place(img3, 660, 360, 1030);
+          place(img4, 660, 380, 1530);
+          place(img5, 660, 300, 2030);
           // measurements text
           var S = planSummary;
           function row(label, value, y) {
@@ -945,6 +964,8 @@
           if (S.room) { row('Room', S.room, y); y += 74; }
           if (S.seat) { row('Seating', S.seat, y); y += 74; }
           if (S.bright) { row('Brightness', S.bright, y); y += 74; }
+          if (S.mount) { row('Mounting', S.mount, y); y += 74; }
+          if (S.drop) { row('Mount drop', S.drop, y); y += 74; }
           if (S.verdict) {
             cx.fillStyle = '#ffd94d';
             cx.font = '600 20px Arial,sans-serif';
@@ -956,13 +977,21 @@
           cv.toBlob(function (blob) {
             if (blob) downloadBlob(blob, 'budgetprojectors-room-plan.' + kind);
             URL.revokeObjectURL(url1); URL.revokeObjectURL(url2); URL.revokeObjectURL(url3);
+            URL.revokeObjectURL(url4); URL.revokeObjectURL(url5);
           }, mime, 0.92);
         } catch (e) {
           URL.revokeObjectURL(url1); URL.revokeObjectURL(url2); URL.revokeObjectURL(url3);
+          URL.revokeObjectURL(url4); URL.revokeObjectURL(url5);
         }
-      }
-        if (svg3) rasterize(svg3, 1320, 720, compose);
+        }
+        if (svg5) rasterize(svg5, 1320, 600, compose);
         else compose(null, null);
+        }
+        if (svg4) rasterize(svg4, 1320, 760, step4);
+        else step4(null, null);
+      }
+      if (svg3) rasterize(svg3, 1320, 720, step3);
+      else step3(null, null);
       }
       if (svg2) rasterize(svg2, 1320, 760, step2);
       else step2(null, null);
@@ -986,6 +1015,8 @@
     ];
     if (S.seat) rows.push(['Seating', S.seat]);
     if (S.bright) rows.push(['Brightness', S.bright]);
+    if (S.mount) rows.push(['Screen mounting', S.mount]);
+    if (S.drop) rows.push(['Mount drop', S.drop]);
     var rowsHtml = rows.map(function (r) {
       return '<tr><th>' + r[0] + '</th><td>' + escHtml(r[1]) + '</td></tr>';
     }).join('');
@@ -1002,6 +1033,8 @@
       '<h2>3D view</h2><div class="cp-view" id="cp-view"></div>' +
       '<h2>Side view</h2><div class="cp-view" id="cp-view-side"></div>' +
       '<h2>Viewer view</h2><div class="cp-view" id="cp-view-viewer"></div>' +
+      '<h2>Mounting view</h2><div class="cp-view" id="cp-view-mount"></div>' +
+      '<h2>Mount drop simulator</h2><div class="cp-view" id="cp-view-drop"></div>' +
       '<div class="cp-foot"><strong>BudgetProjectors.org</strong> &middot; Generated ' + date + '<br>' + tagline + '</div>';
     var slot = document.getElementById('cp-view');
     var clone = svg.cloneNode(true);
@@ -1020,6 +1053,20 @@
       var clone3 = svg3.cloneNode(true);
       clone3.removeAttribute('id');
       slot3.appendChild(clone3);
+    }
+    var slot4 = document.getElementById('cp-view-mount');
+    var svg4 = document.getElementById('calc-svg-mount');
+    if (slot4 && svg4) {
+      var clone4 = svg4.cloneNode(true);
+      clone4.removeAttribute('id');
+      slot4.appendChild(clone4);
+    }
+    var slot5 = document.getElementById('cp-view-drop');
+    var svg5 = document.getElementById('calc-svg-drop');
+    if (slot5 && svg5) {
+      var clone5 = svg5.cloneNode(true);
+      clone5.removeAttribute('id');
+      slot5.appendChild(clone5);
     }
     document.body.classList.add('printing-calc');
     window.print();
@@ -1377,7 +1424,8 @@
       scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType,
       px: px, py: py, pz: pz, pmount: pmount, projPos: projPos, extraProj: extraProj,
       throwD: throwD, zpct: zoomPct, projLocked: lockMode === 'projector',
-      lumens: effLumens > 0 ? effLumens : 0, screenType: screenType };
+      lumens: effLumens > 0 ? effLumens : 0, screenType: screenType,
+      sv: (selectedModel && selectedModel.sv) || null };
     drawO.obst = roomObstacles(drawO);
     drawAll(drawO);
 
@@ -1417,6 +1465,21 @@
           fl < 60 ? 'holds up with some ambient light' : 'bright enough for lights-on viewing';
         bits.push('Brightness: about ' + fmt(fl, 0) + ' foot-lamberts on this screen, ' + flNote +
           (screenType === 'alr' ? ' The ALR surface holds contrast with the lights on.' : '.'));
+      }
+    }
+    var mountStr = '', dropStr = '';
+    if (scrHIn > 0) {
+      var eyeIn = eyeHeightIn();
+      var ma = mountAdvice(drawO, eyeIn);
+      mountStr = 'Center the screen at seated eye level (' + dispIn(eyeIn) + '): bottom ' +
+        dispIn(ma.botGapIn) + ' off the floor, top ' + dispIn(ma.topGapIn) + ' below the ' +
+        dispShort(ma.ceilFt) + ' ceiling' + (ma.ceilKnown ? '' : ' (assumed)') + '.' +
+        (ma.warn ? ' ' + ma.warn + '.' : '');
+      bits.push('Screen mounting: ' + mountStr);
+      if (selectedModel) {
+        var da = dropAdvice(drawO, ma, pipeDropIn());
+        dropStr = 'Ceiling-mount drop: ' + da.text;
+        bits.push(dropStr);
       }
     }
     var fitsRoom;
@@ -1495,6 +1558,7 @@
         ' (enter your room size)')),
       seat: seat > 0 ? dispDist(seat) + ' seating' : '',
       bright: fl > 0 ? 'about ' + fmt(fl, 0) + ' fL, ' + flNote : '',
+      mount: mountStr, drop: dropStr,
       verdict: outdoor ? 'Outdoor setup: keep the throw path clear' :
         (!dimsKnown ? 'Enter your room size to check fit' :
         (fitsRoom ? 'Fits your ' + ROOMS[roomType].label.toLowerCase() : 'Too big for this room'))
@@ -2295,7 +2359,216 @@
     watermark3();
   }
 
-  function drawAll(o) { drawViz(o); drawSideViz(o); drawViewerViz(o); }
+  function drawAll(o) { drawViz(o); drawSideViz(o); drawViewerViz(o); drawMountViz(o); drawDropViz(o); }
+
+  /* ---------- Mounting guidance: screen height + projector drop simulator ----------
+     Screen: center it at seated eye level. Projector drop: with the screen placed,
+     the lens must sit at screenCenter - shift*imageH; the pipe must put it there. */
+  var eyeInput = document.getElementById('calc-eye-height');
+  var pipeInput = document.getElementById('calc-pipe-drop');
+  function eyeHeightIn() {
+    var v = eyeInput ? parseFloat(eyeInput.value, 10) : NaN;
+    if (!(v > 0)) v = unit === 'm' ? 107 : 42;
+    return unit === 'm' ? v / 2.54 : v;
+  }
+  function pipeDropIn() {
+    var v = pipeInput ? parseFloat(pipeInput.value, 10) : NaN;
+    if (!(v > 0)) v = unit === 'm' ? 15 : 6;
+    return unit === 'm' ? v / 2.54 : v;
+  }
+  function dispIn(inches) { return unit === 'm' ? fmt(inches * 2.54, 0) + ' cm' : fmt(inches, 0) + ' in'; }
+  if (eyeInput) eyeInput.addEventListener('input', function () { recalc(); });
+  if (pipeInput) pipeInput.addEventListener('input', function () { recalc(); });
+  function mountAdvice(o, eyeIn) {
+    var scrHIn = o.shFt * 12;
+    var ceilKnown = !o.outdoor && o.H >= 0 && o.H > 0;
+    var ceilFt = ceilKnown ? o.H : 9;
+    var eyeClamped = Math.min(Math.max(eyeIn, 20), ceilFt * 12 - 12);
+    var botGapIn = eyeClamped - scrHIn / 2;
+    var placeable = botGapIn >= 0;
+    var centerIn = placeable ? eyeClamped : scrHIn / 2; // too tall: bottom sits on the floor
+    var topGapIn = ceilFt * 12 - (centerIn + scrHIn / 2);
+    var warn = '';
+    if (!placeable) warn = 'too tall for eye-level mounting: the bottom edge would sit ' + dispIn(-botGapIn) + ' below the floor — use a smaller screen';
+    else if (botGapIn < 12) warn = 'bottom edge only ' + dispIn(botGapIn) + ' off the floor — tight for furniture';
+    else if (topGapIn < 6) warn = 'top edge nearly touches the ceiling';
+    return { scrHIn: scrHIn, ceilFt: ceilFt, ceilKnown: ceilKnown, eyeIn: eyeClamped,
+      botGapIn: placeable ? botGapIn : 0, topGapIn: topGapIn, centerIn: centerIn,
+      placeable: placeable, warn: warn };
+  }
+  function dropAdvice(o, ma, pipeIn) {
+    var sv = (o.sv && o.sv.length === 2) ? o.sv : [0, 0];
+    var vHas = (sv[0] !== 0 || sv[1] !== 0);
+    var imgHIn = ma.scrHIn, zcIn = ma.centerIn, ceilIn = ma.ceilFt * 12;
+    var noModel = !o.r;
+    if (noModel) return { vHas: false, noModel: true, text: 'Pick a projector model to simulate the mount drop.' };
+    if (!vHas) {
+      var needIn = ceilIn - zcIn;
+      var ok = Math.abs(pipeIn - needIn) <= 1;
+      return { vHas: false, noModel: false, needIn: needIn, ok: ok,
+        text: ok ? 'Your ' + dispIn(pipeIn) + ' pipe works — no lens shift, so the lens must sit level with the screen center.' :
+          'No lens shift on this model: the lens must sit level with the screen center, so you need about ' + dispIn(needIn) + ' of drop — ' +
+          (pipeIn < needIn ? 'add an extension tube.' : 'shorten the pipe.') +
+          ' Check the manufacture sheet for this model\u2019s fixed image offset.' };
+    }
+    var sMin = sv[0] / 100, sMax = sv[1] / 100;
+    var zlHi = zcIn - sMin * imgHIn, zlLo = zcIn - sMax * imgHIn;
+    var dMinIn = ceilIn - zlHi, dMaxIn = ceilIn - zlLo;
+    var zlIn = ceilIn - pipeIn;
+    var sNeed = (zcIn - zlIn) / imgHIn * 100;
+    var span = Math.max(Math.abs(sv[0]), Math.abs(sv[1]));
+    var ok2 = pipeIn >= dMinIn - 0.5 && pipeIn <= dMaxIn + 0.5;
+    var text;
+    if (!ok2 && pipeIn < dMinIn) text = 'Too short — with this screen position the lens needs at least ' + dispIn(dMinIn) + ' of drop (' + dispIn(dMinIn - pipeIn) + ' more than your pipe). Add an extension tube.';
+    else if (!ok2) text = 'Too long — the most drop this shift range allows here is ' + dispIn(dMaxIn) + '. Shorten the pipe.';
+    else text = 'Your ' + dispIn(pipeIn) + ' pipe works — it uses ' + fmt(Math.abs(sNeed), 0) + '% of the \u00B1' + fmt(span, 0) + '% vertical shift range.';
+    return { vHas: true, noModel: false, dMinIn: dMinIn, dMaxIn: dMaxIn, zlIn: zlIn,
+      zlLo: zlLo, zlHi: zlHi, sNeed: sNeed, span: span, ok: ok2, text: text };
+  }
+
+  function drawMountViz(o) {
+    var svg4 = document.getElementById('calc-svg-mount');
+    if (!svg4) return;
+    while (svg4.firstChild) svg4.removeChild(svg4.firstChild);
+    var VW = 660, VH = 380;
+    var night = !sunOn && !lightsOn;
+    var ink = night ? '#dbe2f0' : NAVY;
+    var mut = night ? '#8a94a8' : MUTED;
+    var scrFill = night ? '#bcd0ff' : (o.screenType === 'alr' ? '#878e99' : '#dbe7ff');
+    var NS4 = 'http://www.w3.org/2000/svg';
+    function el4(name, attrs) {
+      var e = document.createElementNS(NS4, name);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      svg4.appendChild(e); return e;
+    }
+    function tx(x, y, str, size, anchor, fill) {
+      var t = el4('text', { x: x.toFixed(1), y: y.toFixed(1), 'text-anchor': anchor || 'middle',
+        'font-size': size || 12, fill: fill || mut });
+      t.textContent = str; return t;
+    }
+    function dimV(x, y1, y2, str) {
+      el4('line', { x1: x.toFixed(1), y1: y1.toFixed(1), x2: x.toFixed(1), y2: y2.toFixed(1), stroke: mut, 'stroke-width': 1 });
+      el4('line', { x1: (x - 5).toFixed(1), y1: y1.toFixed(1), x2: (x + 5).toFixed(1), y2: y1.toFixed(1), stroke: mut, 'stroke-width': 1 });
+      el4('line', { x1: (x - 5).toFixed(1), y1: y2.toFixed(1), x2: (x + 5).toFixed(1), y2: y2.toFixed(1), stroke: mut, 'stroke-width': 1 });
+      var mx = x - 9, my = (y1 + y2) / 2;
+      var t = tx(mx, my, str, 12, 'middle', mut);
+      t.setAttribute('transform', 'rotate(-90 ' + mx.toFixed(1) + ' ' + my.toFixed(1) + ')');
+    }
+    if (night) el4('rect', { x: 0, y: 0, width: VW, height: VH, fill: '#0e1320' });
+    tx(VW - 12, VH - 10, 'BudgetProjectors.org', 13, 'end', mut).setAttribute('opacity', 0.55);
+    var hasScreen = o.swFt > 0 && o.shFt > 0;
+    if (!hasScreen) {
+      tx(VW / 2, VH / 2 - 8, 'Pick a screen size above to see mounting guidance.', 15, 'middle', mut);
+      return;
+    }
+    var eyeIn = eyeHeightIn();
+    var ma = mountAdvice(o, eyeIn);
+    var ceilIn = ma.ceilFt * 12, scrHIn = ma.scrHIn, scrWIn = o.swFt * 12;
+    var cy = 64, fy = 318;
+    var s = (fy - cy) / ceilIn;
+    function Y(v) { return fy - v * s; }
+    var wallL = 150, wallR = 510;
+    el4('rect', { x: wallL, y: cy, width: wallR - wallL, height: fy - cy,
+      fill: night ? '#141b2e' : '#f2f5fa', stroke: ink, 'stroke-width': 1.5 });
+    // screen, true scale, centered on the wall
+    var scrWpx = Math.min(scrWIn * s, wallR - wallL - 48);
+    var scrHpx = Math.min(scrHIn, ceilIn - ma.botGapIn) * s;
+    var sx = 330 - scrWpx / 2;
+    var scrTopIn = ma.botGapIn + Math.min(scrHIn, ceilIn - ma.botGapIn);
+    var scrTopY = Y(scrTopIn);
+    el4('rect', { x: sx.toFixed(1), y: scrTopY.toFixed(1),
+      width: scrWpx.toFixed(1), height: scrHpx.toFixed(1), fill: scrFill, stroke: ink, 'stroke-width': 2 });
+    if (o.scrLabel) tx(330, scrTopY + scrHpx / 2 + 4, o.scrLabel, 12, 'middle', ink);
+    // floor + ceiling
+    el4('line', { x1: wallL - 24, y1: fy, x2: wallR + 24, y2: fy, stroke: ink, 'stroke-width': 3 });
+    tx(wallL - 30, fy + 4, 'Floor', 12, 'end', mut);
+    el4('line', { x1: wallL - 24, y1: cy, x2: wallR + 24, y2: cy, stroke: ink, 'stroke-width': 1.5 });
+    tx(wallR + 30, cy + 4, 'Ceiling ' + dispShort(ma.ceilFt) + (ma.ceilKnown ? '' : ' (assumed)'), 12, 'start', mut);
+    // seated eye-level line through the screen center
+    if (ma.placeable) {
+      var ey = Y(ma.eyeIn);
+      el4('line', { x1: wallL, y1: ey, x2: wallR, y2: ey, stroke: night ? '#7fd6a4' : '#2e7d5b',
+        'stroke-width': 1.5, 'stroke-dasharray': '7 5' });
+      tx(wallR + 30, ey + 4, 'seated eye level ' + dispIn(ma.eyeIn), 12, 'start', night ? '#7fd6a4' : '#2e7d5b');
+    }
+    // dimensions: floor -> screen bottom, screen top -> ceiling
+    var topIn = Math.min(ma.botGapIn + scrHIn, ceilIn);
+    dimV(112, Y(ma.botGapIn), fy, dispIn(ma.botGapIn) + ' off floor');
+    if (ceilIn - topIn > 0.5) dimV(548, cy, Y(topIn), dispIn(ceilIn - topIn) + ' to ceiling');
+    tx(330, 30, 'Mount the screen with its center at seated eye level (' + dispIn(ma.eyeIn) + ')', 14, 'middle', ink);
+    if (ma.warn) tx(330, 50, ma.warn, 12, 'middle', night ? '#ff9d8a' : '#c0392b');
+  }
+
+  function drawDropViz(o) {
+    var svg5 = document.getElementById('calc-svg-drop');
+    if (!svg5) return;
+    while (svg5.firstChild) svg5.removeChild(svg5.firstChild);
+    var VW = 660, VH = 300;
+    var night = !sunOn && !lightsOn;
+    var ink = night ? '#dbe2f0' : NAVY;
+    var mut = night ? '#8a94a8' : MUTED;
+    var scrFill = night ? '#bcd0ff' : (o.screenType === 'alr' ? '#878e99' : '#dbe7ff');
+    var NS5 = 'http://www.w3.org/2000/svg';
+    function el5(name, attrs) {
+      var e = document.createElementNS(NS5, name);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      svg5.appendChild(e); return e;
+    }
+    function tx(x, y, str, size, anchor, fill) {
+      var t = el5('text', { x: x.toFixed(1), y: y.toFixed(1), 'text-anchor': anchor || 'middle',
+        'font-size': size || 12, fill: fill || mut });
+      t.textContent = str; return t;
+    }
+    if (night) el5('rect', { x: 0, y: 0, width: VW, height: VH, fill: '#0e1320' });
+    tx(VW - 12, VH - 10, 'BudgetProjectors.org', 13, 'end', mut).setAttribute('opacity', 0.55);
+    var hasScreen = o.swFt > 0 && o.shFt > 0;
+    if (!hasScreen) {
+      tx(VW / 2, VH / 2 - 8, 'Pick a screen size above to simulate the mount drop.', 15, 'middle', mut);
+      return;
+    }
+    var eyeIn = eyeHeightIn(), pipeIn = pipeDropIn();
+    var ma = mountAdvice(o, eyeIn);
+    var da = dropAdvice(o, ma, pipeIn);
+    var ceilIn = ma.ceilFt * 12, scrHIn = ma.scrHIn;
+    var cy = 44, fy = 248;
+    var s = (fy - cy) / ceilIn;
+    function Y(v) { return fy - v * s; }
+    var scrX = 120, lensX = 430;
+    // ceiling + floor
+    el5('line', { x1: 60, y1: cy, x2: 600, y2: cy, stroke: ink, 'stroke-width': 1.5 });
+    tx(606, cy + 4, 'Ceiling ' + dispShort(ma.ceilFt) + (ma.ceilKnown ? '' : ' (assumed)'), 11, 'start', mut);
+    el5('line', { x1: 60, y1: fy, x2: 600, y2: fy, stroke: ink, 'stroke-width': 3 });
+    tx(54, fy + 4, 'Floor', 11, 'end', mut);
+    // screen on the left wall at the mounting height
+    var botIn = ma.botGapIn, topIn = Math.min(botIn + scrHIn, ceilIn);
+    el5('rect', { x: scrX - 6, y: Y(topIn).toFixed(1), width: 12, height: (Y(botIn) - Y(topIn)).toFixed(1),
+      fill: scrFill, stroke: ink, 'stroke-width': 2 });
+    tx(scrX - 6, Y(topIn) - 8, 'Screen', 11, 'end', mut);
+    if (da.noModel) {
+      tx(330, 24, 'Ceiling-mount drop simulator — ' + da.text, 13, 'middle', mut);
+      return;
+    }
+    var zlIn = da.vHas ? da.zlIn : ceilIn - da.needIn;
+    // shift-range band on the pole
+    if (da.vHas) {
+      el5('rect', { x: lensX - 5, y: Y(da.zlHi).toFixed(1), width: 10,
+        height: Math.max(2, Y(da.zlLo) - Y(da.zlHi)).toFixed(1),
+        fill: night ? '#1d3a2a' : '#d9efe2', stroke: night ? '#7fd6a4' : '#2e7d5b', 'stroke-width': 1 });
+      tx(lensX + 14, (Y(da.zlHi) + Y(da.zlLo)) / 2 + 4, 'lens shift range', 11, 'start', night ? '#7fd6a4' : '#2e7d5b');
+    }
+    // pole + projector body at the pipe drop
+    el5('line', { x1: lensX, y1: cy, x2: lensX, y2: Y(zlIn).toFixed(1), stroke: ink, 'stroke-width': 3 });
+    el5('rect', { x: lensX - 22, y: Y(zlIn) - 7, width: 44, height: 15, rx: 3, fill: ink });
+    el5('circle', { cx: lensX, cy: Y(zlIn) + 1, r: 3.5, fill: night ? '#0e1320' : '#ffffff' });
+    tx(lensX, Y(zlIn) + 30, 'your pipe: ' + dispIn(pipeIn), 12, 'middle', ink);
+    // beam: lens -> screen top/bottom
+    el5('line', { x1: lensX, y1: Y(zlIn).toFixed(1), x2: scrX, y2: Y(topIn).toFixed(1),
+      stroke: mut, 'stroke-width': 1.2, 'stroke-dasharray': '6 4' });
+    el5('line', { x1: lensX, y1: Y(zlIn).toFixed(1), x2: scrX, y2: Y(botIn).toFixed(1),
+      stroke: mut, 'stroke-width': 1.2, 'stroke-dasharray': '6 4' });
+    var col = da.ok ? (night ? '#7fd6a4' : '#2e7d5b') : (night ? '#ff9d8a' : '#c0392b');
+    tx(330, 22, da.text, 12.5, 'middle', col);
+  }
 
   // init
   var savedMode = 'basic';
