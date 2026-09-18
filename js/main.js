@@ -14,7 +14,7 @@
 
   /* Throw-distance room planner — per-model ratios from js/throw-data.js.
      16:9: width = diagonal * 0.8716, height = diagonal * 0.4903. */
-  var ASPECTS = { '16:9': [16, 9], '2.35:1': [2.35, 1], '4:3': [4, 3], '1:1': [1, 1] };
+  var ASPECTS = { '16:9': [16, 9], '16:10': [16, 10], '2.35:1': [2.35, 1], '4:3': [4, 3], '1:1': [1, 1] };
   var stdAspect = '16:9';
   function stdWidthFactor() {
     var a = ASPECTS[stdAspect] || ASPECTS['16:9'];
