@@ -43,7 +43,6 @@
   var roomLen = $('golf-room-len');
   var roomWid = $('golf-room-wid');
   var hitInput = $('golf-hit');
-  var throwInput = $('golf-throw');
   var openerWrap = $('golf-opener-wrap');
   var openerBlock = $('golf-opener-block');
   var openerDist = $('golf-opener-dist');
@@ -341,7 +340,7 @@
 
   /* ---------- every other input recalcs ---------- */
   [roomLen, roomWid,
-   hitInput, throwInput, openerDist, gainInput].forEach(function (el) {
+   hitInput, openerDist, gainInput].forEach(function (el) {
     el.addEventListener('input', recalc);
   });
 
@@ -359,7 +358,6 @@
     var sw = parseFloat(screenW.value, 10), sh = parseFloat(screenH.value, 10);
     var rl = parseFloat(roomLen.value, 10), rw = parseFloat(roomWid.value, 10);
     var hit = parseFloat(hitInput.value, 10);
-    var td = parseFloat(throwInput.value, 10);
     var gain = parseFloat(gainInput.value, 10);
     if (!(gain > 0)) gain = 1;
 
@@ -375,58 +373,49 @@
     }
 
     var out = [];
-    var aKey = aspectSel.value !== 'custom' ? aspectSel.value : fmt(sw / sh, 2) + ':1';
 
-    /* Image size. Min ratio = widest image. */
-    var imgWide = 0, imgTele = 0, imgWideH = 0, imgTeleH = 0;
-    if (td > 0) {
-      imgWide = td / r[0];
-      imgTele = td / r[1];
-      imgWideH = imgWide * sh / sw;
-      imgTeleH = imgTele * sh / sw;
-      if (r[0] === r[1]) {
-        out.push('<p><strong>Image:</strong> ' + ft(imgWide) + ' wide x ' + ft(imgWideH) + ' tall (' + aKey + ').</p>');
-      } else {
-        out.push('<p><strong>Image:</strong> ' + ft(imgWide) + ' to ' + ft(imgTele) +
-          ' wide x ' + ft(imgWideH) + ' to ' + ft(imgTeleH) + ' tall (' + aKey + ').</p>');
-      }
+    /* Throw distance, computed from the manufacturer ratio: the lens goes here. */
+    var tdNear = sw * r[0], tdFar = sw * r[1];
+    if (r[0] === r[1]) {
+      out.push('<p><strong>Throw distance:</strong> place the lens ' + ft(tdNear) +
+        ' from the screen to fill the ' + ft(sw) + ' width.</p>');
     } else {
-      out.push('<p><strong>To fill a ' + ft(sw) + ' wide screen</strong>, put the lens ' +
-        ft(sw * r[0]) + ' to ' + ft(sw * r[1]) + ' from the screen. Enter your throw distance below.</p>');
+      out.push('<p><strong>Throw distance:</strong> place the lens ' + ft(tdNear) + ' to ' + ft(tdFar) +
+        ' from the screen - zoom until the image fills the ' + ft(sw) + ' width.</p>');
     }
 
-    /* Which image width to draw / judge brightness on. */
-    var drawW = 0, drawH = 0, unusedSide = 0, overflow = false;
-    if (td > 0) {
-      if (sw >= imgTele && sw <= imgWide) {
-        drawW = sw; // golfer zooms to fit
-      } else if (sw > imgWide) {
-        drawW = imgWide;
-        unusedSide = (sw - imgWide) / 2;
-      } else {
-        drawW = imgTele;
-        overflow = true;
+    /* Room fit + what actually gets drawn (a short room shrinks the image). */
+    var drawW = sw, drawH = sh, unusedSide = 0, drawTd = tdFar;
+    var openerD = (roomType === 'garage' && opener) ? parseFloat(openerDist.value, 10) : 0;
+    if (placement === 'ceiling' && rl > 0) {
+      var avail = (opener && openerD > 0) ? rl - openerD : rl;
+      if (opener && openerD > 0) {
+        out.push('<p><strong>Room:</strong> ' + ft(rl) + ' minus the opener at ' + ft(openerD) +
+          ' leaves ' + ft(avail) + ' of usable length for a ceiling mount.</p>');
       }
-      drawH = drawW * sh / sw;
-    }
-
-    /* Fit verdict. */
-    if (td > 0) {
-      if (sw >= imgTele && sw <= imgWide) {
-        out.push('<p><strong>Fit:</strong> the zoom range covers your screen - zoom until the image fills the ' +
-          ft(sw) + ' width.</p>');
-      } else if (unusedSide > 0) {
-        out.push('<p><strong>Fit:</strong> ' + ft(unusedSide * 2) + ' of screen stays blank (' +
-          ft(unusedSide) + ' each side) - marked with an X in the front view.</p>');
+      if (tdNear > avail) {
+        drawW = avail / r[0];
+        drawH = drawW * sh / sw;
+        unusedSide = (sw - drawW) / 2;
+        drawTd = avail;
+        out.push('<p style="color:' + WARN + '"><strong>Too far:</strong> this projector needs at least ' + ft(tdNear) +
+          ' of throw but the room only gives ' + ft(avail) + ' - the biggest image is ' + ft(drawW) +
+          ' wide. The unused screen is marked with an X in the front view.</p>');
+      } else if (tdFar > avail) {
+        drawTd = avail;
+        out.push('<p><strong>Fit:</strong> the throw fits if you mount the lens ' + ft(tdNear) + ' to ' + ft(avail) +
+          ' from the screen (wide end of the zoom).</p>');
+      } else if (r[0] === r[1]) {
+        out.push('<p><strong>Fit:</strong> the throw fits your room.</p>');
       } else {
-        out.push('<p><strong>Fit:</strong> the image overflows the screen by ' + ft(drawW - sw) +
-          ' even at full zoom-out - move the projector closer.</p>');
+        out.push('<p><strong>Fit:</strong> the throw fits your room - mount the lens anywhere from ' + ft(tdNear) +
+          ' to ' + ft(tdFar) + ' from the screen.</p>');
       }
     }
 
     /* Brightness: foot-lamberts over the drawn image area. */
     var lumens = effectiveLumens();
-    if (td > 0 && lumens > 0 && drawW > 0 && drawH > 0) {
+    if (lumens > 0 && drawW > 0 && drawH > 0) {
       var fl = lumens * gain / (drawW * drawH);
       var note = fl < 12 ? 'dim, best in a fully dark room' :
         fl < 30 ? 'good with the lights off' :
@@ -438,28 +427,13 @@
         out.push('<p style="color:' + WARN + '"><strong>Heads up:</strong> on a grey golf screen with ambient ' +
           'light this will look dim - a brighter projector is worth it.</p>');
       }
-    } else if (td > 0) {
+    } else {
       out.push('<p><strong>Brightness:</strong> pick a model with published lumens to see the foot-lambert estimate.</p>');
     }
 
-    /* Throw check: garage opener eats into the room for ceiling mounts. */
-    var openerD = (roomType === 'garage' && opener) ? parseFloat(openerDist.value, 10) : 0;
-    if (td > 0 && placement === 'ceiling' && rl > 0) {
-      var avail = (opener && openerD > 0) ? rl - openerD : rl;
-      if (opener && openerD > 0) {
-        out.push('<p><strong>Room:</strong> ' + ft(rl) + ' minus the opener at ' + ft(openerD) +
-          ' leaves ' + ft(avail) + ' of usable length for a ceiling mount.</p>');
-      }
-      if (td > avail) {
-        out.push('<p style="color:' + WARN + '"><strong>Too far:</strong> a ' + ft(td) +
-          ' throw needs more than the ' + ft(avail) + ' available - the projector would sit past the ' +
-          (opener && openerD > 0 ? 'opener' : 'room') + '.</p>');
-      }
-    }
-
     results.innerHTML = out.join('');
-    drawTop(r, sw, sh, rl, rw, hit, td, openerD);
-    drawFront(sw, sh, drawW, drawH, unusedSide, overflow, td);
+    drawTop(r, sw, sh, rl, rw, hit, drawTd, openerD);
+    drawFront(sw, sh, drawW, drawH, unusedSide, false, drawTd);
   }
 
   /* ---------- SVG A: top-down ---------- */
