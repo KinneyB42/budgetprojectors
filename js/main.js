@@ -1418,7 +1418,7 @@
       viewerProj = 'all';
       try { localStorage.setItem('calc-viewerproj', 'all'); } catch (e) {}
     }
-    row.hidden = !(advMode && compareOn && (compareB || compareC));
+    row.style.display = (advMode && compareOn && (compareB || compareC)) ? '' : 'none';
     row.querySelectorAll('.calc__chip').forEach(function (c) {
       var vp = c.getAttribute('data-vp');
       c.classList.toggle('chosen', vp === viewerProj);
