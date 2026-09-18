@@ -748,46 +748,52 @@
     });
   }
 
-  /* ---------- View toggles: show/hide each render individually, or all at once ---------- */
+  /* ---------- View selector: one view at a time, or all of them ---------- */
   var viewIds = ['3d', 'side', 'viewer', 'ceiling', 'mounting'];
-  var viewState = { '3d': true, side: true, viewer: true, ceiling: true, mounting: true };
+  var activeView = 'all';
   try {
     var vsSaved = JSON.parse(localStorage.getItem('calc-views') || 'null');
-    if (vsSaved) viewIds.forEach(function (id) { if (vsSaved[id] === false) viewState[id] = false; });
+    if (vsSaved) {
+      if (typeof vsSaved === 'string' && (vsSaved === 'all' || viewIds.indexOf(vsSaved) >= 0)) {
+        activeView = vsSaved;
+      } else if (typeof vsSaved === 'object') {
+        // migrate the old multi-toggle state: exactly one visible view wins, else all
+        var vis = viewIds.filter(function (id) { return vsSaved[id] !== false; });
+        activeView = (vis.length === 1) ? vis[0] : 'all';
+      }
+    }
   } catch (e) {}
+  function outdoorGatedView(id) { return roomType === 'outdoors' && (id === 'ceiling' || id === 'mounting'); }
   function applyViewToggles() {
-    var outdoor = roomType === 'outdoors';
+    if (outdoorGatedView(activeView)) activeView = '3d'; // no ceiling outdoors
     viewIds.forEach(function (id) {
-      var gated = outdoor && (id === 'ceiling' || id === 'mounting'); // no ceiling outdoors
+      var gated = outdoorGatedView(id);
+      var show = (activeView === 'all' || activeView === id) && !gated;
       var fig = document.querySelector('[data-viewfig="' + id + '"]');
-      if (fig) fig.style.display = (!gated && viewState[id]) ? '' : 'none';
+      if (fig) fig.style.display = show ? '' : 'none';
       var chip = document.querySelector('#calc-view-toggles [data-view="' + id + '"]');
       if (chip) {
         chip.style.display = gated ? 'none' : '';
-        chip.classList.toggle('chosen', !!viewState[id]);
-        chip.setAttribute('aria-pressed', viewState[id] ? 'true' : 'false');
+        var on = activeView === id;
+        chip.classList.toggle('chosen', on);
+        chip.setAttribute('aria-pressed', on ? 'true' : 'false');
       }
     });
-    var allOn = viewIds.every(function (id) { return viewState[id]; });
     var allChip = document.getElementById('calc-views-all');
     if (allChip) {
+      var allOn = activeView === 'all';
       allChip.classList.toggle('chosen', allOn);
       allChip.setAttribute('aria-pressed', allOn ? 'true' : 'false');
     }
-    try { localStorage.setItem('calc-views', JSON.stringify(viewState)); } catch (e2) {}
+    try { localStorage.setItem('calc-views', JSON.stringify(activeView)); } catch (e2) {}
   }
   var viewToggleWrap = document.getElementById('calc-view-toggles');
   if (viewToggleWrap) {
     viewToggleWrap.addEventListener('click', function (ev) {
       var btn = ev.target.closest ? ev.target.closest('button') : null;
       if (!btn) return;
-      if (btn.id === 'calc-views-all') {
-        var turnOn = !viewIds.every(function (id) { return viewState[id]; });
-        viewIds.forEach(function (id) { viewState[id] = turnOn; });
-      } else if (btn.hasAttribute('data-view')) {
-        var vid = btn.getAttribute('data-view');
-        viewState[vid] = !viewState[vid];
-      }
+      if (btn.id === 'calc-views-all') activeView = 'all';
+      else if (btn.hasAttribute('data-view')) activeView = btn.getAttribute('data-view');
       applyViewToggles();
     });
   }
