@@ -400,12 +400,15 @@
       var b = document.getElementById(id);
       if (b) b.style.display = outdoor ? 'none' : '';
     });
+    var spkWrap = document.getElementById('calc-speakers-wrap');
+    if (spkWrap) spkWrap.style.display = outdoor ? 'none' : '';
     if (outdoor) {
       if (lightsOn && lightsToggle) lightsToggle.click();
       if (sunOn && sunToggle) sunToggle.click();
     }
     if (outdoor && projPos === 'ceiling') setProjPos('table');
     if (outdoor && (screenStyle === 'acoustic' || screenStyle === 'floor')) setScreenStyle('fixed');
+    if (outdoor && speakerMode !== 'none') setSpeakerMode('none'); // tripods are drawn automatically
   }
 
   document.querySelectorAll('.calc__chip[data-room]').forEach(function (chip) {
@@ -645,13 +648,16 @@
     });
   });
   var speakerMode = 'none';
+  function setSpeakerMode(spk) {
+    speakerMode = spk;
+    document.querySelectorAll('#calc-speakers .calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', c.getAttribute('data-spk') === spk);
+    });
+    recalc();
+  }
   document.querySelectorAll('#calc-speakers .calc__chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
-      speakerMode = chip.getAttribute('data-spk');
-      document.querySelectorAll('#calc-speakers .calc__chip').forEach(function (c) {
-        c.classList.toggle('chosen', c === chip);
-      });
-      recalc();
+      setSpeakerMode(chip.getAttribute('data-spk'));
     });
   });
 
@@ -1968,6 +1974,20 @@
         // simple stand legs
         box(0.15, yA + 0.3, z0 / 2, 0.25, 0.25, z0, pal.stand[0], pal.stand[1], pal.stand[2]);
         box(0.15, yB - 0.3, z0 / 2, 0.25, 0.25, z0, pal.stand[0], pal.stand[1], pal.stand[2]);
+        // PA speakers on tripods flanking the screen
+        var legCol = scene === 'night' ? '#9aa5bd' : '#3a3f47';
+        [yA - 1.6, yB + 1.6].forEach(function (sy3) {
+          var sx3 = 0.5, sz3 = zc - 0.2;
+          box(sx3, sy3, sz3, 0.7, 1.1, 1.6, '#232838', '#161b28', '#0f1420');
+          var b3 = [sx3, sy3, sz3 - 0.8];
+          [[sx3 + 0.6, sy3 + 0.6, 0], [sx3 + 0.6, sy3 - 0.6, 0], [sx3 - 0.7, sy3, 0]].forEach(function (f3) {
+            var a3 = P(b3[0], b3[1], b3[2]), e3 = P(f3[0], f3[1], f3[2]);
+            el('line', { x1: a3[0].toFixed(1), y1: a3[1].toFixed(1),
+              x2: e3[0].toFixed(1), y2: e3[1].toFixed(1),
+              stroke: legCol, 'stroke-width': 2.5, 'stroke-linecap': 'round' });
+          });
+        });
+        txt(0.5, yA - 1.6, Math.max(0.5, zc - 1.9), 'tripod speakers', 11);
       }
     }
 
