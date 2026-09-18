@@ -44,7 +44,7 @@
         <button type="button" class="calc__chip chosen" data-mode="basic">Basic</button>
         <button type="button" class="calc__chip" data-mode="advanced">Advanced</button>
       </div>
-      <p class="calc__hint">Basic covers the essentials. Advanced unlocks golf simulator mode, planning from a throw distance, side-by-side projector comparisons, and brightness math.</p>
+      <p class="calc__hint">Basic covers the essentials. Advanced unlocks planning from a throw distance, side-by-side projector comparisons, and brightness math.</p>
     </div>
 
     <div class="calc calc--basic">
@@ -108,11 +108,6 @@
           <button type="button" class="calc__chip" data-room="garage">Garage</button>
           <button type="button" class="calc__chip" data-room="outdoors">Outdoors</button>
         </div>
-        <label class="adv-only">Is this a golf simulator space?</label>
-        <div class="calc__chips adv-only" id="calc-golf-chips">
-          <button type="button" class="calc__chip chosen" data-golf="no">No</button>
-          <button type="button" class="calc__chip" data-golf="yes">Yes</button>
-        </div>
         <div class="calc__dims" id="calc-dims">
           <div>
             <label for="calc-room-len">Room length (ft)</label>
@@ -128,39 +123,6 @@
           </div>
         </div>
         <p class="calc__hint" id="calc-room-tip"></p>
-      </div>
-
-      <div class="calc__golf" id="calc-golf-wrap" hidden>
-        <label>Screen dimensions</label>
-        <div class="calc__dims">
-          <div>
-            <label for="calc-screen-w">Width (ft)</label>
-            <input type="number" id="calc-screen-w" min="4" max="40" step="0.5" placeholder="e.g. 10" inputmode="decimal">
-          </div>
-          <div>
-            <label for="calc-screen-h">Height (ft)</label>
-            <input type="number" id="calc-screen-h" min="3" max="20" step="0.5" placeholder="e.g. 7.5" inputmode="decimal">
-          </div>
-          <div>
-            <label for="calc-aspect">Aspect ratio</label>
-            <select id="calc-aspect">
-              <option value="16:9">16:9</option>
-              <option value="16:10">16:10</option>
-              <option value="4:3" selected>4:3</option>
-              <option value="1:1">1:1</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-        </div>
-        <p class="calc__hint">Golf sim screens are usually 4:3 or 1:1. Pick an aspect to fill the height, or type your exact width and height.</p>
-        <div class="calc__place">
-          <label>Where will the projector go?</label>
-          <div class="calc__chips" id="calc-placement">
-            <button type="button" class="calc__chip chosen" data-place="ceiling">Ceiling Mount</button>
-            <button type="button" class="calc__chip" data-place="floor">On Floor</button>
-            <button type="button" class="calc__chip" data-place="golfer">Next to Golfer</button>
-          </div>
-        </div>
       </div>
 
       <div id="calc-projpos-wrap" class="adv-only">
