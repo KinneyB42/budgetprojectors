@@ -940,13 +940,39 @@
           views.forEach(function (v) { place(v[0], v[1], v[2], slotY); slotY += PITCH; });
           // measurements text
           var S = planSummary;
+          var VALW = PW - 48 - 24; // value text must end 24px before the panel edge
+          function wrapVal(text) {
+            var words = String(text).split(/\s+/).filter(Boolean), lines = [], line = '';
+            function pushWord(w) {
+              // hard-break a single word that is wider than the column
+              while (cx.measureText(w).width > VALW && w.length > 1) {
+                var k = 1;
+                while (k < w.length && cx.measureText(w.slice(0, k + 1)).width <= VALW) k++;
+                lines.push(w.slice(0, k)); w = w.slice(k);
+              }
+              var t = line ? line + ' ' + w : w;
+              if (cx.measureText(t).width <= VALW || !line) line = t;
+              else { lines.push(line); line = w; }
+            }
+            words.forEach(pushWord);
+            if (line) lines.push(line);
+            return lines;
+          }
           function row(label, value, y) {
             cx.fillStyle = '#8fa3c8';
             cx.font = '600 13px Arial,sans-serif';
             cx.fillText(label.toUpperCase(), 48, y);
             cx.fillStyle = '#ffffff';
             cx.font = '400 23px Arial,sans-serif';
-            cx.fillText(String(value).substring(0, 40), 48, y + 30);
+            var lines = wrapVal(value);
+            if (lines.length > 3) {
+              lines = lines.slice(0, 3);
+              var last = lines[2];
+              while (last.length > 1 && cx.measureText(last + '…').width > VALW) last = last.slice(0, -1);
+              lines[2] = last + '…';
+            }
+            lines.forEach(function (ln, i) { cx.fillText(ln, 48, y + 30 + i * 30); });
+            return lines.length;
           }
           cx.fillStyle = '#8fa3c8';
           cx.font = '600 15px Arial,sans-serif';
@@ -958,14 +984,14 @@
           cx.lineWidth = 1;
           cx.beginPath(); cx.moveTo(48, 140); cx.lineTo(PW - 48, 140); cx.stroke();
           var y = 184;
-          if (S.model) { row('Projector', S.model, y); y += 74; }
-          if (S.throw) { row('Throw distance', S.throw, y); y += 74; }
-          if (S.screen) { row('Screen', S.screen, y); y += 74; }
-          if (S.room) { row('Room', S.room, y); y += 74; }
-          if (S.seat) { row('Seating', S.seat, y); y += 74; }
-          if (S.bright) { row('Brightness', S.bright, y); y += 74; }
-          if (S.mount) { row('Mounting', S.mount, y); y += 74; }
-          if (S.drop) { row('Mount drop', S.drop, y); y += 74; }
+          if (S.model) { y += 44 + row('Projector', S.model, y) * 30; }
+          if (S.throw) { y += 44 + row('Throw distance', S.throw, y) * 30; }
+          if (S.screen) { y += 44 + row('Screen', S.screen, y) * 30; }
+          if (S.room) { y += 44 + row('Room', S.room, y) * 30; }
+          if (S.seat) { y += 44 + row('Seating', S.seat, y) * 30; }
+          if (S.bright) { y += 44 + row('Brightness', S.bright, y) * 30; }
+          if (S.mount) { y += 44 + row('Mounting', S.mount, y) * 30; }
+          if (S.drop) { y += 44 + row('Mount drop', S.drop, y) * 30; }
           if (S.verdict) {
             cx.fillStyle = '#ffd94d';
             cx.font = '600 20px Arial,sans-serif';
