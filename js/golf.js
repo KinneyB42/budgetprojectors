@@ -52,6 +52,7 @@
   var aspectSel = $('golf-aspect');
   var roomLen = $('golf-room-len');
   var roomWid = $('golf-room-wid');
+  var roomCeil = $('golf-room-ceil');
   var hitInput = $('golf-hit');
   var openerWrap = $('golf-opener-wrap');
   var openerBlock = $('golf-opener-block');
@@ -65,6 +66,7 @@
   var results = $('golf-results');
   var svgTop = $('golf-top');
   var svgFront = $('golf-front');
+  var svgSide = $('golf-side');
 
   /* ---------- model picker ---------- */
   function ratioLabel(t) {
@@ -387,7 +389,7 @@
   });
 
   /* ---------- every other input recalcs ---------- */
-  [roomLen, roomWid,
+  [roomLen, roomWid, roomCeil,
    hitInput, openerDist, gainInput].forEach(function (el) {
     el.addEventListener('input', recalc);
   });
@@ -399,12 +401,14 @@
   function clearSvgs() {
     svgTop.innerHTML = '';
     svgFront.innerHTML = '';
+    if (svgSide) svgSide.innerHTML = '';
   }
 
   function recalc() {
     var r = currentRatio();
     var sw = parseFloat(screenW.value, 10), sh = parseFloat(screenH.value, 10);
     var rl = parseFloat(roomLen.value, 10), rw = parseFloat(roomWid.value, 10);
+    var ch = parseFloat(roomCeil.value, 10);
     var hit = parseFloat(hitInput.value, 10);
     var gain = parseFloat(gainInput.value, 10);
     if (!(gain > 0)) gain = 1;
@@ -499,6 +503,7 @@
     results.innerHTML = out.join('');
     drawTop(r, sw, sh, rl, rw, hit, projDist, openerD);
     drawFront(sw, sh, drawW, drawH, unusedSide, overflow, projDist);
+    if (svgSide) drawSide(sw, sh, rl, ch, hit, projDist, drawW, drawH, openerD);
   }
 
   /* ---------- SVG A: top-down ---------- */
@@ -655,6 +660,114 @@
     }
 
     svgFront.innerHTML = parts.join('');
+  }
+
+  /* ---------- SVG C: side view ---------- */
+  function drawSide(sw, sh, rl, ch, hit, projDist, drawW, drawH, openerD) {
+    if (!(rl > 0) || !(ch > 0)) { svgSide.innerHTML = ''; return; }
+    var W = 620, H = 400, L = 56, T = 30, R = 20, B = 46;
+    var plotW = W - L - R, plotH = H - T - B;
+    var s = Math.min(plotW / rl, plotH / ch);
+    var roomLenPx = rl * s, roomHpx = ch * s;
+    var x0 = L + (plotW - roomLenPx) / 2, y0 = T + (plotH - roomHpx) / 2;
+    function X(d) { return x0 + d * s; }
+    function Y(h) { return y0 + roomHpx - h * s; }
+    var parts = [];
+    parts.push('<defs><pattern id="golf-xhatch-side" width="12" height="12" patternUnits="userSpaceOnUse">' +
+      '<path d="M0,0 L12,12 M12,0 L0,12" stroke="' + WARN + '" stroke-width="1.4" opacity="0.55"/>' +
+      '</pattern></defs>');
+
+    function txt(x, y, str, size, color, anchor, rot) {
+      var a = anchor ? ' text-anchor="' + anchor + '"' : '';
+      var tr = rot ? ' transform="rotate(-90 ' + x + ' ' + y + ')"' : '';
+      parts.push('<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '"' + a + tr +
+        ' font-size="' + (size || 12) + '" fill="' + (color || MUTED) +
+        '" font-family="Poppins, sans-serif">' + str + '</text>');
+    }
+
+    // room shell: floor + ceiling + walls
+    parts.push('<rect x="' + x0.toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' +
+      roomLenPx.toFixed(1) + '" height="' + roomHpx.toFixed(1) +
+      '" fill="none" stroke="' + MUTED + '" stroke-width="1.5"/>');
+    parts.push('<line x1="' + x0.toFixed(1) + '" y1="' + Y(0).toFixed(1) +
+      '" x2="' + (x0 + roomLenPx).toFixed(1) + '" y2="' + Y(0).toFixed(1) +
+      '" stroke="' + NAVY + '" stroke-width="3"/>');
+    txt(x0 - 10, Y(0) + 4, 'Floor', 11, MUTED, 'end');
+
+    // screen at the left wall, standing on the floor
+    var scrTop = Y(sh), scrBot = Y(0);
+    parts.push('<rect x="' + (X(0) - 5).toFixed(1) + '" y="' + scrTop.toFixed(1) + '" width="10" height="' +
+      (scrBot - scrTop).toFixed(1) + '" fill="#ffffff" stroke="' + NAVY + '" stroke-width="2"/>');
+    txt(X(0), scrTop - 10, 'Screen ' + fmt(sh, 1) + ' ft tall', 11, NAVY, 'middle');
+
+    // image on the screen (follows lens shift)
+    if (projDist > 0 && drawW > 0 && drawH > 0) {
+      var imgH = Math.min(drawH, sh);
+      var imgBot = (sh - imgH) / 2;
+      if (shiftOn) imgBot += ((parseFloat(shiftInput.value, 10) || 0) / 100) * imgH;
+      imgBot = Math.max(0, Math.min(sh - imgH, imgBot));
+      var imgTop = imgBot + imgH;
+      // unused bands above / below the image
+      if (imgBot > 0.03) {
+        parts.push('<rect x="' + (X(0) - 5).toFixed(1) + '" y="' + Y(imgBot).toFixed(1) + '" width="10" height="' +
+          (Y(0) - Y(imgBot)).toFixed(1) + '" fill="url(#golf-xhatch-side)"/>');
+      }
+      if (sh - imgTop > 0.03) {
+        parts.push('<rect x="' + (X(0) - 5).toFixed(1) + '" y="' + Y(sh).toFixed(1) + '" width="10" height="' +
+          (Y(imgTop) - Y(sh)).toFixed(1) + '" fill="url(#golf-xhatch-side)"/>');
+      }
+      parts.push('<rect x="' + (X(0) - 5).toFixed(1) + '" y="' + Y(imgTop).toFixed(1) + '" width="10" height="' +
+        (Y(imgBot) - Y(imgTop)).toFixed(1) + '" fill="' + IMG_FILL + '" stroke="' + NAVY + '" stroke-width="1.5"/>');
+    }
+
+    // garage opener hanging from the ceiling (red when the projector conflicts)
+    var conflict = opener && openerD > 0 && openerD < rl &&
+      (placement === 'ceiling' || placement === 'frame') && projDist > openerD - 2;
+    if (opener && openerD > 0 && openerD < rl) {
+      var ow = Math.min(1.6 * s, 46), oh = Math.min(1.1 * s, 30);
+      parts.push('<rect x="' + (X(openerD) - ow / 2).toFixed(1) + '" y="' + Y(ch).toFixed(1) +
+        '" width="' + ow.toFixed(1) + '" height="' + oh.toFixed(1) +
+        '" fill="' + (conflict ? WARN : AMBER) + '" opacity="0.8" rx="2"/>');
+      parts.push('<line x1="' + X(openerD).toFixed(1) + '" y1="' + Y(ch).toFixed(1) +
+        '" x2="' + X(openerD).toFixed(1) + '" y2="' + (Y(ch) + 4).toFixed(1) +
+        '" stroke="' + (conflict ? WARN : AMBER) + '" stroke-width="2"/>');
+      txt(X(openerD), Y(ch) - 8, 'Opener', 11, conflict ? WARN : AMBER, 'middle');
+    }
+
+    // hitting mat + golfer
+    if (hit > 0 && hit < rl) {
+      var mw = Math.min(2.4 * s, 60);
+      parts.push('<rect x="' + (X(hit) - mw / 2).toFixed(1) + '" y="' + (Y(0) - 7).toFixed(1) +
+        '" width="' + mw.toFixed(1) + '" height="7" fill="#4a7c59" rx="2"/>');
+      parts.push('<circle cx="' + X(hit).toFixed(1) + '" cy="' + Y(3.2).toFixed(1) + '" r="10" fill="' + NAVY + '"/>');
+      parts.push('<line x1="' + X(hit).toFixed(1) + '" y1="' + Y(2.4).toFixed(1) +
+        '" x2="' + X(hit).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="' + NAVY + '" stroke-width="4"/>');
+      txt(X(hit), Y(0) + 24, 'Golfer', 11, MUTED, 'middle');
+    }
+
+    // projector (height depends on placement)
+    if (projDist > 0 && projDist < rl + 2) {
+      var ph = placement === 'ceiling' ? ch - 0.8 :
+        placement === 'frame' ? sh + 0.4 :
+        (placement === 'table-left' || placement === 'table-right') ? 2.8 : 1.1;
+      var px = X(projDist), py = Y(ph);
+      parts.push('<line x1="' + px.toFixed(1) + '" y1="' + py.toFixed(1) +
+        '" x2="' + X(0).toFixed(1) + '" y2="' + Y(sh / 2).toFixed(1) +
+        '" stroke="' + (conflict ? WARN : NAVY) + '" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.6"/>');
+      parts.push('<rect x="' + (px - 12).toFixed(1) + '" y="' + (py - 8).toFixed(1) +
+        '" width="24" height="16" rx="2" fill="' + NAVY + '"/>');
+      if (placement === 'ceiling') {
+        parts.push('<line x1="' + px.toFixed(1) + '" y1="' + (py - 8).toFixed(1) +
+          '" x2="' + px.toFixed(1) + '" y2="' + Y(ch).toFixed(1) + '" stroke="' + NAVY + '" stroke-width="3"/>');
+      }
+      txt(px, py + 28, (PLACE_LABEL[placement] || 'Projector') + ' (' + ft(ph) + ' high)', 11, NAVY, 'middle');
+    }
+
+    // dimensions
+    txt(x0 + roomLenPx / 2, y0 + roomHpx + 30, ft(rl) + ' long', 12, MUTED, 'middle');
+    txt(24, y0 + roomHpx / 2, ft(ch) + ' ceiling', 12, MUTED, 'middle', true);
+
+    svgSide.innerHTML = parts.join('');
   }
 
   /* ---------- init ---------- */
