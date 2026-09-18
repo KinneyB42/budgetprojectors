@@ -1012,9 +1012,14 @@
       });
     }
 
+    // Effective lumens for brightness: manual input wins, else the model's published output.
+    var effLumens = lumensInput ? parseFloat(lumensInput.value, 10) : NaN;
+    if (!(effLumens > 0) && selectedModel && selectedModel.lm > 0) effLumens = selectedModel.lm;
+
     drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
       scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType, golf: golfMode,
-      px: px, py: py, pz: pz, pmount: pmount, projPos: projPos, extraProj: extraProj });
+      px: px, py: py, pz: pz, pmount: pmount, projPos: projPos, extraProj: extraProj,
+      lumens: effLumens > 0 ? effLumens : 0 });
 
     // Reference viewing distance from viewing angle: 36 deg (immersive) to 30 deg (SMPTE minimum).
     var dClose = (imgWIn / 2) / Math.tan(18 * Math.PI / 180) / 12; // ft
@@ -1040,7 +1045,7 @@
     }
     // Brightness: lumens over the lit image area, in foot-lamberts.
     var fl = NaN, flNote = '';
-    var lumens = lumensInput ? parseFloat(lumensInput.value, 10) : NaN;
+    var lumens = effLumens;
     if (lumens > 0) {
       var gain = gainInput ? parseFloat(gainInput.value, 10) : NaN;
       if (!(gain > 0)) gain = 1;
@@ -1357,6 +1362,30 @@
           ? (scene === 'night' ? '#7fd6a4' : '#2e7d5b')
           : (scene === 'night' ? '#ff9d8a' : '#c0392b'));
         throwTag.appendChild(tStat);
+      }
+      // brightness verdict in the white margin: is this screen size too dim for these lumens?
+      if (o.lumens > 0 && imgWIn > 0) {
+        var bGain = gainInput ? parseFloat(gainInput.value, 10) : NaN;
+        if (!(bGain > 0)) bGain = 1;
+        var bImgHIn = o.golf ? imgWIn / PROJ_AR : o.shFt * 12;
+        var bArea = imgWIn * bImgHIn / 144;
+        if (bArea > 0) {
+          var bFl = o.lumens * bGain / bArea;
+          var bNote = bFl < 12 ? 'dim, best in a fully dark room' :
+            bFl < 30 ? 'good with the lights off' :
+            bFl < 60 ? 'holds up with some ambient light' : 'bright enough for lights-on viewing';
+          var bCol = bFl < 12 ? (scene === 'night' ? '#ff9d8a' : '#c0392b') :
+            bFl < 30 ? (scene === 'night' ? '#ffd28a' : '#a86e00') :
+            (scene === 'night' ? '#7fd6a4' : '#2e7d5b');
+          var bTag = el('text', { x: 16, y: 44, 'font-size': 13, 'font-weight': '600', fill: pal.label });
+          var bT1 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+          bT1.textContent = 'Brightness ~' + fmt(bFl, 0) + ' fL';
+          bTag.appendChild(bT1);
+          var bT2 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+          bT2.textContent = ' · ' + bNote;
+          bT2.setAttribute('fill', bCol);
+          bTag.appendChild(bT2);
+        }
       }
       // light cone: lens to screen corners
       var lens = [pxx, pyy, pzz];
