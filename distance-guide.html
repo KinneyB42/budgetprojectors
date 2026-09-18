@@ -329,6 +329,21 @@
             <button type="button" class="calc__chip" data-place="table-right">Table right of golfer</button>
           </div>
 
+          <div id="golf-zoom-wrap" hidden>
+            <label for="golf-zoom">Lens zoom <span class="calc__slider-val" id="golf-zoom-val"></span></label>
+            <div class="calc__slider-row">
+              <input type="range" id="golf-zoom" min="0" max="100" step="1" value="50">
+            </div>
+            <div class="calc__slider-ends"><span>Wide</span><span>Tele</span></div>
+          </div>
+          <div>
+            <label for="golf-dist">Projector distance from screen <span class="calc__slider-val" id="golf-dist-val"></span></label>
+            <div class="calc__slider-row">
+              <input type="range" id="golf-dist" min="1" max="30" step="0.5" value="10">
+            </div>
+          </div>
+          <p class="calc__hint">Drag the sliders to explore - the image size, fit, and brightness update live.</p>
+
           <div id="golf-opener-block">
           <label>Ceiling-mounted garage door opener?</label>
           <div class="calc__chips" id="golf-opener-chips">
