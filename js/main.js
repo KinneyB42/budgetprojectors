@@ -2338,13 +2338,11 @@
     }
     if (screenStyle === 'floor') {
       // housing sits on the floor; black leader rises from the housing to the viewing area
-      var fhh = 11, fhx = sx - 6, fhw = scrW + 12, fhy;
-      if (sy + scrH + 8 <= floorY - fhh) {
-        fhy = floorY - fhh;
+      var fhh = 11, fhx = sx - 6, fhw = scrW + 12;
+      var fhy = (sy + scrH + 8 <= floorY - fhh) ? floorY - fhh : sy + scrH + 8;
+      if (fhy > sy + scrH) {
         el3('rect', { x: sx.toFixed(1), y: (sy + scrH).toFixed(1), width: scrW.toFixed(1),
           height: (fhy - sy - scrH).toFixed(1), fill: night ? '#04060c' : '#151515' });
-      } else {
-        fhy = sy + scrH + 8;
       }
       el3('rect', { x: fhx.toFixed(1), y: fhy.toFixed(1), width: fhw.toFixed(1), height: fhh, rx: 5,
         fill: caseFill, stroke: NAVY, 'stroke-width': 1.5 });
