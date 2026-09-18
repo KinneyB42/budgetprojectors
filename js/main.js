@@ -1580,7 +1580,7 @@
       model: modelName,
       throw: revMode ? dispDist(tdFt) + ' throw' : throwStr + ' throw',
       screen: revMode ? dRange.replace(/&ndash;/g, '–') + '″ ' + stdAspect + scrMatNote :
-        fmt(diag, 0) + '″ ' + stdAspect + scrMatNote,
+        fmt(diag, 0) + '″ ' + stdAspect + scrMatNote + ' · place projector ' + throwStr,
       room: ROOMS[roomType].label + (outdoor ? '' : (dimsKnown ?
         ', ' + dispShort(L) + ' × ' + dispShort(W) + ((H >= 0) ? ', ' + dispShort(H) + ' ceiling' : '') :
         ' (enter your room size)')),
@@ -2429,18 +2429,6 @@
     var isUstV = !!(o.obst && o.obst.ust);
     var projBodyC = night ? '#2c3d66' : '#22345c';
     var projTrimC = night ? '#5a6c96' : '#7a6a52';
-    if (fanOn && !o.outdoor) {
-      var ffx = VW * 0.62, ffTop = ceilY - 2;
-      el3('rect', { x: (ffx - 7).toFixed(1), y: ffTop.toFixed(1), width: 14, height: 8, rx: 3, fill: projTrimC });
-      el3('line', { x1: ffx, y1: ffTop + 8, x2: ffx, y2: ffTop + 34, stroke: projTrimC, 'stroke-width': 4 });
-      el3('ellipse', { cx: ffx, cy: ffTop + 40, rx: 11, ry: 8, fill: projTrimC });
-      for (var fbi = 0; fbi < 4; fbi++) {
-        var fba = fbi * Math.PI / 2 + Math.PI / 4;
-        el3('line', { x1: (ffx - Math.cos(fba) * 42).toFixed(1), y1: (ffTop + 40 - Math.sin(fba) * 10).toFixed(1),
-          x2: (ffx + Math.cos(fba) * 42).toFixed(1), y2: (ffTop + 40 + Math.sin(fba) * 10).toFixed(1),
-          stroke: projTrimC, 'stroke-width': 7, 'stroke-linecap': 'round', opacity: 0.9 });
-      }
-    }
     function projLens3(px, py, r, op) {
       el3('circle', { cx: px.toFixed(1), cy: py.toFixed(1), r: r, fill: '#9fd0ff', opacity: op == null ? 1 : op });
       el3('circle', { cx: px.toFixed(1), cy: py.toFixed(1), r: (r * 0.45).toFixed(1), fill: '#e8f4ff', opacity: op == null ? 1 : op });
