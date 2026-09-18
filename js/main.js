@@ -1854,7 +1854,12 @@
         box(pxx, pyy, (pzz + H) / 2, 0.18, 0.18, H - pzz, pal.stand[0], pal.stand[1], pal.stand[2]); // mount pole
       }
       box(pxx, pyy, pzz, 1.1, 0.9, 0.55, pal.proj[0], pal.proj[1], pal.proj[2]);
-      txt(pxx, pyy, pzz + 0.9, isRear ? 'rear projector' : 'projector', 11);
+      // head-to-head: tag the first projector A so it matches the B/C labels
+      var projLabel = isRear ? 'rear projector' : 'projector';
+      if (!isRear && (o.extraProj || []).length > 0 && o.r) {
+        projLabel = 'A ' + fmtDist(imgWIn * o.r[0]) + (o.r[1] !== o.r[0] ? '–' + fmtDist(imgWIn * o.r[1]) : '');
+      }
+      txt(pxx, pyy, pzz + 0.9, projLabel, 11);
       if (isRear && H > 0) {
         // cutaway booth behind the screen wall
         var bx0 = pxx - 1.5;
@@ -2591,7 +2596,7 @@
     var projs = [];
     if (o.px >= 0 && o.r) {
       var mainDist = fmtDist(o.imgWIn * o.r[0]) + (o.r[1] !== o.r[0] ? '–' + fmtDist(o.imgWIn * o.r[1]) : '');
-      projs.push({ tag: 'A', px: o.px, py: o.py != null ? o.py : W / 2, dist: mainDist,
+      projs.push({ tag: (o.extraProj || []).length > 0 ? 'A' : 'projector', px: o.px, py: o.py != null ? o.py : W / 2, dist: mainDist,
         col: night ? '#8fb0e8' : NAVY, ceiling: o.projPos === 'ceiling' || !!o.pmount });
     }
     (o.extraProj || []).forEach(function (xp, xi) {
