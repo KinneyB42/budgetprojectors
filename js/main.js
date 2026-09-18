@@ -840,7 +840,7 @@
         c.classList.toggle('chosen', c.getAttribute('data-ss') === p.ss);
       });
     }
-    if (p.spk && ['none', 'wall', 'tower'].indexOf(p.spk) >= 0) {
+    if (p.spk && ['none', 'wall', 'tower', 'soundbar'].indexOf(p.spk) >= 0) {
       speakerMode = p.spk;
       document.querySelectorAll('#calc-speakers .calc__chip').forEach(function (c) {
         c.classList.toggle('chosen', c.getAttribute('data-spk') === p.spk);
@@ -2221,6 +2221,18 @@
           el3('circle', { cx: (wx + twT / 2).toFixed(1), cy: (tyT + thT * f).toFixed(1), r: (twT * 0.22).toFixed(1),
             fill: spkCone, opacity: 0.5 });
         });
+      });
+    } else if (speakerMode === 'soundbar') {
+      // soundbar mounted under the physical screen: it stays centered on the
+      // screen itself, not on the shifted image
+      var sbw = scrW * 0.55, sbh = 14;
+      var sbcx = sx - hPix + scrW / 2;
+      var sbx = sbcx - sbw / 2, sby = sy + scrH + 10;
+      el3('rect', { x: sbx.toFixed(1), y: sby.toFixed(1), width: sbw.toFixed(1), height: sbh,
+        rx: 7, fill: spkFill });
+      [0.2, 0.35, 0.5, 0.65, 0.8].forEach(function (f) {
+        el3('circle', { cx: (sbx + sbw * f).toFixed(1), cy: (sby + sbh / 2).toFixed(1), r: 3.5,
+          fill: spkCone, opacity: 0.5 });
       });
     }
     // center channel behind the screen (acoustic-transparent): drawn over the image
