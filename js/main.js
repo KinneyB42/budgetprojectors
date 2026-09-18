@@ -2765,9 +2765,14 @@
       p.dx = dx; p.dy = dy; placed.push(p);
     });
     if (!svgMeasureCtx) svgMeasureCtx = document.createElement('canvas').getContext('2d');
-    var mctx = svgMeasureCtx; mctx.font = '12px sans-serif';
+    var mctx = svgMeasureCtx; mctx.font = '12px ' + getComputedStyle(document.body).fontFamily;
+    // body boxes up front so throw labels can dodge neighboring bodies as well as labels
+    var bodyBoxes = projs.map(function (p) {
+      var bx = X(p.dx), by = Y(p.dy), bw2 = 1.2 * s, bh2 = 1.0 * s;
+      return { x0: bx - bw2 / 2, x1: bx + bw2 / 2, y0: by - bh2 / 2, y1: by + bh2 / 2 };
+    });
     var placedLabels = [];
-    projs.forEach(function (p) {
+    projs.forEach(function (p, pi) {
       var cx = X(p.dx), cy = Y(p.dy), bw = 1.2 * s, bh = 1.0 * s;
       var body = { x: (cx - bw / 2).toFixed(1), y: (cy - bh / 2).toFixed(1),
         width: bw.toFixed(1), height: bh.toFixed(1), rx: 4,
@@ -2779,15 +2784,23 @@
         fill: night ? '#dbe2f0' : '#ffffff', stroke: ink, 'stroke-width': 1 });
       // mount point for ceiling mounts
       if (p.ceiling) el6('circle', { cx: cx.toFixed(1), cy: cy.toFixed(1), r: 3.5, fill: night ? '#0e1320' : '#ffffff' });
-      // throw label, bumped to a lower row when it would collide with a neighbor's label
+      // throw label, bumped to a lower row when it would collide with a
+      // neighbor's label or projector body
       var lab = p.tag + ' · ' + p.dist;
       var lw = mctx.measureText(lab).width;
       var lx0 = cx - lw / 2, lx1 = cx + lw / 2, ly = cy + bh / 2 + 17, tries = 0, clear = false;
-      while (!clear && tries < 4) {
+      while (!clear && tries < 5) {
         clear = true;
-        for (var li = 0; li < placedLabels.length; li++) {
-          var q = placedLabels[li];
-          if (lx0 < q.x1 + 6 && lx1 > q.x0 - 6 && Math.abs(ly - q.y) < 15) { clear = false; break; }
+        var ltop = ly - 12;
+        var oi, ob;
+        for (oi = 0; oi < placedLabels.length; oi++) {
+          ob = placedLabels[oi];
+          if (lx0 < ob.x1 + 6 && lx1 > ob.x0 - 6 && Math.abs(ly - ob.y) < 15) { clear = false; break; }
+        }
+        for (oi = 0; clear && oi < bodyBoxes.length; oi++) {
+          if (oi === pi) continue;
+          ob = bodyBoxes[oi];
+          if (lx0 < ob.x1 + 4 && lx1 > ob.x0 - 4 && ltop < ob.y1 + 4 && ly > ob.y0 - 4) { clear = false; break; }
         }
         if (!clear) { ly += 18; tries++; }
       }
