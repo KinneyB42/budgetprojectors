@@ -687,81 +687,150 @@
   function exportImage(kind) {
     if (!svg || !planSummary) return;
     var mime = kind === 'jpg' ? 'image/jpeg' : 'image/png';
-    var clone = svg.cloneNode(true);
-    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    clone.setAttribute('width', '1320');
-    clone.setAttribute('height', '880');
-    var st = document.createElementNS(NS, 'style');
-    st.textContent = 'text{font-family:Arial,Helvetica,sans-serif}';
-    clone.insertBefore(st, clone.firstChild);
-    var svgUrl = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }));
-    var img = new Image();
-    img.onload = function () {
-      try {
-        var CW = 1600, CH = 900, PW = 540;
-        var cv = document.createElement('canvas');
-        cv.width = CW; cv.height = CH;
-        var cx = cv.getContext('2d');
-        // left measurements panel
-        cx.fillStyle = '#0c2244';
-        cx.fillRect(0, 0, PW, CH);
-        // right side backdrop matches the scene
-        var night = !sunOn && !lightsOn;
-        cx.fillStyle = night ? '#0e1320' : '#ffffff';
-        cx.fillRect(PW, 0, CW - PW, CH);
-        var s = Math.min((CW - PW) / 660, CH / 440);
-        var dw = 660 * s, dh = 440 * s;
-        cx.drawImage(img, PW + ((CW - PW) - dw) / 2, (CH - dh) / 2, dw, dh);
-        // measurements text
-        var S = planSummary;
-        function row(label, value, y) {
+    function rasterize(node, w, h, done) {
+      var clone = node.cloneNode(true);
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      clone.setAttribute('width', String(w));
+      clone.setAttribute('height', String(h));
+      var st = document.createElementNS(NS, 'style');
+      st.textContent = 'text{font-family:Arial,Helvetica,sans-serif}';
+      clone.insertBefore(st, clone.firstChild);
+      var url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }));
+      var img = new Image();
+      img.onload = function () { done(img, url); };
+      img.onerror = function () { URL.revokeObjectURL(url); done(null, url); };
+      img.src = url;
+    }
+    var svg2 = document.getElementById('calc-svg-side');
+    rasterize(svg, 1320, 880, function (img1, url1) {
+      function compose(img2, url2) {
+        try {
+          var CW = 1600, CH = 1150, PW = 540;
+          var cv = document.createElement('canvas');
+          cv.width = CW; cv.height = CH;
+          var cx = cv.getContext('2d');
+          // left measurements panel
+          cx.fillStyle = '#0c2244';
+          cx.fillRect(0, 0, PW, CH);
+          // right side backdrop matches the scene
+          var night = !sunOn && !lightsOn;
+          cx.fillStyle = night ? '#0e1320' : '#ffffff';
+          cx.fillRect(PW, 0, CW - PW, CH);
+          var RW = CW - PW;
+          if (img1) {
+            var s1 = Math.min((RW - 40) / 660, 520 / 440);
+            var dw1 = 660 * s1, dh1 = 440 * s1;
+            cx.drawImage(img1, PW + (RW - dw1) / 2, 30 + (520 - dh1) / 2, dw1, dh1);
+          }
+          if (img2) {
+            var s2 = Math.min((RW - 40) / 660, 520 / 380);
+            var dw2 = 660 * s2, dh2 = 380 * s2;
+            cx.drawImage(img2, PW + (RW - dw2) / 2, 580 + (520 - dh2) / 2, dw2, dh2);
+          }
+          // measurements text
+          var S = planSummary;
+          function row(label, value, y) {
+            cx.fillStyle = '#8fa3c8';
+            cx.font = '600 13px Arial,sans-serif';
+            cx.fillText(label.toUpperCase(), 48, y);
+            cx.fillStyle = '#ffffff';
+            cx.font = '400 23px Arial,sans-serif';
+            cx.fillText(String(value).substring(0, 40), 48, y + 30);
+          }
           cx.fillStyle = '#8fa3c8';
-          cx.font = '600 13px Arial,sans-serif';
-          cx.fillText(label.toUpperCase(), 48, y);
+          cx.font = '600 15px Arial,sans-serif';
+          cx.fillText('BUDGETPROJECTORS.ORG', 48, 64);
           cx.fillStyle = '#ffffff';
-          cx.font = '400 23px Arial,sans-serif';
-          cx.fillText(String(value).substring(0, 40), 48, y + 30);
+          cx.font = '700 42px Arial,sans-serif';
+          cx.fillText('Room Plan', 48, 114);
+          cx.strokeStyle = 'rgba(255,255,255,0.18)';
+          cx.lineWidth = 1;
+          cx.beginPath(); cx.moveTo(48, 140); cx.lineTo(PW - 48, 140); cx.stroke();
+          var y = 184;
+          if (S.model) { row('Projector', S.model, y); y += 74; }
+          if (S.throw) { row('Throw distance', S.throw, y); y += 74; }
+          if (S.screen) { row('Screen', S.screen, y); y += 74; }
+          if (S.room) { row('Room', S.room, y); y += 74; }
+          if (S.seat) { row('Seating', S.seat, y); y += 74; }
+          if (S.bright) { row('Brightness', S.bright, y); y += 74; }
+          if (S.verdict) {
+            cx.fillStyle = '#ffd94d';
+            cx.font = '600 20px Arial,sans-serif';
+            cx.fillText(String(S.verdict).substring(0, 38), 48, CH - 58);
+          }
+          cx.fillStyle = '#8fa3c8';
+          cx.font = '400 13px Arial,sans-serif';
+          cx.fillText('Made with the BudgetProjectors throw-distance calculator', 48, CH - 28);
+          cv.toBlob(function (blob) {
+            if (blob) downloadBlob(blob, 'budgetprojectors-room-plan.' + kind);
+            URL.revokeObjectURL(url1); URL.revokeObjectURL(url2);
+          }, mime, 0.92);
+        } catch (e) {
+          URL.revokeObjectURL(url1); URL.revokeObjectURL(url2);
         }
-        cx.fillStyle = '#8fa3c8';
-        cx.font = '600 15px Arial,sans-serif';
-        cx.fillText('BUDGETPROJECTORS.ORG', 48, 64);
-        cx.fillStyle = '#ffffff';
-        cx.font = '700 42px Arial,sans-serif';
-        cx.fillText('Room Plan', 48, 114);
-        cx.strokeStyle = 'rgba(255,255,255,0.18)';
-        cx.lineWidth = 1;
-        cx.beginPath(); cx.moveTo(48, 140); cx.lineTo(PW - 48, 140); cx.stroke();
-        var y = 184;
-        if (S.model) { row('Projector', S.model, y); y += 74; }
-        if (S.throw) { row('Throw distance', S.throw, y); y += 74; }
-        if (S.screen) { row('Screen', S.screen, y); y += 74; }
-        if (S.room) { row('Room', S.room, y); y += 74; }
-        if (S.seat) { row('Seating', S.seat, y); y += 74; }
-        if (S.bright) { row('Brightness', S.bright, y); y += 74; }
-        if (S.verdict) {
-          cx.fillStyle = '#ffd94d';
-          cx.font = '600 20px Arial,sans-serif';
-          cx.fillText(String(S.verdict).substring(0, 38), 48, CH - 58);
-        }
-        cx.fillStyle = '#8fa3c8';
-        cx.font = '400 13px Arial,sans-serif';
-        cx.fillText('Made with the BudgetProjectors throw-distance calculator', 48, CH - 28);
-        cv.toBlob(function (blob) {
-          if (blob) downloadBlob(blob, 'budgetprojectors-room-plan.' + kind);
-          URL.revokeObjectURL(svgUrl);
-        }, mime, 0.92);
-      } catch (e) {
-        URL.revokeObjectURL(svgUrl);
       }
-    };
-    img.onerror = function () { URL.revokeObjectURL(svgUrl); };
-    img.src = svgUrl;
+      if (svg2) rasterize(svg2, 1320, 760, compose);
+      else compose(null, null);
+    });
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function exportPdf() {
+    if (!svg || !planSummary) return;
+    var S = planSummary;
+    var sheet = document.getElementById('calc-print');
+    if (!sheet) return;
+    var rows = [
+      ['Projector', S.model],
+      ['Throw distance', S.throw],
+      ['Screen', S.screen],
+      ['Room', S.room]
+    ];
+    if (S.seat) rows.push(['Seating', S.seat]);
+    if (S.bright) rows.push(['Brightness', S.bright]);
+    var rowsHtml = rows.map(function (r) {
+      return '<tr><th>' + r[0] + '</th><td>' + escHtml(r[1]) + '</td></tr>';
+    }).join('');
+    var fits = S.verdict.indexOf('Fits your') === 0;
+    var date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    var tagline = 'Your professional estimate was generated based on your customized space provided by BudgetProjectors.org';
+    sheet.innerHTML =
+      '<div class="cp-watermark">BudgetProjectors.org</div>' +
+      '<div class="cp-head"><div class="cp-brand">BUDGETPROJECTORS.ORG</div>' +
+      '<h1>Room Plan</h1><div class="cp-date">' + date + '</div></div>' +
+      '<p class="cp-tagline">' + tagline + '</p>' +
+      '<table class="cp-specs">' + rowsHtml + '</table>' +
+      '<div class="cp-fit ' + (fits ? 'yes' : 'warn') + '">' + escHtml(S.verdict) + '</div>' +
+      '<h2>3D view</h2><div class="cp-view" id="cp-view"></div>' +
+      '<h2>Side view</h2><div class="cp-view" id="cp-view-side"></div>' +
+      '<div class="cp-foot"><strong>BudgetProjectors.org</strong> &middot; Generated ' + date + '<br>' + tagline + '</div>';
+    var slot = document.getElementById('cp-view');
+    var clone = svg.cloneNode(true);
+    clone.removeAttribute('id');
+    slot.appendChild(clone);
+    var slot2 = document.getElementById('cp-view-side');
+    var svg2 = document.getElementById('calc-svg-side');
+    if (slot2 && svg2) {
+      var clone2 = svg2.cloneNode(true);
+      clone2.removeAttribute('id');
+      slot2.appendChild(clone2);
+    }
+    document.body.classList.add('printing-calc');
+    window.print();
   }
 
   var pngBtn = document.getElementById('calc-export-png');
   if (pngBtn) pngBtn.addEventListener('click', function () { exportImage('png'); });
   var jpgBtn = document.getElementById('calc-export-jpg');
   if (jpgBtn) jpgBtn.addEventListener('click', function () { exportImage('jpg'); });
+  var pdfBtn = document.getElementById('calc-export-pdf');
+  if (pdfBtn) pdfBtn.addEventListener('click', exportPdf);
+  window.addEventListener('afterprint', function () {
+    document.body.classList.remove('printing-calc', 'printing-golf');
+  });
 
   var sizeNum = document.getElementById('calc-size-num');
   function syncSizeVal() {
@@ -992,7 +1061,7 @@
     }
 
     if (!r) {
-      drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: null, seat: seat, room: roomType });
+      drawAll({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: null, seat: seat, room: roomType });
       planResult.innerHTML = '<strong>Pick your projector model</strong>' +
         '<span>Choose your model from the list above (or enter its throw ratio manually) and your room plan will appear here.</span>';
       syncZoom(null, 0);
@@ -1006,7 +1075,7 @@
     if (reverseMode) {
       tdFt = throwDistInput ? toFt(parseFloat(throwDistInput.value, 10)) : NaN;
       if (!(tdFt > 0)) {
-        drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType });
+        drawAll({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType });
         planResult.innerHTML = '<strong>Enter a throw distance</strong>' +
           '<span>Type how far back the projector will sit and the planner will show the screen sizes it can fill.</span>';
         syncZoom(null, 0);
@@ -1022,7 +1091,7 @@
       scrLabel = dRange + '&Prime; ' + stdAspect;
     } else {
       if (!(diag > 0)) {
-        drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType });
+        drawAll({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType });
         planResult.innerHTML = '<strong>Enter a screen size</strong>' +
           '<span>Type the screen diagonal you want and the planner will show throw distance, seating, and whether it fits your room.</span>';
         syncZoom(null, 0);
@@ -1081,7 +1150,7 @@
 
     syncZoom(r, imgWIn);
     var zoomPct = (zoomWrap && !zoomWrap.hidden) ? Math.round(zoomFrac() * 100) : -1;
-    drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
+    drawAll({ L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
       scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType,
       px: px, py: py, pz: pz, pmount: pmount, projPos: projPos, extraProj: extraProj,
       throwD: throwD, zpct: zoomPct, projLocked: lockMode === 'projector',
@@ -1384,7 +1453,7 @@
         var adiag = Math.sqrt(sw * sw + sh * sh) * 12;
         txt(ax, (ay1 + ay2) / 2 + anx * 0.62, (az1 + az2) / 2 + anz * 0.62, fmt(adiag, 0) + '"', 13);
       }
-      txt(0, yc, z0 + sh + 0.7, o.scrLabel || 'screen', 12);
+      txt(0, yc, z0 + sh + 0.7, (o.scrLabel || 'screen').replace(/&Prime;/g, '″'), 12);
       if (o.outdoor) {
         // simple stand legs
         box(0.15, yA + 0.3, z0 / 2, 0.25, 0.25, z0, pal.stand[0], pal.stand[1], pal.stand[2]);
@@ -1559,6 +1628,140 @@
       'font-weight': '600', 'letter-spacing': '1', fill: pal.label, opacity: 0.55 });
     wm.textContent = 'BudgetProjectors.org';
   }
+
+  // Side elevation: screen wall on the left, projector at its throw distance,
+  // throw beam, and seating. Mirrors the placement math in drawViz.
+  function drawSideViz(o) {
+    var svg2 = document.getElementById('calc-svg-side');
+    if (!svg2) return;
+    while (svg2.firstChild) svg2.removeChild(svg2.firstChild);
+    var VW = 660, VH = 380;
+    var night = !sunOn && !lightsOn;
+    var ink = night ? '#dbe2f0' : NAVY;
+    var mut = night ? '#8a94a8' : MUTED;
+    var scrFill = night ? '#bcd0ff' : '#dbe7ff';
+    function el2(name, attrs) {
+      var e = document.createElementNS(NS, name);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      svg2.appendChild(e); return e;
+    }
+    function tx(x, y, str, size, anchor, fill) {
+      var t = el2('text', { x: x.toFixed(1), y: y.toFixed(1), 'text-anchor': anchor || 'middle',
+        'font-size': size || 12, fill: fill || mut });
+      t.textContent = str; return t;
+    }
+    function dim(x1, y1, x2, y2, str) {
+      // horizontal dimension line with end ticks and a centered label
+      el2('line', { x1: x1.toFixed(1), y1: y1.toFixed(1), x2: x2.toFixed(1), y2: y2.toFixed(1), stroke: mut, 'stroke-width': 1 });
+      el2('line', { x1: x1.toFixed(1), y1: (y1 - 5).toFixed(1), x2: x1.toFixed(1), y2: (y1 + 5).toFixed(1), stroke: mut, 'stroke-width': 1 });
+      el2('line', { x1: x2.toFixed(1), y1: (y2 - 5).toFixed(1), x2: x2.toFixed(1), y2: (y2 + 5).toFixed(1), stroke: mut, 'stroke-width': 1 });
+      tx((x1 + x2) / 2, (y1 + y2) / 2 - 6, str, 12, 'middle', mut);
+    }
+    function dimV(x, y1, y2, str) {
+      // vertical dimension line with a rotated label
+      el2('line', { x1: x.toFixed(1), y1: y1.toFixed(1), x2: x.toFixed(1), y2: y2.toFixed(1), stroke: mut, 'stroke-width': 1 });
+      el2('line', { x1: (x - 5).toFixed(1), y1: y1.toFixed(1), x2: (x + 5).toFixed(1), y2: y1.toFixed(1), stroke: mut, 'stroke-width': 1 });
+      el2('line', { x1: (x - 5).toFixed(1), y1: y2.toFixed(1), x2: (x + 5).toFixed(1), y2: y2.toFixed(1), stroke: mut, 'stroke-width': 1 });
+      var mx = x - 9, my = (y1 + y2) / 2;
+      var t = tx(mx, my, str, 12, 'middle', mut);
+      t.setAttribute('transform', 'rotate(-90 ' + mx.toFixed(1) + ' ' + my.toFixed(1) + ')');
+    }
+    if (night) el2('rect', { x: 0, y: 0, width: VW, height: VH, fill: '#0e1320' });
+
+    var L = o.L, H = o.H;
+    var hasRoom = o.outdoor || (L > 0);
+    if (!hasRoom) {
+      tx(VW / 2, VH / 2 - 8, 'Enter your room size above to see the side view.', 15, 'middle', mut);
+      tx(VW - 12, VH - 10, 'BudgetProjectors.org', 13, 'end', mut).setAttribute('opacity', 0.55);
+      return;
+    }
+    var hasScreen = o.swFt > 0 && o.shFt > 0;
+    if (!hasScreen) {
+      tx(VW / 2, VH / 2 - 8, o.r ? 'Enter a screen size to see the side view.' : 'Pick a model and enter a screen size.', 14, 'middle', mut);
+      tx(VW - 12, VH - 10, 'BudgetProjectors.org', 13, 'end', mut).setAttribute('opacity', 0.55);
+      return;
+    }
+    var sw = o.swFt, sh = o.shFt;
+    var hKnown = H >= 0 && H > 0;
+    // screen vertical placement mirrors drawViz
+    var z0 = 2;
+    if (hKnown && z0 + sh > H - 0.5) z0 = Math.max(0.5, H - sh - 0.5);
+    var zc = z0 + sh / 2;
+    // projector placement mirrors drawViz
+    var ust = o.r[1] < 1;
+    var imgWIn = o.imgWIn || sw * 12;
+    var near = imgWIn / 12 * o.r[0];
+    var pxx = (o.px != null) ? o.px : near;
+    var ppos = !ust ? (o.projPos || 'behind') : 'behind';
+    var pzz = (o.pz != null) ? o.pz : (ust ? 1 : zc);
+    var poleTop = -1, onTable = false;
+    if (ppos === 'ceiling' && hKnown) { pzz = H - 1.0; poleTop = H; }
+    else if (ppos === 'table') { pzz = 2.475; onTable = true; }
+    else if (o.pmount && hKnown) { poleTop = H; }
+    // plot scaling
+    var xMax = Math.max(L || 10, pxx > 0 ? pxx : 0);
+    var zTop = hKnown ? H : Math.max(z0 + sh + 1, pzz + 1.5, 6);
+    var padL = 66, padR = 26, padT = 28, padB = 64;
+    var s = Math.min((VW - padL - padR) / xMax, (VH - padT - padB) / zTop);
+    var ox = padL, oy = VH - padB;
+    function X(x) { return ox + x * s; }
+    function Z(z) { return oy - z * s; }
+
+    // room shell
+    el2('line', { x1: X(0).toFixed(1), y1: oy.toFixed(1), x2: X(L).toFixed(1), y2: oy.toFixed(1), stroke: ink, 'stroke-width': 3 }); // floor
+    if (!o.outdoor) {
+      var wallTop = hKnown ? H : z0 + sh;
+      el2('line', { x1: X(0).toFixed(1), y1: oy.toFixed(1), x2: X(0).toFixed(1), y2: Z(wallTop).toFixed(1), stroke: ink, 'stroke-width': 2 }); // screen wall
+      el2('line', { x1: X(L).toFixed(1), y1: oy.toFixed(1), x2: X(L).toFixed(1), y2: Z(wallTop).toFixed(1), stroke: ink, 'stroke-width': 2 }); // back wall
+      if (hKnown) {
+        el2('line', { x1: X(0).toFixed(1), y1: Z(H).toFixed(1), x2: X(L).toFixed(1), y2: Z(H).toFixed(1), stroke: ink, 'stroke-width': 2 }); // ceiling
+      } else {
+        el2('line', { x1: X(0).toFixed(1), y1: Z(zTop).toFixed(1), x2: X(L).toFixed(1), y2: Z(zTop).toFixed(1),
+          stroke: mut, 'stroke-width': 1.5, 'stroke-dasharray': '7 5' });
+        tx(X(L) + 4, Z(zTop) + 4, 'enter ceiling height', 11, 'start', mut);
+      }
+    }
+    // screen
+    el2('rect', { x: (X(0) - 7).toFixed(1), y: Z(z0 + sh).toFixed(1), width: 7, height: (sh * s).toFixed(1),
+      fill: scrFill, stroke: ink, 'stroke-width': 1.5 });
+    tx(X(0) + 10, Z(zc) + 4, 'screen ' + dispShort(sh), 11, 'start', mut);
+    // throw beam: lens to screen top and bottom
+    var lx = X(pxx), lz = Z(pzz);
+    el2('line', { x1: lx.toFixed(1), y1: lz.toFixed(1), x2: X(0).toFixed(1), y2: Z(z0).toFixed(1),
+      stroke: ink, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0.55 });
+    el2('line', { x1: lx.toFixed(1), y1: lz.toFixed(1), x2: X(0).toFixed(1), y2: Z(z0 + sh).toFixed(1),
+      stroke: ink, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0.55 });
+    // mount pole or table
+    if (poleTop > 0) {
+      el2('line', { x1: lx.toFixed(1), y1: (lz - 8).toFixed(1), x2: lx.toFixed(1), y2: Z(poleTop).toFixed(1), stroke: ink, 'stroke-width': 4 });
+    } else if (onTable) {
+      el2('rect', { x: (lx - 1.2 * s).toFixed(1), y: Z(2.2).toFixed(1), width: (2.4 * s).toFixed(1), height: (2.2 * s).toFixed(1),
+        fill: night ? '#4a5878' : '#c9bfae', stroke: ink, 'stroke-width': 1.5 });
+    } else if (o.outdoor) {
+      // stand legs for the outdoor screen
+      el2('line', { x1: X(0.3).toFixed(1), y1: Z(z0).toFixed(1), x2: X(0.9).toFixed(1), y2: oy.toFixed(1), stroke: ink, 'stroke-width': 2.5 });
+      el2('line', { x1: (X(0) - 7).toFixed(1), y1: Z(z0).toFixed(1), x2: (X(0) - 14).toFixed(1), y2: oy.toFixed(1), stroke: ink, 'stroke-width': 2.5 });
+    }
+    // projector body
+    el2('rect', { x: (lx - 17).toFixed(1), y: (lz - 8).toFixed(1), width: 34, height: 16, rx: 3,
+      fill: night ? '#3b5a94' : NAVY });
+    tx(lx, lz - 14, ppos === 'ceiling' ? 'ceiling mount' : (onTable ? 'on table' : 'projector'), 11, 'middle', mut);
+    // seating marker
+    if (o.seat > 0) {
+      var sx = Math.min(o.seat, (L || 10) - 0.5);
+      el2('rect', { x: (X(sx) - 20).toFixed(1), y: (oy - 20).toFixed(1), width: 40, height: 20, rx: 4,
+        fill: night ? '#5c6a8c' : '#9aa5bd', stroke: ink, 'stroke-width': 1.5 });
+      tx(X(sx), oy - 26, 'seating', 11, 'middle', mut);
+    }
+    // dimensions
+    dim(X(0), oy + 20, X(pxx), oy + 20, dispDist(pxx) + ' throw');
+    dim(X(0), oy + 40, X(L), oy + 40, dispShort(L) + (o.outdoor ? '' : ' long'));
+    if (hKnown) dimV(X(0) - 26, Z(H), oy, dispShort(H) + ' ceiling');
+    var wmt = tx(VW - 12, VH - 10, 'BudgetProjectors.org', 13, 'end', mut);
+    wmt.setAttribute('opacity', 0.55);
+  }
+
+  function drawAll(o) { drawViz(o); drawSideViz(o); }
 
   // init
   var savedMode = 'basic';

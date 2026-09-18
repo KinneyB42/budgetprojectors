@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260918e">
+  <link rel="stylesheet" href="css/style.css?v=20260918f">
 </head>
 <body>
 
@@ -202,10 +202,18 @@
           <button type="button" class="calc__chip" id="calc-share">Share link</button>
           <button type="button" class="calc__chip" id="calc-export-png">Export PNG</button>
           <button type="button" class="calc__chip" id="calc-export-jpg">Export JPG</button>
+          <button type="button" class="calc__chip" id="calc-export-pdf">Export PDF</button>
         </div>
       </div>
       <div class="calc__viz">
-        <svg id="calc-svg" viewBox="0 0 660 440" role="img" aria-label="3D room visualization"></svg>
+        <figure class="calc__fig">
+          <svg id="calc-svg" viewBox="0 0 660 440" role="img" aria-label="3D room visualization"></svg>
+          <figcaption>3D view</figcaption>
+        </figure>
+        <figure class="calc__fig">
+          <svg id="calc-svg-side" viewBox="0 0 660 380" role="img" aria-label="Side view of the room"></svg>
+          <figcaption>Side view</figcaption>
+        </figure>
       </div>
 
       <div class="calc__result show" id="calc-plan-result" aria-live="polite"></div>
@@ -445,5 +453,6 @@
 <script src="js/main.js"></script>
 <script src="js/golf.js?v=20260918h"></script>
 <div id="golf-print" aria-hidden="true"></div>
+<div id="calc-print" aria-hidden="true"></div>
 </body>
 </html>

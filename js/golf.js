@@ -1101,6 +1101,7 @@
       var slot = document.getElementById('gp-v' + i);
       if (slot && src) slot.appendChild(src.cloneNode(true));
     });
+    document.body.classList.add('printing-golf');
     window.print();
   }
 

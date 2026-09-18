@@ -309,6 +309,9 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__viz { border: 1px solid var(--line); background: var(--white); margin: 0 0 22px; }
 .calc__viz svg { display: block; width: 100%; height: auto; }
 .calc__viz text { font-family: var(--sans); }
+.calc__fig { margin: 0; }
+.calc__fig + .calc__fig { border-top: 1px solid var(--line); }
+.calc__fig figcaption { font-size: 12.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); padding: 12px 16px 14px; }
 .calc__viz-head { display: flex; justify-content: space-between; align-items: center; margin: 22px 0 10px; flex-wrap: wrap; gap: 8px; }
 .calc__viz-title { font-size: 12.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--navy); }
 .calc__viz-toggles .calc__chip { margin: 0 0 0 8px; }
@@ -401,10 +404,12 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 /* Golf plan export */
 .golf-export-section { border-top: 1px solid var(--line); }
 .golf-export-buttons { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
-#golf-print { display: none; }
+#golf-print, #calc-print { display: none; }
 @media print {
-  body > *:not(#golf-print) { display: none !important; }
-  #golf-print { display: block !important; padding: 8px 4px; color: #111; font-family: Poppins, Arial, Helvetica, sans-serif; }
+  body.printing-golf > *:not(#golf-print) { display: none !important; }
+  body.printing-calc > *:not(#calc-print) { display: none !important; }
+  body.printing-golf #golf-print { display: block !important; padding: 8px 4px; color: #111; font-family: Poppins, Arial, Helvetica, sans-serif; }
+  body.printing-calc #calc-print { display: block !important; padding: 8px 4px; color: #111; font-family: Poppins, Arial, Helvetica, sans-serif; }
   .gp-head { background: #0c2244; color: #fff; padding: 26px 30px; border-radius: 10px; }
   .gp-brand { letter-spacing: 2px; font-size: 13px; color: #8fa3c8; font-weight: 600; }
   .gp-head h1 { margin: 6px 0 0; font-size: 30px; color: #fff; }
@@ -426,4 +431,22 @@ h3 { font-size: 22px; margin-bottom: 12px; }
   .gp-acc a { color: #1a56db; word-break: break-all; }
   .gp-foot { margin-top: 26px; border-top: 2px solid #0c2244; padding-top: 12px; font-size: 12px; color: #555; }
   .gp-watermark { position: fixed; top: 42%; left: 0; right: 0; text-align: center; transform: rotate(-24deg); font-size: 84px; font-weight: 700; color: #0c2244; opacity: 0.05; pointer-events: none; }
+}
+
+@media print {
+  .cp-head { background: #0c2244; color: #fff; padding: 26px 30px; border-radius: 10px; }
+  .cp-brand { letter-spacing: 2px; font-size: 13px; color: #8fa3c8; font-weight: 600; }
+  .cp-head h1 { margin: 6px 0 0; font-size: 30px; color: #fff; }
+  .cp-date { color: #8fa3c8; font-size: 13px; margin-top: 4px; }
+  .cp-tagline { font-style: italic; color: #555; font-size: 14px; }
+  .cp-specs { width: 100%; border-collapse: collapse; margin: 10px 0 16px; }
+  .cp-specs th, .cp-specs td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #ddd; font-size: 14px; vertical-align: top; }
+  .cp-specs th { color: #666; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; width: 210px; }
+  .cp-fit { border-radius: 10px; padding: 16px 22px; font-size: 20px; font-weight: 700; color: #fff; margin: 12px 0 18px; }
+  .cp-fit.yes { background: #2e7d5b; }
+  .cp-fit.warn { background: #b7791f; }
+  #calc-print h2 { font-size: 20px; color: #0c2244; margin: 22px 0 10px; }
+  .cp-view svg { width: 100%; height: auto; border: 1px solid #ccc; border-radius: 6px; page-break-inside: avoid; }
+  .cp-foot { margin-top: 26px; border-top: 2px solid #0c2244; padding-top: 12px; font-size: 12px; color: #555; }
+  .cp-watermark { position: fixed; top: 42%; left: 0; right: 0; text-align: center; transform: rotate(-24deg); font-size: 84px; font-weight: 700; color: #0c2244; opacity: 0.05; pointer-events: none; }
 }
