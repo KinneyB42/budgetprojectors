@@ -2507,7 +2507,136 @@
     watermark3();
   }
 
-  function drawAll(o) { drawViz(o); drawSideViz(o); drawViewerViz(o); if (advMode) { drawMountViz(o); drawDropViz(o); } }
+  /* ---------- Ceiling view: looking straight up at the ceiling ----------
+     Plan of the ceiling showing where each projector mounts, so A/B/C
+     throw differences read at a glance. */
+  function drawCeilingViz(o) {
+    var svg6 = document.getElementById('calc-svg-ceiling');
+    if (!svg6) return;
+    while (svg6.firstChild) svg6.removeChild(svg6.firstChild);
+    var VW = 660, VH = 360;
+    var night = !sunOn && !lightsOn;
+    var mut = night ? '#8a94a8' : MUTED;
+    var ink = night ? '#dbe2f0' : NAVY;
+    function el6(name, attrs) {
+      var e = document.createElementNS(NS, name);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      svg6.appendChild(e); return e;
+    }
+    function tx6(x, y, str, size, anchor, fill) {
+      var t = el6('text', { x: x.toFixed(1), y: y.toFixed(1), 'text-anchor': anchor || 'middle',
+        'font-size': size || 12, fill: fill || mut });
+      t.textContent = str; return t;
+    }
+    function watermark6() {
+      var w = tx6(VW - 12, VH - 12, 'BudgetProjectors.org', 13, 'end', mut);
+      w.setAttribute('opacity', 0.55);
+    }
+    var L = o.L || 0, W = o.W || 0, H = o.H || 0, sw = o.swFt || 0;
+    if (o.outdoor) {
+      tx6(VW / 2, VH / 2 - 8, 'No ceiling outdoors — the ceiling view needs a room.', 15, 'middle', mut);
+      watermark6(); return;
+    }
+    if (!(L > 0 && W > 0)) {
+      tx6(VW / 2, VH / 2 - 8, 'Enter your room size above to see the ceiling view.', 15, 'middle', mut);
+      watermark6(); return;
+    }
+    if (!(sw > 0)) {
+      tx6(VW / 2, VH / 2 - 8, 'Pick a screen size above to see the ceiling view.', 15, 'middle', mut);
+      watermark6(); return;
+    }
+    tx6(VW / 2, 24, 'Looking up at the ceiling — where each projector mounts', 14, 'middle', ink);
+    // plan scale: x = distance from the screen wall, y = across the room
+    var padL = 64, padR = 30, padT = 48, padB = 54;
+    var s = Math.min((VW - padL - padR) / L, (VH - padT - padB) / W);
+    var ox = padL + ((VW - padL - padR) - L * s) / 2;
+    var oy = padT + ((VH - padT - padB) - W * s) / 2;
+    function X(x) { return ox + x * s; }
+    function Y(y) { return oy + y * s; }
+    // ceiling slab
+    el6('rect', { x: X(0).toFixed(1), y: Y(0).toFixed(1), width: (L * s).toFixed(1), height: (W * s).toFixed(1),
+      fill: night ? '#141b2e' : '#eef1f6', stroke: ink, 'stroke-width': 2 });
+    // faint grid every 2 ft so throw differences are easy to read
+    for (var gx = 2; gx < L; gx += 2) {
+      el6('line', { x1: X(gx).toFixed(1), y1: Y(0).toFixed(1), x2: X(gx).toFixed(1), y2: Y(W).toFixed(1),
+        stroke: ink, 'stroke-width': 1, opacity: 0.14 });
+    }
+    // screen mark on the screen wall (left edge)
+    var scrA = Y(W / 2 - sw / 2), scrB = Y(W / 2 + sw / 2);
+    el6('line', { x1: X(0).toFixed(1), y1: scrA.toFixed(1), x2: X(0).toFixed(1), y2: scrB.toFixed(1),
+      stroke: night ? '#9fb6dd' : '#41598a', 'stroke-width': 7, 'stroke-linecap': 'round' });
+    tx6(X(0) - 10, (scrA + scrB) / 2 + 4, 'screen', 11, 'end', mut);
+    // seating marker
+    if (o.seat > 0) {
+      var sx = Math.min(o.seat, L - 0.5);
+      el6('rect', { x: (X(sx) - 16).toFixed(1), y: (Y(W / 2) - 10).toFixed(1), width: 32, height: 20, rx: 5,
+        fill: night ? '#5c6a8c' : '#9aa5bd', stroke: ink, 'stroke-width': 1.5 });
+      tx6(X(sx), Y(W / 2) - 18, 'seating', 11, 'middle', mut);
+    }
+    // ceiling fan at room center; amber when it fouls the mount or the beam
+    if (fanOn && H > 0) {
+      var fx = X(L / 2), fy = Y(W / 2);
+      var fAlert = o.obst && (o.obst.fanBeam || o.obst.fanMount);
+      var fcol = fAlert ? '#d98a2b' : mut;
+      for (var bi = 0; bi < 4; bi++) {
+        var fa = bi * Math.PI / 2 + Math.PI / 4;
+        el6('line', { x1: fx.toFixed(1), y1: fy.toFixed(1),
+          x2: (fx + 24 * Math.cos(fa)).toFixed(1), y2: (fy + 24 * Math.sin(fa)).toFixed(1),
+          stroke: fcol, 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 0.75 });
+      }
+      el6('circle', { cx: fx.toFixed(1), cy: fy.toFixed(1), r: 5, fill: fcol });
+      tx6(fx, fy - 32, 'ceiling fan', 11, 'middle', fcol);
+    }
+    // projectors as seen from below: A navy, B green, C orange (matches the 3D view)
+    var projs = [];
+    if (o.px >= 0 && o.r) {
+      var mainDist = fmtDist(o.imgWIn * o.r[0]) + (o.r[1] !== o.r[0] ? '–' + fmtDist(o.imgWIn * o.r[1]) : '');
+      projs.push({ tag: 'A', px: o.px, py: o.py != null ? o.py : W / 2, dist: mainDist,
+        col: night ? '#8fb0e8' : NAVY, ceiling: o.projPos === 'ceiling' || !!o.pmount });
+    }
+    (o.extraProj || []).forEach(function (xp, xi) {
+      if (!(xp.px >= 0)) return;
+      projs.push({ tag: xp.tag, px: xp.px, py: xp.py != null ? xp.py : W / 2, dist: xp.dist,
+        col: xi === 0 ? (night ? '#57b586' : '#2e7d5b') : (night ? '#e09a3c' : '#c07a1e'),
+        ceiling: xp.pos === 'ceiling' });
+    });
+    // stagger glyphs that would sit on top of each other
+    var placed = [];
+    projs.forEach(function (p) {
+      var dx = Math.max(0.5, Math.min(L - 0.5, p.px));
+      var dy = Math.max(0.9, Math.min(W - 0.9, p.py));
+      placed.forEach(function (q) {
+        if (Math.abs(dx - q.dx) < 1 && Math.abs(dy - q.dy) < 1) dy = Math.min(W - 0.9, q.dy + 1.2);
+      });
+      p.dx = dx; p.dy = dy; placed.push(p);
+    });
+    projs.forEach(function (p) {
+      var cx = X(p.dx), cy = Y(p.dy), bw = 1.2 * s, bh = 1.0 * s;
+      var body = { x: (cx - bw / 2).toFixed(1), y: (cy - bh / 2).toFixed(1),
+        width: bw.toFixed(1), height: bh.toFixed(1), rx: 4,
+        fill: p.col, opacity: 0.92, stroke: ink, 'stroke-width': 1.5 };
+      if (!p.ceiling) body['stroke-dasharray'] = '5 4'; // dashed = not ceiling-mounted
+      el6('rect', body);
+      // lens on the screen-facing edge
+      el6('circle', { cx: (cx - bw / 2).toFixed(1), cy: cy.toFixed(1), r: 4,
+        fill: night ? '#dbe2f0' : '#ffffff', stroke: ink, 'stroke-width': 1 });
+      // mount point for ceiling mounts
+      if (p.ceiling) el6('circle', { cx: cx.toFixed(1), cy: cy.toFixed(1), r: 3.5, fill: night ? '#0e1320' : '#ffffff' });
+      tx6(cx, cy + bh / 2 + 17, p.tag + ' · ' + p.dist, 12, 'middle', p.col);
+    });
+    // dimensions
+    var dyL = Y(W) + 30;
+    el6('line', { x1: X(0).toFixed(1), y1: dyL.toFixed(1), x2: X(L).toFixed(1), y2: dyL.toFixed(1), stroke: mut, 'stroke-width': 1 });
+    el6('line', { x1: X(0).toFixed(1), y1: (dyL - 5).toFixed(1), x2: X(0).toFixed(1), y2: (dyL + 5).toFixed(1), stroke: mut, 'stroke-width': 1 });
+    el6('line', { x1: X(L).toFixed(1), y1: (dyL - 5).toFixed(1), x2: X(L).toFixed(1), y2: (dyL + 5).toFixed(1), stroke: mut, 'stroke-width': 1 });
+    tx6((X(0) + X(L)) / 2, dyL + 16, dispShort(L) + ' long', 11, 'middle', mut);
+    var dxW = X(0) - 34;
+    el6('line', { x1: dxW.toFixed(1), y1: Y(0).toFixed(1), x2: dxW.toFixed(1), y2: Y(W).toFixed(1), stroke: mut, 'stroke-width': 1 });
+    var wt = tx6(dxW - 8, (Y(0) + Y(W)) / 2, dispShort(W) + ' wide', 11, 'middle', mut);
+    wt.setAttribute('transform', 'rotate(-90 ' + (dxW - 8).toFixed(1) + ' ' + ((Y(0) + Y(W)) / 2).toFixed(1) + ')');
+    watermark6();
+  }
+  function drawAll(o) { drawViz(o); drawSideViz(o); drawViewerViz(o); drawCeilingViz(o); if (advMode) { drawMountViz(o); drawDropViz(o); } }
 
   /* ---------- Mounting guidance: screen height + projector drop simulator ----------
      Screen: center it at seated eye level. Projector drop: with the screen placed,
