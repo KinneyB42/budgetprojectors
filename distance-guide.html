@@ -233,6 +233,155 @@
       <p>As a rule of thumb, sit about 1.5 to 2.5 times the screen width away. Too close and you'll see pixels and crane your neck; too far and you lose the cinematic feel. For a 100-inch screen (about 7.3 ft wide), that's roughly 11–18 ft of seating distance.</p>
 
       <p>Odd room shape, short throw, or mounting constraints? <a href="book-a-consultation.html">Book a consultation</a> and we'll map your room properly.</p>
+
+      <style>
+        #golf-sim { margin-top: 64px; padding-top: 48px; border-top: 1px solid var(--line); }
+        #golf-sim h2 { font-family: var(--serif); }
+        #golf-sim .golf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+        #golf-sim .golf-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px; }
+        #golf-sim .golf-views { display: grid; grid-template-columns: 1fr; gap: 24px; margin-top: 24px; }
+        @media (min-width: 900px) { #golf-sim .golf-views { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 560px) { #golf-sim .golf-row, #golf-sim .golf-row3 { grid-template-columns: 1fr; } }
+        #golf-sim figure { margin: 0; }
+        #golf-sim .golf-cap { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin-bottom: 8px; }
+        #golf-sim svg.golf-svg { width: 100%; height: auto; display: block; border: 1px solid var(--line); background: var(--white); }
+        #golf-sim input[type="range"] { width: 100%; accent-color: var(--navy); }
+      </style>
+      <section id="golf-sim" aria-label="Golf simulator calculator">
+        <p class="label">Golf Simulator</p>
+        <h2>Golf Simulator Calculator</h2>
+        <p class="lede">Plan your sim bay: pick a projector, set your screen and room, and see the throw, the fit, the brightness, and exactly what the unused screen looks like from the hitting mat.</p>
+
+        <div class="calc">
+          <div class="calc__model">
+            <label for="golf-model">Projector model</label>
+            <input type="text" id="golf-model" placeholder="Start typing your model&hellip;" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="golf-suggest">
+            <div class="calc__suggest" id="golf-suggest" role="listbox" hidden></div>
+            <p class="calc__selected" id="golf-selected" hidden></p>
+            <div id="golf-lens-wrap" hidden>
+              <label for="golf-lens">Lens</label>
+              <select id="golf-lens"></select>
+            </div>
+          </div>
+          <div class="golf-row">
+            <div>
+              <label for="golf-ratio-min">Throw ratio min (optional)</label>
+              <input type="number" id="golf-ratio-min" step="0.01" min="0" placeholder="e.g. 0.5">
+            </div>
+            <div>
+              <label for="golf-ratio-max">Throw ratio max (optional)</label>
+              <input type="number" id="golf-ratio-max" step="0.01" min="0" placeholder="e.g. 0.5">
+            </div>
+          </div>
+          <p class="calc__hint">Leave the ratio blank to use the selected model's published ratio, or type your own.</p>
+          <div>
+            <label for="golf-lumens">Projector lumens</label>
+            <input type="number" id="golf-lumens" step="50" min="0" placeholder="e.g. 4200">
+          </div>
+
+          <div class="golf-row">
+            <div>
+              <label for="golf-screen-w">Screen width (ft)</label>
+              <input type="number" id="golf-screen-w" step="0.5" min="4" max="30" value="10">
+            </div>
+            <div>
+              <label for="golf-screen-h">Screen height (ft)</label>
+              <input type="number" id="golf-screen-h" step="0.5" min="3" max="20" value="7.5">
+            </div>
+          </div>
+          <div>
+            <label for="golf-aspect">Screen aspect ratio</label>
+            <select id="golf-aspect">
+              <option value="16:9">16:9</option>
+              <option value="16:10">16:10</option>
+              <option value="4:3" selected>4:3</option>
+              <option value="1:1">1:1</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <p class="calc__hint">Golf sim screens are usually 4:3 or 1:1. Pick an aspect to fill the height, or type your exact width and height.</p>
+
+          <div class="golf-row3">
+            <div>
+              <label for="golf-room-len">Room length (ft)</label>
+              <input type="number" id="golf-room-len" step="0.5" min="6" max="60" value="17">
+            </div>
+            <div>
+              <label for="golf-room-wid">Room width (ft)</label>
+              <input type="number" id="golf-room-wid" step="0.5" min="6" max="40" value="10.5">
+            </div>
+            <div>
+              <label for="golf-room-ceil">Ceiling height (ft)</label>
+              <input type="number" id="golf-room-ceil" step="0.5" min="7" max="20" value="11.5">
+            </div>
+          </div>
+          <div class="golf-row">
+            <div>
+              <label for="golf-hit">Hitting distance from screen (ft)</label>
+              <input type="number" id="golf-hit" step="0.5" min="2" max="30" value="10">
+            </div>
+            <div>
+              <label for="golf-throw">Throw distance, lens to screen (ft)</label>
+              <input type="number" id="golf-throw" step="0.5" min="1" max="60" placeholder="e.g. 11">
+            </div>
+          </div>
+
+          <label>Projector placement</label>
+          <div class="calc__chips" id="golf-placement">
+            <button type="button" class="calc__chip" data-place="frame">Top of sim frame</button>
+            <button type="button" class="calc__chip chosen" data-place="ceiling">Ceiling mount</button>
+            <button type="button" class="calc__chip" data-place="floor-left">Floor left</button>
+            <button type="button" class="calc__chip" data-place="floor-right">Floor right</button>
+            <button type="button" class="calc__chip" data-place="table-left">Table left of golfer</button>
+            <button type="button" class="calc__chip" data-place="table-right">Table right of golfer</button>
+          </div>
+
+          <label>Ceiling-mounted garage door opener?</label>
+          <div class="calc__chips" id="golf-opener-chips">
+            <button type="button" class="calc__chip chosen" data-opener="no">No</button>
+            <button type="button" class="calc__chip" data-opener="yes">Yes</button>
+          </div>
+          <div id="golf-opener-wrap" hidden>
+            <label for="golf-opener-dist">Opener distance from screen (ft)</label>
+            <input type="number" id="golf-opener-dist" step="0.5" min="1" max="40" placeholder="e.g. 9">
+            <p class="calc__hint">For a ceiling mount, the opener eats into your room: available length is room length minus this distance.</p>
+          </div>
+
+          <label>Source device</label>
+          <div class="calc__chips" id="golf-device">
+            <button type="button" class="calc__chip chosen" data-device="pc">PC</button>
+            <button type="button" class="calc__chip" data-device="iphone">iPhone</button>
+            <button type="button" class="calc__chip" data-device="ipad">iPad</button>
+          </div>
+          <p class="calc__hint" id="golf-device-advice"></p>
+
+          <div class="calc__chips">
+            <button type="button" class="calc__chip" id="golf-shift-chip" aria-pressed="false">My projector has vertical lens shift</button>
+          </div>
+          <div id="golf-shift-wrap" hidden>
+            <label for="golf-shift">Lens shift: <span id="golf-shift-val">0%</span></label>
+            <input type="range" id="golf-shift" min="-50" max="50" step="5" value="0">
+          </div>
+
+          <div>
+            <label for="golf-gain">Screen gain</label>
+            <input type="number" id="golf-gain" step="0.1" min="0.1" max="3" value="1.0">
+          </div>
+
+          <div class="calc__result show" id="golf-results" aria-live="polite"></div>
+
+          <div class="golf-views">
+            <figure>
+              <figcaption class="golf-cap">Top-down view</figcaption>
+              <svg class="golf-svg" id="golf-top" viewBox="0 0 620 400" role="img" aria-label="Top-down room layout"></svg>
+            </figure>
+            <figure>
+              <figcaption class="golf-cap">What you'll see from the hitting mat</figcaption>
+              <svg class="golf-svg" id="golf-front" viewBox="0 0 620 400" role="img" aria-label="Front view from the hitting mat"></svg>
+            </figure>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 </section>
@@ -256,5 +405,6 @@
 
 <script src="js/throw-data.js"></script>
 <script src="js/main.js"></script>
+<script src="js/golf.js"></script>
 </body>
 </html>
