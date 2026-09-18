@@ -1346,7 +1346,18 @@
       if (o.r[1] !== o.r[0]) rangeLabel += '–' + fmtDist(imgWIn * o.r[1]);
       // throw range in the white margin outside the 3D render, not under the unit
       var throwTag = el('text', { x: 16, y: 26, 'font-size': 13, 'font-weight': '600', fill: pal.label });
-      throwTag.textContent = 'Throw ' + rangeLabel;
+      var tThrow = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+      tThrow.textContent = 'Throw ' + rangeLabel;
+      throwTag.appendChild(tThrow);
+      if (!o.outdoor) {
+        var throwInRange = far <= o.L;
+        var tStat = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tStat.textContent = throwInRange ? ' · In range' : ' · Out of range';
+        tStat.setAttribute('fill', throwInRange
+          ? (scene === 'night' ? '#7fd6a4' : '#2e7d5b')
+          : (scene === 'night' ? '#ff9d8a' : '#c0392b'));
+        throwTag.appendChild(tStat);
+      }
       // light cone: lens to screen corners
       var lens = [pxx, pyy, pzz];
       var sc = [[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]];
