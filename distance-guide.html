@@ -268,6 +268,17 @@
             <input type="number" id="golf-lumens" step="50" min="0" placeholder="e.g. 4200">
           </div>
 
+          <div>
+            <label for="golf-aspect">Screen aspect ratio</label>
+            <select id="golf-aspect">
+              <option value="16:9">16:9</option>
+              <option value="16:10">16:10</option>
+              <option value="4:3" selected>4:3</option>
+              <option value="1:1">1:1</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <p class="calc__hint">Choose your aspect ratio first. Golf sim screens are usually 4:3 or 1:1, and the height fills in automatically from the width.</p>
           <div class="golf-row">
             <div>
               <label for="golf-screen-w">Screen width (ft)</label>
@@ -284,17 +295,6 @@
             <button type="button" class="calc__chip" data-sw="12">12 ft wide</button>
             <button type="button" class="calc__chip chosen" data-sw="custom">Custom</button>
           </div>
-          <div>
-            <label for="golf-aspect">Screen aspect ratio</label>
-            <select id="golf-aspect">
-              <option value="16:9">16:9</option>
-              <option value="16:10">16:10</option>
-              <option value="4:3" selected>4:3</option>
-              <option value="1:1">1:1</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-          <p class="calc__hint">Golf sim screens are usually 4:3 or 1:1. Pick an aspect to fill the height, or type your exact width and height.</p>
 
           <label>Room type</label>
           <div class="calc__chips" id="golf-roomtype">
