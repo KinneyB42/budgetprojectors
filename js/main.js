@@ -1596,8 +1596,9 @@
         flNote = fl < 12 ? 'dim, best in a fully dark room' :
           fl < 30 ? 'good with the lights off' :
           fl < 60 ? 'holds up with some ambient light' : 'bright enough for lights-on viewing';
-        bits.push('Brightness: about ' + fmt(fl, 0) + ' foot-lamberts on this screen, ' + flNote +
-          (screenType === 'alr' ? ' The ALR surface holds contrast with the lights on.' : '.'));
+        bits.push('Brightness: about ' + fmt(fl, 0) + ' foot-lamberts on this screen' +
+          (outdoor ? '.' : ', ' + flNote +
+            (screenType === 'alr' ? ' The ALR surface holds contrast with the lights on.' : '.')));
       }
     }
     var mountStr = '', dropStr = '';
@@ -2159,10 +2160,12 @@
           var bT1 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
           bT1.textContent = 'Brightness ~' + fmt(bFl, 0) + ' fL';
           bTag.appendChild(bT1);
-          var bT2 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-          bT2.textContent = ' · ' + bNote;
-          bT2.setAttribute('fill', bCol);
-          bTag.appendChild(bT2);
+          if (!o.outdoor) {
+            var bT2 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+            bT2.textContent = ' · ' + bNote;
+            bT2.setAttribute('fill', bCol);
+            bTag.appendChild(bT2);
+          }
         }
       }
       // seating position in the white margin, not inside the 3D render
