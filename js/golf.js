@@ -146,12 +146,21 @@
   }
 
   function renderSuggest(q) {
-    if (q.length < 2) { suggest.hidden = true; suggest.innerHTML = ''; return; }
+    suggest.innerHTML = '';
+    if (q.length < 2) { suggest.hidden = true; return; }
+    function emptyNote(text) {
+      var d = document.createElement('div');
+      d.className = 'calc__suggest-empty';
+      d.textContent = text;
+      suggest.appendChild(d);
+      suggest.hidden = false;
+      modelInput.setAttribute('aria-expanded', 'true');
+    }
+    if (!THROW.length) { emptyNote('Loading projector database - try again in a moment.'); return; }
     var matches = THROW.filter(function (x) {
       return (x.b + ' ' + x.m).toLowerCase().indexOf(q) !== -1;
     }).slice(0, 20);
-    if (!matches.length) { suggest.hidden = true; suggest.innerHTML = ''; return; }
-    suggest.innerHTML = '';
+    if (!matches.length) { emptyNote('No models found - try fewer words.'); return; }
     matches.forEach(function (x) {
       var btn = document.createElement('button');
       btn.type = 'button';

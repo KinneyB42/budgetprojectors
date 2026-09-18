@@ -260,6 +260,7 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__suggest button:last-child { border-bottom: 0; }
 .calc__suggest button:hover, .calc__suggest button:focus { background: var(--panel); }
 .calc__suggest .calc__suggest-brand { color: var(--muted); font-size: 13px; margin-right: 8px; }
+.calc__suggest-empty { padding: 10px 12px; color: var(--muted); font-size: 14px; }
 .calc__featured { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 4px; }
 .calc__featured-label { font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
 .calc__chip {
