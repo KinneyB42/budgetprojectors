@@ -477,6 +477,119 @@
     });
   });
 
+  /* ---------- Lens shift (user-declared; the model DB carries no shift specs) ---------- */
+  var shiftOn = false, shiftPct = 0;
+  var shiftChip = document.getElementById('calc-shift-chip');
+  var shiftWrap = document.getElementById('calc-shift-wrap');
+  var shiftInput = document.getElementById('calc-shift');
+  var shiftVal = document.getElementById('calc-shift-val');
+  if (shiftChip) {
+    shiftChip.addEventListener('click', function () {
+      shiftOn = !shiftOn;
+      shiftChip.classList.toggle('chosen', shiftOn);
+      shiftChip.setAttribute('aria-pressed', shiftOn ? 'true' : 'false');
+      if (shiftWrap) shiftWrap.hidden = !shiftOn;
+      recalc();
+    });
+  }
+  if (shiftInput) {
+    shiftInput.addEventListener('input', function () {
+      shiftPct = parseFloat(shiftInput.value, 10) || 0;
+      if (shiftVal) shiftVal.textContent = (shiftPct > 0 ? '+' : '') + shiftPct + '%';
+      recalc();
+    });
+  }
+
+  /* ---------- Ceiling fan (always room center) for the 3D / side views ---------- */
+  var fanOn = false;
+  var fanToggle = document.getElementById('calc-fan-toggle');
+  if (fanToggle) {
+    fanToggle.addEventListener('click', function () {
+      fanOn = !fanOn;
+      fanToggle.classList.toggle('chosen', fanOn);
+      fanToggle.textContent = fanOn ? 'Ceiling fan: On' : 'Ceiling fan: Off';
+      fanToggle.setAttribute('aria-pressed', fanOn ? 'true' : 'false');
+      recalc();
+    });
+  }
+
+  /* ---------- Screen style (physical) and front speakers for the viewer view ---------- */
+  var screenStyle = 'fixed';
+  document.querySelectorAll('#calc-screenstyle .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      screenStyle = chip.getAttribute('data-ss');
+      document.querySelectorAll('#calc-screenstyle .calc__chip').forEach(function (c) {
+        c.classList.toggle('chosen', c === chip);
+      });
+      recalc();
+    });
+  });
+  var speakerMode = 'none';
+  document.querySelectorAll('#calc-speakers .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      speakerMode = chip.getAttribute('data-spk');
+      document.querySelectorAll('#calc-speakers .calc__chip').forEach(function (c) {
+        c.classList.toggle('chosen', c === chip);
+      });
+      recalc();
+    });
+  });
+
+  /* ---------- Projector geometry + obstacle math (shared by 3D, side, results) ----------
+     The lens point is the projector body center plus the vertical lens-shift offset
+     (a fraction of the image height). The model DB carries no shift specs, so the
+     user declares it with the lens-shift chip. The throw beam runs lens -> screen
+     corners; the sightline runs viewer eye -> screen center. */
+  function projectorBodyZ(o, sh, zc, H) {
+    var ust = !!(o.r && o.r[1] < 1);
+    var ppos = !ust ? (o.projPos || 'behind') : 'behind';
+    var pzz = (o.pz != null) ? o.pz : (ust ? 1 : zc);
+    if (ppos === 'ceiling' && H > 0) pzz = H - 1.0;
+    else if (ppos === 'table') pzz = 2.475;
+    else if (ppos === 'rear') pzz = zc;
+    if (shiftOn) pzz += (shiftPct / 100) * sh;
+    return { ppos: ppos, z: pzz, ust: ust };
+  }
+
+  function roomObstacles(o) {
+    var sh = o.shFt;
+    if (!(sh > 0) || !o.r) return null;
+    var H = o.H, L = o.L || 0;
+    var z0 = 2;
+    if (H > 0 && z0 + sh > H - 0.5) z0 = Math.max(0.5, H - sh - 0.5);
+    var zc = z0 + sh / 2;
+    var pg = projectorBodyZ(o, sh, zc, H);
+    var throwD = o.throwD > 0 ? o.throwD : ((o.px != null) ? o.px : 0);
+    var lensX = pg.ppos === 'rear' ? -throwD : throwD;
+    var res = { z0: z0, zc: zc, bodyZ: pg.z, lensX: lensX, ppos: pg.ppos, ust: pg.ust,
+      blocked: false, fanBeam: false, fanMount: false, seatX: 0, eyeH: 3.8 };
+    // projector body in the viewer's sightline? check the full frustum
+    // (eye -> screen top/bottom), not just the center line
+    if (o.seat > 0 && L > 0 && pg.ppos !== 'rear') {
+      var seatX = Math.min(o.seat, L - 0.5);
+      res.seatX = seatX;
+      if (lensX > 0 && lensX < seatX) {
+        var f = (seatX - lensX) / seatX;
+        var hTop = res.eyeH + ((z0 + sh) - res.eyeH) * f;
+        var hBot = res.eyeH + (z0 - res.eyeH) * f;
+        if (pg.z + 0.3 >= hBot && pg.z - 0.3 <= hTop) res.blocked = true;
+      }
+    }
+    // ceiling fan always hangs at room center
+    if (fanOn && !o.outdoor && H > 0 && L > 0) {
+      var fx = L / 2, fz = H - 1.2;
+      if (pg.ppos === 'ceiling' && Math.abs(lensX - fx) < 2) res.fanMount = true;
+      if (lensX > fx) {
+        var t = (lensX - fx) / lensX;
+        var hTop = pg.z + ((z0 + sh) - pg.z) * t;
+        var hBot = pg.z + (z0 - pg.z) * t;
+        var lo = Math.min(hTop, hBot), hi = Math.max(hTop, hBot);
+        if (hi >= fz - 0.4 && lo <= H) res.fanBeam = true;
+      }
+    }
+    return res;
+  }
+
   /* ---------- Lights on/off for the 3D preview ---------- */
   var lightsOn = true;
   var lightsToggle = document.getElementById('calc-lights-toggle');
@@ -533,6 +646,10 @@
     }
     enc('u', unit);
     if (screenType === 'alr') enc('st', 'alr');
+    if (screenStyle !== 'fixed') enc('ss', screenStyle);
+    if (speakerMode !== 'none') enc('spk', speakerMode);
+    if (fanOn) enc('cf', '1');
+    if (shiftOn) { enc('ls', '1'); if (shiftPct !== 0) enc('lsv', shiftPct); }
     if (gainInput && parseFloat(gainInput.value, 10) > 0) enc('gn', parseFloat(gainInput.value, 10));
     if (zoomFrac() > 0) enc('z', Math.round(zoomFrac() * 100));
     if (lockMode !== 'off') enc('lk', lockMode === 'projector' ? '1' : '2');
@@ -638,7 +755,7 @@
       });
     }
     if (!isNaN(num('seat')) && seatInput) seatInput.value = toDisp(num('seat'));
-    if (p.pp) {
+    if (p.pp && ['behind', 'table', 'ceiling', 'rear'].indexOf(p.pp) >= 0) {
       projPos = p.pp;
       document.querySelectorAll('#calc-projpos .calc__chip').forEach(function (c) {
         c.classList.toggle('chosen', c.getAttribute('data-pos') === p.pp);
@@ -646,6 +763,24 @@
     }
     if (!isNaN(num('gn')) && gainInput) gainInput.value = p.gn;
     if (p.st === 'alr') setScreenType('alr');
+    if (p.ss && ['fixed', 'pulldown', 'acoustic', 'floor', 'portable'].indexOf(p.ss) >= 0) {
+      screenStyle = p.ss;
+      document.querySelectorAll('#calc-screenstyle .calc__chip').forEach(function (c) {
+        c.classList.toggle('chosen', c.getAttribute('data-ss') === p.ss);
+      });
+    }
+    if (p.spk && ['none', 'wall', 'tower'].indexOf(p.spk) >= 0) {
+      speakerMode = p.spk;
+      document.querySelectorAll('#calc-speakers .calc__chip').forEach(function (c) {
+        c.classList.toggle('chosen', c.getAttribute('data-spk') === p.spk);
+      });
+    }
+    if (p.cf === '1' && !fanOn && fanToggle) fanToggle.click();
+    if (p.ls === '1' && !shiftOn && shiftChip) shiftChip.click();
+    if (p.lsv && shiftInput) {
+      shiftInput.value = Math.max(-60, Math.min(60, parseFloat(p.lsv) || 0));
+      shiftInput.dispatchEvent(new Event('input'));
+    }
     if (!isNaN(num('z')) && zoomInput) zoomInput.value = Math.max(0, Math.min(100, Math.round(num('z'))));
     if (p.lk === '1') setLockMode('projector'); else if (p.lk === '2') setLockMode('image');
     if (p.li === '0' && lightsOn && lightsToggle) lightsToggle.click();
@@ -1163,11 +1298,13 @@
 
     syncZoom(r, imgWIn);
     var zoomPct = (zoomWrap && !zoomWrap.hidden) ? Math.round(zoomFrac() * 100) : -1;
-    drawAll({ L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
+    var drawO = { L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
       scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType,
       px: px, py: py, pz: pz, pmount: pmount, projPos: projPos, extraProj: extraProj,
       throwD: throwD, zpct: zoomPct, projLocked: lockMode === 'projector',
-      lumens: effLumens > 0 ? effLumens : 0, screenType: screenType });
+      lumens: effLumens > 0 ? effLumens : 0, screenType: screenType };
+    drawO.obst = roomObstacles(drawO);
+    drawAll(drawO);
 
     // Reference viewing distance from viewing angle: 36 deg (immersive) to 30 deg (SMPTE minimum).
     var dClose = (imgWIn / 2) / Math.tan(18 * Math.PI / 180) / 12; // ft
@@ -1208,20 +1345,33 @@
       }
     }
     var fitsRoom;
+    var isRear = !ust && projPos === 'rear';
     if (!outdoor && !dimsKnown) {
       fitsRoom = null; // cannot judge the fit without the user's room size
       bits.push('Enter your room size above to check whether this fits.');
     } else if (!outdoor) {
       var maxW = Math.min(L * 12 / r[1], (W - 1) * 12);
-      fitsRoom = reverseMode ? (tdFt <= L && scrWIn / 12 <= W - 1) : (throwD <= L && scrWIn / 12 <= W - 1);
+      fitsRoom = reverseMode ? (tdFt <= L && scrWIn / 12 <= W - 1) :
+        isRear ? (scrWIn / 12 <= W - 1) : (throwD <= L && scrWIn / 12 <= W - 1);
       if (fitsRoom) {
         bits.push('It fits your ' + ROOMS[roomType].label.toLowerCase() + '.');
       } else {
         bits.push('Too big for this room: the largest screen that fits is about ' +
           fmt(maxW / stdWidthFactor(), 0) + '&Prime; ' + stdAspect + '.');
       }
+      if (isRear && throwD > 0) {
+        bits.push('Rear projection: leave about ' + fmt(throwD + 2, 0) +
+          ' ft behind the screen for the projector and its throw. You will need a dedicated rear-projection screen — standard white and ALR screens do not work from behind.');
+      }
     } else {
       bits.push('No walls to worry about outdoors, just keep the throw path clear.');
+    }
+    // Obstacle warnings from the 3D / side view geometry.
+    var ob = drawO.obst;
+    if (ob) {
+      if (ob.blocked) bits.push('Heads up: the projector sits in your sightline and will block part of the screen from your seat — move it behind the seating or shift it aside.');
+      if (ob.fanMount) bits.push('Heads up: the ceiling mount lands within 2 ft of the ceiling fan — they will collide.');
+      if (ob.fanBeam) bits.push('Heads up: the ceiling fan crosses the throw beam — the blades will cast shadows on the image. Lower the projector with lens shift or move the mount.');
     }
     // Projector locked and the lens ran out of zoom: name what it can actually fill from here.
     if (lockMode === 'projector' && lockPegged && r && r[1] > r[0] && lockedD > 0) {
@@ -1348,6 +1498,11 @@
     };
     function raw(x, y, z) { return [(y - x) * 0.8660254, (x + y) * 0.5 - z]; }
     var corners = [[0,0,0],[L,0,0],[0,W,0],[L,W,0],[0,0,H],[L,0,H],[0,W,H],[L,W,H]];
+    var rearX = 0; // rear projection: the booth behind the screen must fit in the frame
+    if (o.obst && o.obst.ppos === 'rear' && o.throwD > 0) {
+      rearX = -(o.throwD + 1.5);
+      [[rearX,0,0],[rearX,W,0],[rearX,0,H],[rearX,W,H]].forEach(function (c) { corners.push(c); });
+    }
     if (scene === 'sun' && H > 0) {
       // make room in the frame for the sun icon outside the side wall
       var sunFx = L * 0.5, sunFz = H * 0.52;
@@ -1502,24 +1657,64 @@
       var imgWIn = o.imgWIn || o.swFt * 12;
       var near = imgWIn / 12 * o.r[0]; // ft
       var far = imgWIn / 12 * o.r[1]; // ft
-      // throw range zone on the floor
-      poly([[near,yc-1.1,0.02],[far,yc-1.1,0.02],[far,yc+1.1,0.02],[near,yc+1.1,0.02]], pal.zone, { opacity: pal.zoneOp });
-      // projector (position follows the projector-position setting)
+      // projector geometry: body height includes the lens-shift offset; rear sits behind the screen
+      var ob = o.obst;
+      var pg = ob ? { ppos: ob.ppos, z: ob.bodyZ } : projectorBodyZ(o, sh, zc, H);
+      var ppos = pg.ppos, pzz = pg.z;
+      var isRear = ppos === 'rear';
       var pxx = (o.px != null) ? o.px : near;
       var pyy = (o.py != null) ? o.py : yc;
-      var ppos = !ust ? (o.projPos || 'behind') : 'behind';
-      var pzz = (o.pz != null) ? o.pz : (ust ? 1 : zc);
+      if (isRear) pxx = ob ? ob.lensX : -(o.throwD > 0 ? o.throwD : near);
+      // throw range zone on the floor (behind the screen for rear projection)
+      var zA = isRear ? -far : near, zB = isRear ? -near : far;
+      poly([[zA,yc-1.1,0.02],[zB,yc-1.1,0.02],[zB,yc+1.1,0.02],[zA,yc+1.1,0.02]], pal.zone, { opacity: pal.zoneOp });
+      // projector (position follows the projector-position setting)
       if (ppos === 'ceiling' && H > 0) {
-        pzz = H - 1.0;
-        box(pxx, pyy, (pzz + H) / 2, 0.18, 0.18, H - pzz, pal.stand[0], pal.stand[1], pal.stand[2]); // mount pole
+        if (H - pzz > 0.15) box(pxx, pyy, (pzz + H) / 2, 0.18, 0.18, H - pzz, pal.stand[0], pal.stand[1], pal.stand[2]); // mount pole
       } else if (ppos === 'table') {
-        box(pxx, pyy, 1.1, 2.4, 1.8, 2.2, '#8a6f4d', '#7a6244', '#6e5840'); // table
-        pzz = 2.475;
+        if (shiftOn && Math.abs(pzz - 2.475) > 0.05) {
+          box(pxx, pyy, pzz / 2, 0.18, 0.18, pzz, pal.stand[0], pal.stand[1], pal.stand[2]); // adjustable stand
+        } else {
+          box(pxx, pyy, 1.1, 2.4, 1.8, 2.2, '#8a6f4d', '#7a6244', '#6e5840'); // table
+        }
       } else if (o.pmount && H > 0) {
         box(pxx, pyy, (pzz + H) / 2, 0.18, 0.18, H - pzz, pal.stand[0], pal.stand[1], pal.stand[2]); // mount pole
       }
       box(pxx, pyy, pzz, 1.1, 0.9, 0.55, pal.proj[0], pal.proj[1], pal.proj[2]);
-      txt(pxx, pyy, pzz + 0.9, 'projector', 11);
+      txt(pxx, pyy, pzz + 0.9, isRear ? 'rear projector' : 'projector', 11);
+      if (isRear && H > 0) {
+        // cutaway booth behind the screen wall
+        var bx0 = pxx - 1.5;
+        [[bx0,0,0, 0,0,0],[bx0,W,0, 0,W,0],[bx0,0,H, 0,0,H],[bx0,W,H, 0,W,H],
+         [bx0,0,0, bx0,W,0],[bx0,0,H, bx0,W,H],
+         [bx0,0,0, bx0,0,H],[bx0,W,0, bx0,W,H]].forEach(function (e) {
+          var a = P(e[0], e[1], e[2]), b = P(e[3], e[4], e[5]);
+          el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1],
+            stroke: '#8a94a8', 'stroke-width': 1.5, 'stroke-dasharray': '7 5', opacity: 0.8 });
+        });
+        txt((bx0) / 2, yc, H + 0.6, 'rear projection booth', 11);
+      }
+      if (fanOn && !o.outdoor && L > 0 && H > 0) {
+        // ceiling fan always hangs at room center; amber when it fouls the mount or the beam
+        var fx = L / 2, fz = H - 1.2;
+        var fAlert = ob && (ob.fanBeam || ob.fanMount);
+        var fb = fAlert ? ['#d98a2b', '#b56f1f', '#8f5718'] : pal.stand;
+        box(fx, yc, H - 0.6, 0.14, 0.14, 1.2, pal.stand[0], pal.stand[1], pal.stand[2]); // downrod
+        box(fx, yc, fz, 0.55, 0.55, 0.35, fb[0], fb[1], fb[2]); // motor
+        box(fx - 1.35, yc, fz, 2.2, 0.5, 0.08, fb[0], fb[1], fb[2]);
+        box(fx + 1.35, yc, fz, 2.2, 0.5, 0.08, fb[0], fb[1], fb[2]);
+        box(fx, yc - 1.35, fz, 0.5, 2.2, 0.08, fb[0], fb[1], fb[2]);
+        box(fx, yc + 1.35, fz, 0.5, 2.2, 0.08, fb[0], fb[1], fb[2]);
+        txt(fx, yc, fz + 0.7, 'ceiling fan', 11);
+      }
+      if (ob && ob.seatX > 0 && !isRear) {
+        // viewer sightline: seat eye -> screen center, amber when the projector blocks it
+        var sA = P(ob.seatX, yc, ob.eyeH), sB = P(0, yc, ob.zc);
+        el('line', { x1: sA[0], y1: sA[1], x2: sB[0], y2: sB[1],
+          stroke: ob.blocked ? '#d98a2b' : '#8a94a8', 'stroke-width': ob.blocked ? 2.5 : 1,
+          'stroke-dasharray': '6 4', opacity: ob.blocked ? 0.95 : 0.45 });
+        if (ob.blocked) txt(ob.seatX / 2, yc, (ob.eyeH + ob.zc) / 2 + 0.9, 'blocks your view!', 12);
+      }
       var rangeLabel = fmtDist(imgWIn * o.r[0]);
       if (o.r[1] !== o.r[0]) rangeLabel += '–' + fmtDist(imgWIn * o.r[1]);
       // throw range in the white margin outside the 3D render, not under the unit
@@ -1530,7 +1725,7 @@
       if (o.projLocked && o.throwD > 0) {
         tThrow.textContent = '🔒 Throw ' + fmtDist(o.throwD * 12);
       } else {
-        tThrow.textContent = 'Throw ' + rangeLabel;
+        tThrow.textContent = 'Throw ' + rangeLabel + (isRear ? ' · behind the screen' : '');
       }
       throwTag.appendChild(tThrow);
       if (o.zpct >= 0) {
@@ -1539,7 +1734,8 @@
         throwTag.appendChild(tZoom);
       }
       // Only judge the fit when the user has entered a room length.
-      if (!o.outdoor && o.L > 0) {
+      // Rear projection doesn't consume room length, so there is nothing to judge.
+      if (!o.outdoor && o.L > 0 && !isRear) {
         // Judge the selected zoom position, not the far end of the zoom range.
         var selD = (o.throwD > 0) ? o.throwD : far;
         var throwInRange = selD <= o.L;
@@ -1722,24 +1918,28 @@
     var z0 = 2;
     if (hKnown && z0 + sh > H - 0.5) z0 = Math.max(0.5, H - sh - 0.5);
     var zc = z0 + sh / 2;
-    // projector placement mirrors drawViz
+    // projector placement mirrors drawViz (body height includes the lens-shift offset)
     var ust = o.r[1] < 1;
     var imgWIn = o.imgWIn || sw * 12;
     var near = imgWIn / 12 * o.r[0];
+    var ob = o.obst;
+    var pg = ob ? { ppos: ob.ppos, z: ob.bodyZ } : projectorBodyZ(o, sh, zc, hKnown ? H : 0);
+    var ppos = pg.ppos, pzz = pg.z;
+    var isRear = ppos === 'rear';
     var pxx = (o.px != null) ? o.px : near;
-    var ppos = !ust ? (o.projPos || 'behind') : 'behind';
-    var pzz = (o.pz != null) ? o.pz : (ust ? 1 : zc);
+    if (isRear) pxx = ob ? ob.lensX : -(o.throwD > 0 ? o.throwD : near);
     var poleTop = -1, onTable = false;
-    if (ppos === 'ceiling' && hKnown) { pzz = H - 1.0; poleTop = H; }
-    else if (ppos === 'table') { pzz = 2.475; onTable = true; }
+    if (ppos === 'ceiling' && hKnown) { poleTop = H; }
+    else if (ppos === 'table') { onTable = true; }
     else if (o.pmount && hKnown) { poleTop = H; }
-    // plot scaling
+    // plot scaling (rear projection extends left of the screen wall)
+    var xMin = isRear ? pxx - 1.5 : 0;
     var xMax = Math.max(L || 10, pxx > 0 ? pxx : 0);
     var zTop = hKnown ? H : Math.max(z0 + sh + 1, pzz + 1.5, 6);
     var padL = 66, padR = 26, padT = 28, padB = 64;
-    var s = Math.min((VW - padL - padR) / xMax, (VH - padT - padB) / zTop);
+    var s = Math.min((VW - padL - padR) / (xMax - xMin), (VH - padT - padB) / zTop);
     var ox = padL, oy = VH - padB;
-    function X(x) { return ox + x * s; }
+    function X(x) { return ox + (x - xMin) * s; }
     function Z(z) { return oy - z * s; }
 
     // room shell
@@ -1765,6 +1965,14 @@
         fill: '#fff3d0', opacity: 0.6 });
     }
     tx(X(0) + 10, Z(zc) + 4, 'screen ' + dispShort(sh) + (o.screenType === 'alr' ? ' · ALR' : ''), 11, 'start', mut);
+    if (isRear) {
+      // cutaway booth behind the screen wall
+      var boothH = hKnown ? H : z0 + sh;
+      el2('rect', { x: X(xMin).toFixed(1), y: Z(boothH).toFixed(1),
+        width: (X(0) - X(xMin)).toFixed(1), height: (boothH * s).toFixed(1),
+        fill: 'none', stroke: mut, 'stroke-width': 1.5, 'stroke-dasharray': '7 5' });
+      tx((X(xMin) + X(0)) / 2, Z(boothH) - 8, 'rear projection booth', 11, 'middle', mut);
+    }
     // throw beam: lens to screen top and bottom
     var lx = X(pxx), lz = Z(pzz);
     el2('line', { x1: lx.toFixed(1), y1: lz.toFixed(1), x2: X(0).toFixed(1), y2: Z(z0).toFixed(1),
@@ -1772,11 +1980,15 @@
     el2('line', { x1: lx.toFixed(1), y1: lz.toFixed(1), x2: X(0).toFixed(1), y2: Z(z0 + sh).toFixed(1),
       stroke: ink, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0.55 });
     // mount pole or table
-    if (poleTop > 0) {
+    if (poleTop > 0 && lz - 8 > Z(poleTop)) {
       el2('line', { x1: lx.toFixed(1), y1: (lz - 8).toFixed(1), x2: lx.toFixed(1), y2: Z(poleTop).toFixed(1), stroke: ink, 'stroke-width': 4 });
     } else if (onTable) {
-      el2('rect', { x: (lx - 1.2 * s).toFixed(1), y: Z(2.2).toFixed(1), width: (2.4 * s).toFixed(1), height: (2.2 * s).toFixed(1),
-        fill: night ? '#4a5878' : '#c9bfae', stroke: ink, 'stroke-width': 1.5 });
+      if (shiftOn && Math.abs(pzz - 2.475) > 0.05) {
+        el2('line', { x1: lx.toFixed(1), y1: oy.toFixed(1), x2: lx.toFixed(1), y2: lz.toFixed(1), stroke: ink, 'stroke-width': 4 });
+      } else {
+        el2('rect', { x: (lx - 1.2 * s).toFixed(1), y: Z(2.2).toFixed(1), width: (2.4 * s).toFixed(1), height: (2.2 * s).toFixed(1),
+          fill: night ? '#4a5878' : '#c9bfae', stroke: ink, 'stroke-width': 1.5 });
+      }
     } else if (o.outdoor) {
       // stand legs for the outdoor screen
       el2('line', { x1: X(0.3).toFixed(1), y1: Z(z0).toFixed(1), x2: X(0.9).toFixed(1), y2: oy.toFixed(1), stroke: ink, 'stroke-width': 2.5 });
@@ -1785,7 +1997,16 @@
     // projector body
     el2('rect', { x: (lx - 17).toFixed(1), y: (lz - 8).toFixed(1), width: 34, height: 16, rx: 3,
       fill: night ? '#3b5a94' : NAVY });
-    tx(lx, lz - 14, ppos === 'ceiling' ? 'ceiling mount' : (onTable ? 'on table' : 'projector'), 11, 'middle', mut);
+    tx(lx, lz - 14, isRear ? 'rear projector' : (ppos === 'ceiling' ? 'ceiling mount' : (onTable ? 'on table' : 'projector')), 11, 'middle', mut);
+    if (fanOn && hKnown && !o.outdoor) {
+      // ceiling fan at room center; amber when it fouls the mount or the throw beam
+      var fxx = X(L / 2), fzz = Z(H - 1.2);
+      var fAlert = ob && (ob.fanBeam || ob.fanMount);
+      var fcol = fAlert ? '#d98a2b' : ink;
+      el2('line', { x1: fxx.toFixed(1), y1: Z(H).toFixed(1), x2: fxx.toFixed(1), y2: fzz.toFixed(1), stroke: fcol, 'stroke-width': 3 });
+      el2('line', { x1: X(L / 2 - 2.5).toFixed(1), y1: fzz.toFixed(1), x2: X(L / 2 + 2.5).toFixed(1), y2: fzz.toFixed(1), stroke: fcol, 'stroke-width': 6 });
+      tx(fxx, fzz - 10, 'ceiling fan', 11, 'middle', fcol);
+    }
     // seating marker
     if (o.seat > 0) {
       var sx = Math.min(o.seat, (L || 10) - 0.5);
@@ -1793,8 +2014,15 @@
         fill: night ? '#5c6a8c' : '#9aa5bd', stroke: ink, 'stroke-width': 1.5 });
       tx(X(sx), oy - 26, 'seating', 11, 'middle', mut);
     }
+    if (ob && ob.seatX > 0 && !isRear) {
+      // viewer sightline: seat eye -> screen center, amber when the projector blocks it
+      el2('line', { x1: X(ob.seatX).toFixed(1), y1: Z(ob.eyeH).toFixed(1), x2: X(0).toFixed(1), y2: Z(ob.zc).toFixed(1),
+        stroke: ob.blocked ? '#d98a2b' : mut, 'stroke-width': ob.blocked ? 2.5 : 1,
+        'stroke-dasharray': '6 4', opacity: ob.blocked ? 0.95 : 0.5 });
+      if (ob.blocked) tx(X(ob.seatX / 2), Z((ob.eyeH + ob.zc) / 2) - 10, 'blocks your view!', 12, 'middle', '#d98a2b');
+    }
     // dimensions
-    dim(X(0), oy + 20, X(pxx), oy + 20, dispDist(pxx) + ' throw');
+    dim(X(0), oy + 20, X(pxx), oy + 20, dispDist(Math.abs(pxx)) + ' throw' + (isRear ? ' (behind screen)' : ''));
     dim(X(0), oy + 40, X(L), oy + 40, dispShort(L) + (o.outdoor ? '' : ' long'));
     if (hKnown) dimV(X(0) - 26, Z(H), oy, dispShort(H) + ' ceiling');
     var wmt = tx(VW - 12, VH - 10, 'BudgetProjectors.org', 13, 'end', mut);
@@ -1845,8 +2073,53 @@
     var scrW = wForDeg(Math.min(screenDeg, 90)), scrH = scrW * (sh / sw);
     var sx = VW / 2 - scrW / 2, sy = VH / 2 - scrH / 2;
     var face = night ? (alr ? '#9aa2ad' : '#eef3ff') : (alr ? '#878e99' : '#f7f4ec');
+    var styleName = { fixed: 'Fixed frame', pulldown: 'Manual pull-down', acoustic: 'Acoustic frame',
+      floor: 'Floor rising', portable: 'Portable on legs' }[screenStyle] || 'Fixed frame';
+    var frameCol = screenStyle === 'acoustic' ? '#3a3f47' : NAVY;
+    var caseFill = night ? '#3b5a94' : '#dfe5ef';
+    // physical screen style: legs and housings around the same image area
+    if (screenStyle === 'portable') {
+      [[sx + 12, sx - 16], [sx + scrW - 12, sx + scrW + 16]].forEach(function (lx) {
+        el3('line', { x1: lx[0].toFixed(1), y1: (sy + scrH - 4).toFixed(1), x2: lx[1].toFixed(1), y2: (VH - 14).toFixed(1),
+          stroke: frameCol, 'stroke-width': 4 });
+        el3('line', { x1: (lx[1] - 12).toFixed(1), y1: (VH - 14).toFixed(1), x2: (lx[1] + 12).toFixed(1), y2: (VH - 14).toFixed(1),
+          stroke: frameCol, 'stroke-width': 4 });
+      });
+    }
+    if (screenStyle === 'pulldown') {
+      el3('rect', { x: (sx - 8).toFixed(1), y: (sy - 16).toFixed(1), width: (scrW + 16).toFixed(1), height: 13, rx: 6,
+        fill: caseFill, stroke: NAVY, 'stroke-width': 1.5 });
+    }
     el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
-      fill: face, stroke: NAVY, 'stroke-width': 2 });
+      fill: face, stroke: frameCol, 'stroke-width': screenStyle === 'acoustic' ? 5 : 3 });
+    if (screenStyle === 'pulldown') {
+      el3('rect', { x: sx.toFixed(1), y: (sy + scrH - 2).toFixed(1), width: scrW.toFixed(1), height: 5,
+        fill: caseFill, stroke: NAVY, 'stroke-width': 1 });
+    }
+    if (screenStyle === 'floor') {
+      el3('rect', { x: (sx - 6).toFixed(1), y: (sy + scrH + 8).toFixed(1), width: (scrW + 12).toFixed(1), height: 11, rx: 5,
+        fill: caseFill, stroke: NAVY, 'stroke-width': 1.5 });
+    }
+    // front speakers flanking the screen
+    var spkFill = night ? '#3b5a94' : NAVY;
+    var spkCone = night ? '#0e1320' : '#ffffff';
+    if (speakerMode === 'wall') {
+      var ww = 24, wh = scrH * 0.52, wy = VH / 2 - wh / 2;
+      [sx - ww - 16, sx + scrW + 16].forEach(function (wx) {
+        el3('rect', { x: wx.toFixed(1), y: wy.toFixed(1), width: ww, height: wh.toFixed(1), rx: 5, fill: spkFill });
+        el3('circle', { cx: (wx + ww / 2).toFixed(1), cy: (wy + wh * 0.3).toFixed(1), r: 6, fill: spkCone, opacity: 0.5 });
+        el3('circle', { cx: (wx + ww / 2).toFixed(1), cy: (wy + wh * 0.7).toFixed(1), r: 9, fill: spkCone, opacity: 0.5 });
+      });
+    } else if (speakerMode === 'tower') {
+      var tw = Math.max(26, scrW * 0.075), th = scrH * 1.2, ty = VH / 2 - th / 2;
+      [sx - tw - 18, sx + scrW + 18].forEach(function (wx) {
+        el3('rect', { x: wx.toFixed(1), y: ty.toFixed(1), width: tw.toFixed(1), height: th.toFixed(1), rx: 4, fill: spkFill });
+        [0.25, 0.5, 0.75].forEach(function (f) {
+          el3('circle', { cx: (wx + tw / 2).toFixed(1), cy: (ty + th * f).toFixed(1), r: (tw * 0.22).toFixed(1),
+            fill: spkCone, opacity: 0.5 });
+        });
+      });
+    }
     if (!night && !alr) {
       el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
         fill: '#fff3d0', opacity: 0.55 });
@@ -1865,14 +2138,16 @@
       else tx3(rx + rw - 6, ry + rh - 8, ref.deg + '°', 11, 'end', mut);
     });
     var fillsAll = screenDeg >= 90;
-    tx3(VW / 2, 26, 'From your seat · ' + dispDist(seat) + ' away', 14, 'middle', night ? '#dbe2f0' : NAVY);
+    var isRearV = !!(o.obst && o.obst.ppos === 'rear');
+    tx3(VW / 2, 26, 'From your seat · ' + dispDist(seat) + ' away · ' + styleName, 14, 'middle', night ? '#dbe2f0' : NAVY);
     tx3(VW / 2, VH - 34, fillsAll ? 'The screen fills your entire field of view' :
       'The screen fills about ' + Math.round(screenDeg) + '° of your view' +
       (screenDeg < 30 ? ' · below the 30° cinematic minimum' :
        screenDeg <= 40 ? ' · right in the cinematic sweet spot' : ' · bigger than the 36° immersive target'),
       12, 'middle', mut);
-    if (!night && !alr) tx3(VW / 2, VH - 16, 'matte white washes out with the lights on', 11, 'middle', mut);
-    if (!night && alr) tx3(VW / 2, VH - 16, 'ALR holds contrast with the lights on', 11, 'middle', mut);
+    if (isRearV) tx3(VW / 2, VH - 16, 'Rear projection needs a dedicated rear-projection screen', 11, 'middle', mut);
+    else if (!night && !alr) tx3(VW / 2, VH - 16, 'matte white washes out with the lights on', 11, 'middle', mut);
+    else if (!night && alr) tx3(VW / 2, VH - 16, 'ALR holds contrast with the lights on', 11, 'middle', mut);
     watermark3();
   }
 
