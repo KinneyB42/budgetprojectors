@@ -2237,9 +2237,18 @@
       tx3(sx + scrW / 2, ccy + cch + 15, 'center channel (behind screen)', 11, 'middle',
         night ? '#dbe2f0' : NAVY);
     }
-    if (!night && !alr) {
+    // ambient washout on the screen face: sunlight hits far harder than indoor lamps,
+    // so it bleaches a matte white screen badly; ALR holds up but still takes a hit
+    var washOp = 0, washFill = '#fff3d0';
+    if (!alr) {
+      if (sunOn) { washOp = 0.8; washFill = '#fff6d8'; }
+      else if (!night) washOp = 0.55;
+    } else if (sunOn) {
+      washOp = 0.3; washFill = '#fff6d8';
+    }
+    if (washOp > 0) {
       el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
-        fill: '#fff3d0', opacity: 0.55 });
+        fill: washFill, opacity: washOp });
     }
     if (night) {
       el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
@@ -2259,12 +2268,16 @@
     var shiftNote = (shiftOn && shiftHPct) ? ' · image shifted ' + (shiftHPct > 0 ? 'right' : 'left') +
       ' ' + Math.abs(shiftHPct) + '% (lens shift)' : '';
     tx3(VW / 2, 26, 'From your seat · ' + dispDist(seat) + ' away · ' + styleName, 14, 'middle', night ? '#dbe2f0' : NAVY);
+    if (sunOn) tx3(VW / 2, 44, 'Simulated sunlight — actual brightness varies by room', 11, 'middle',
+      night ? '#dbe2f0' : '#8a6a2a');
     tx3(VW / 2, VH - 34, fillsAll ? 'The screen fills your entire field of view' + shiftNote :
       'The screen fills about ' + Math.round(screenDeg) + '° of your view' +
       (screenDeg < 30 ? ' · below the 30° cinematic minimum' :
        screenDeg <= 40 ? ' · right in the cinematic sweet spot' : ' · bigger than the 36° immersive target') + shiftNote,
       12, 'middle', mut);
     if (isRearV) tx3(VW / 2, VH - 16, 'Rear projection needs a dedicated rear-projection screen', 11, 'middle', mut);
+    else if (sunOn && !alr) tx3(VW / 2, VH - 16, 'sunlight washes out a matte white screen — consider ALR', 11, 'middle', mut);
+    else if (sunOn && alr) tx3(VW / 2, VH - 16, 'ALR holds up in sunlight, though blacks still lift', 11, 'middle', mut);
     else if (!night && !alr) tx3(VW / 2, VH - 16, 'matte white washes out with the lights on', 11, 'middle', mut);
     else if (!night && alr) tx3(VW / 2, VH - 16, 'ALR holds contrast with the lights on', 11, 'middle', mut);
     watermark3();
