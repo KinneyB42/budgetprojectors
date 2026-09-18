@@ -1437,6 +1437,8 @@
         sp.py = W / 2;
         sp.pos = xust ? 'behind' : projPos;
         sp.pz = sp.pos === 'table' ? 2.475 : null;
+        sp.lm = (entry && entry.lm) || 0; // published lumens for the on-render data line
+        sp.fit = (!xust && !outdoor && L > 0) ? (nX <= L) : null; // wide-end throw fits the room
         extraProj.push(sp);
       });
     }
@@ -1646,7 +1648,10 @@
   function drawLegend(elFn, items, x0, y, maxW, textCol, centered) {
     if (!items.length) return;
     if (!svgMeasureCtx) svgMeasureCtx = document.createElement('canvas').getContext('2d');
-    var ctx = svgMeasureCtx; ctx.font = '12px sans-serif';
+    var ctx = svgMeasureCtx;
+    // measure with the page's real font (Poppins stack), not a fallback, so the
+    // row never runs into the watermark with longer model names
+    ctx.font = '12px ' + getComputedStyle(document.body).fontFamily;
     var gap = 20;
     items.forEach(function (it) {
       var lab = String(it.label);
@@ -1938,6 +1943,54 @@
       }
       var rangeLabel = fmtDist(imgWIn * o.r[0]);
       if (o.r[1] !== o.r[0]) rangeLabel += '–' + fmtDist(imgWIn * o.r[1]);
+      var cmpCount = (o.extraProj || []).length;
+      if (cmpCount > 0) {
+        // head-to-head: one color-coded data line per projector (throw, zoom,
+        // brightness, fit) so a weak pick is obvious at a glance
+        var fitCol = function (ok) {
+          return ok ? (scene === 'night' ? '#7fd6a4' : '#2e7d5b')
+                    : (scene === 'night' ? '#ff9d8a' : '#c0392b');
+        };
+        var flCol = function (fl) {
+          return fl < 12 ? (scene === 'night' ? '#ff9d8a' : '#c0392b') :
+            fl < 30 ? (scene === 'night' ? '#ffd28a' : '#a86e00') :
+            (scene === 'night' ? '#7fd6a4' : '#2e7d5b');
+        };
+        var scrArea = (imgWIn > 0 && o.shFt > 0) ? imgWIn * o.shFt * 12 / 144 : 0;
+        function dataLine(y, tag, tagCol, throwTxt, lumens, inRange) {
+          var g = el('text', { x: 16, y: y, 'font-size': 13, 'font-weight': '600', fill: pal.label });
+          function tsp(str, fill) {
+            var t = document.createElementNS(NS, 'tspan');
+            t.textContent = str;
+            if (fill) t.setAttribute('fill', fill);
+            g.appendChild(t);
+          }
+          tsp(tag + ' · ', tagCol);
+          tsp(throwTxt);
+          if (lumens > 0 && scrArea > 0) {
+            var fl = lumens * effGain() / scrArea;
+            tsp(' · ~' + fmt(fl, 0) + ' fL', flCol(fl));
+          }
+          if (inRange != null) tsp(inRange ? ' · In range' : ' · Out of range', fitCol(inRange));
+        }
+        var aThrow = (o.projLocked && o.throwD > 0)
+          ? '🔒 Throw ' + fmtDist(o.throwD * 12)
+          : 'Throw ' + rangeLabel + (isRear ? ' · behind the screen' : '');
+        if (o.zpct >= 0) aThrow += ' · Zoom ' + o.zpct + '%';
+        var aFit = (!o.outdoor && o.L > 0 && !isRear)
+          ? (((o.throwD > 0) ? o.throwD : far) <= o.L) : null;
+        dataLine(26, 'A', pal.proj[0], aThrow, o.lumens, aFit);
+        (o.extraProj || []).forEach(function (xp, xi) {
+          dataLine(44 + xi * 18, xp.tag, xi === 0 ? '#2e7d5b' : '#c07a1e',
+            'Throw ' + xp.dist, xp.lm || 0, xp.fit);
+        });
+        if (o.seat > 0) {
+          var sTagC = el('text', { x: 16, y: 44 + cmpCount * 18, 'font-size': 13, 'font-weight': '600', fill: pal.label });
+          var sT1C = document.createElementNS(NS, 'tspan');
+          sT1C.textContent = 'Seating ' + dispDist(o.seat) + ' from screen';
+          sTagC.appendChild(sT1C);
+        }
+      } else {
       // throw range in the white margin outside the 3D render, not under the unit
       var throwTag = el('text', { x: 16, y: 26, 'font-size': 13, 'font-weight': '600', fill: pal.label });
       var tThrow = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
@@ -1997,6 +2050,7 @@
         sT1.textContent = 'Seating ' + dispDist(o.seat) + ' from screen';
         sTag.appendChild(sT1);
       }
+      } // end non-compare tags
       // light cone: lens to screen corners
       var lens = [pxx, pyy, pzz];
       var sc = [[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]];
@@ -2076,7 +2130,7 @@
     }
 
     // legend at the bottom: color key for the projector labels
-    drawLegend(el, compareLegendItems(o, { a: pal.proj[0], b: '#2e7d5b', c: '#c07a1e' }), 16, VH - 14, 470, pal.label, false);
+    drawLegend(el, compareLegendItems(o, { a: pal.proj[0], b: '#2e7d5b', c: '#c07a1e' }), 16, VH - 14, 420, pal.label, false);
 
     // watermark
     var wm = el('text', { x: VW - 12, y: VH - 10, 'text-anchor': 'end', 'font-size': 13,
