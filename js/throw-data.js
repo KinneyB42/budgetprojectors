@@ -9648,4 +9648,11 @@ window.THROW_DATA = [
   {b: "Epson", m: "EpiqVision Ultra LS800", t: [0.16, 0.4], lm: 4000},
   {b: "Epson", m: "EH-LS650W", t: [0.25, 0.62], lm: 3600},
   {b: "Epson", m: "EH-LS650B", t: [0.25, 0.62], lm: 3600},
+  {b: "BenQ", m: "W1400", t: [1.07, 1.71], lm: 2200},
+  {b: "BenQ", m: "W770ST", t: [0.72, 0.87], lm: 2500},
+  {b: "BenQ", m: "W1500", t: [1.07, 1.71], lm: 2200},
+  {b: "BenQ", m: "Joybee GP1", t: [1.92, 1.92], lm: 100},
+  {b: "BenQ", m: "Joybee GP2", t: [1.13, 1.13], lm: 200},
+  {b: "BenQ", m: "Joybee GP3", t: [1.16, 1.16], lm: 300},
+  {b: "BenQ", m: "GS1", t: [0.8, 0.8], lm: 300},
 ];
