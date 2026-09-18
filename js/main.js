@@ -121,16 +121,7 @@
 
   if (lensSelect) {
     lensSelect.addEventListener('change', function () {
-      // If the lumens box still shows the previous auto-filled value (the user
-      // hasn't typed their own), refresh it for the newly selected lens.
-      var oldAuto = lensLumens(selectedModel, selectedLens);
-      if (!(oldAuto > 0) && selectedModel) oldAuto = selectedModel.lm > 0 ? selectedModel.lm : 0;
       selectedLens = parseInt(lensSelect.value, 10) || 0;
-      var newAuto = lensLumens(selectedModel, selectedLens);
-      if (!(newAuto > 0) && selectedModel) newAuto = selectedModel.lm > 0 ? selectedModel.lm : 0;
-      if (lumensInput && oldAuto > 0 && parseFloat(lumensInput.value, 10) === Math.round(oldAuto)) {
-        lumensInput.value = newAuto > 0 ? Math.round(newAuto) : '';
-      }
       resetZoom();
       if (lockMode === 'projector') needLockCapture = true;
       refreshSelectedLine();
@@ -258,7 +249,6 @@
     selectedLens = 0;
     syncLensPicker();
     if (modelInput) modelInput.value = '';
-    if (lumensInput) lumensInput.value = '';
     if (selectedLine) selectedLine.hidden = true;
     clearModelChips();
     if (suggest) suggest.hidden = true;
@@ -278,13 +268,6 @@
     syncLensPicker();
     if (selectedLine) selectedLine.hidden = false;
     refreshSelectedLine();
-    // Auto-fill the published lumen output so it never has to be typed by hand;
-    // the box stays editable as a manual override. A lens with its own published
-    // output (a brightness-limiting lens) wins over the body's rating.
-    var autoLm = (entry.lm > 0) ? entry.lm : 0;
-    var entryLensLm = lensLumens(entry, selectedLens);
-    if (entryLensLm > 0) autoLm = entryLensLm;
-    if (lumensInput) lumensInput.value = autoLm > 0 ? Math.round(autoLm) : '';
     recalc();
   }
 
@@ -319,7 +302,6 @@
       syncLensPicker();
       if (selectedLine) selectedLine.hidden = true;
       clearModelChips();
-      if (lumensInput) lumensInput.value = '';
       renderSuggest(modelInput.value.trim().toLowerCase());
       recalc();
     });
@@ -381,7 +363,6 @@
   var roomTip = document.getElementById('calc-room-tip');
   var sizeInput = document.getElementById('calc-size');
   var seatInput = document.getElementById('calc-seat');
-  var lumensInput = document.getElementById('calc-lumens');
   var gainInput = document.getElementById('calc-gain');
   var planResult = document.getElementById('calc-plan-result');
   var svg = document.getElementById('calc-svg');
@@ -551,7 +532,6 @@
       var H = inFt(ceilInput); if (H > 0) enc('H', r2(H));
     }
     enc('u', unit);
-    if (lumensInput && parseFloat(lumensInput.value, 10) > 0) enc('lm', Math.round(parseFloat(lumensInput.value, 10)));
     if (gainInput && parseFloat(gainInput.value, 10) > 0) enc('gn', parseFloat(gainInput.value, 10));
     if (zoomFrac() > 0) enc('z', Math.round(zoomFrac() * 100));
     if (lockMode !== 'off') enc('lk', lockMode === 'projector' ? '1' : '2');
@@ -663,7 +643,6 @@
         c.classList.toggle('chosen', c.getAttribute('data-pos') === p.pp);
       });
     }
-    if (!isNaN(num('lm')) && lumensInput) lumensInput.value = Math.round(num('lm'));
     if (!isNaN(num('gn')) && gainInput) gainInput.value = p.gn;
     if (!isNaN(num('z')) && zoomInput) zoomInput.value = Math.max(0, Math.min(100, Math.round(num('z'))));
     if (p.lk === '1') setLockMode('projector'); else if (p.lk === '2') setLockMode('image');
@@ -854,9 +833,7 @@
       recalc();
     });
   }
-  [lumensInput, gainInput].forEach(function (el) {
-    if (el) el.addEventListener('input', recalc);
-  });
+  if (gainInput) gainInput.addEventListener('input', recalc);
   document.querySelectorAll('#calc-aspect-std .calc__chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
       stdAspect = chip.getAttribute('data-ar');
@@ -1139,14 +1116,10 @@
       });
     }
 
-    // Effective lumens for brightness: manual input wins, then the selected
-    // lens's published output, then the model's published output.
-    var effLumens = lumensInput ? parseFloat(lumensInput.value, 10) : NaN;
-    if (!(effLumens > 0)) {
-      var selLensLm = lensLumens(selectedModel, selectedLens);
-      if (selLensLm > 0) effLumens = selLensLm;
-      else if (selectedModel && selectedModel.lm > 0) effLumens = selectedModel.lm;
-    }
+    // Effective lumens for brightness: the selected lens's published output,
+    // then the model's published output. No manual override exists.
+    var effLumens = lensLumens(selectedModel, selectedLens);
+    if (!(effLumens > 0) && selectedModel && selectedModel.lm > 0) effLumens = selectedModel.lm;
 
     syncZoom(r, imgWIn);
     var zoomPct = (zoomWrap && !zoomWrap.hidden) ? Math.round(zoomFrac() * 100) : -1;
