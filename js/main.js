@@ -2132,6 +2132,21 @@
       t.textContent = str; return t;
     }
     el3('rect', { x: 0, y: 0, width: VW, height: VH, fill: night ? '#0e1320' : '#e8e2d4' });
+    // room shell: side walls + floor, first-person from the couch
+    var floorY = Math.round(VH * 0.70);
+    var wallTone = night ? '#141c30' : '#d9d2c0';
+    var floorTone = night ? '#0b101d' : '#c9c0a9';
+    var trimCol = night ? '#232f4d' : '#a89e86';
+    el3('polygon', { points: '0,0 58,' + floorY + ' 0,' + VH, fill: wallTone });
+    el3('polygon', { points: VW + ',0 ' + (VW - 58) + ',' + floorY + ' ' + VW + ',' + VH, fill: wallTone });
+    el3('polygon', { points: '0,' + VH + ' ' + VW + ',' + VH + ' ' + (VW - 58) + ',' + floorY + ' 58,' + floorY,
+      fill: floorTone });
+    [150, 260, 400, 510].forEach(function (fx) {
+      el3('line', { x1: fx, y1: VH, x2: (VW / 2 + (fx - VW / 2) * 0.12).toFixed(1), y2: floorY + 4,
+        stroke: trimCol, 'stroke-width': 1, opacity: 0.45 });
+    });
+    el3('line', { x1: 58, y1: floorY, x2: VW - 58, y2: floorY,
+      stroke: trimCol, 'stroke-width': 2, opacity: 0.8 });
 
     var sw = o.swFt, sh = o.shFt, seat = o.seat;
     function watermark3() {
@@ -2167,9 +2182,9 @@
     // physical screen style: legs and housings around the same image area
     if (screenStyle === 'portable') {
       [[sx + 12, sx - 16], [sx + scrW - 12, sx + scrW + 16]].forEach(function (lx) {
-        el3('line', { x1: lx[0].toFixed(1), y1: (sy + scrH - 4).toFixed(1), x2: lx[1].toFixed(1), y2: (VH - 14).toFixed(1),
+        el3('line', { x1: lx[0].toFixed(1), y1: (sy + scrH - 4).toFixed(1), x2: lx[1].toFixed(1), y2: floorY.toFixed(1),
           stroke: frameCol, 'stroke-width': 4 });
-        el3('line', { x1: (lx[1] - 12).toFixed(1), y1: (VH - 14).toFixed(1), x2: (lx[1] + 12).toFixed(1), y2: (VH - 14).toFixed(1),
+        el3('line', { x1: (lx[1] - 12).toFixed(1), y1: floorY.toFixed(1), x2: (lx[1] + 12).toFixed(1), y2: floorY.toFixed(1),
           stroke: frameCol, 'stroke-width': 4 });
       });
     }
@@ -2198,11 +2213,12 @@
         el3('circle', { cx: (wx + ww / 2).toFixed(1), cy: (wy + wh * 0.7).toFixed(1), r: 9, fill: spkCone, opacity: 0.5 });
       });
     } else if (speakerMode === 'tower') {
-      var tw = Math.max(26, scrW * 0.075), th = scrH * 1.2, ty = VH / 2 - th / 2;
-      [sx - tw - 18, sx + scrW + 18].forEach(function (wx) {
-        el3('rect', { x: wx.toFixed(1), y: ty.toFixed(1), width: tw.toFixed(1), height: th.toFixed(1), rx: 4, fill: spkFill });
+      // towers stand on the floor: true angular height of a 3.4 ft tower at the seat distance
+      var thT = VW * 3.4 / (2 * seat), twT = Math.max(22, thT * 0.30), tyT = floorY - thT;
+      [sx - twT - 18, sx + scrW + 18].forEach(function (wx) {
+        el3('rect', { x: wx.toFixed(1), y: tyT.toFixed(1), width: twT.toFixed(1), height: thT.toFixed(1), rx: 4, fill: spkFill });
         [0.25, 0.5, 0.75].forEach(function (f) {
-          el3('circle', { cx: (wx + tw / 2).toFixed(1), cy: (ty + th * f).toFixed(1), r: (tw * 0.22).toFixed(1),
+          el3('circle', { cx: (wx + twT / 2).toFixed(1), cy: (tyT + thT * f).toFixed(1), r: (twT * 0.22).toFixed(1),
             fill: spkCone, opacity: 0.5 });
         });
       });
