@@ -26,7 +26,6 @@
   var roomType = 'garage';
   var device = 'pc';
   var shiftOn = false;
-  var autoLumens = 0; // last auto-filled lumens value (user edits win)
 
   /* ---------- elements ---------- */
   var modelInput = $('golf-model');
@@ -35,7 +34,7 @@
   var selectedLine = $('golf-selected');
   var lensWrap = $('golf-lens-wrap');
   var lensSelect = $('golf-lens');
-  var lumensInput = $('golf-lumens');
+  var lumensDisplay = $('golf-lumens-display');
   var screenW = $('golf-screen-w');
   var screenH = $('golf-screen-h');
   var screenPresets = $('golf-screen-presets');
@@ -82,8 +81,6 @@
   }
 
   function effectiveLumens() {
-    var v = parseFloat(lumensInput.value, 10);
-    if (v > 0) return v;
     var ll = lensLumens(selectedModel, selectedLens);
     if (ll > 0) return ll;
     if (selectedModel && selectedModel.lm > 0) return selectedModel.lm;
@@ -125,14 +122,14 @@
     lensWrap.hidden = false;
   }
 
-  function autoFillLumens() {
-    var v = lensLumens(selectedModel, selectedLens);
-    if (!(v > 0) && selectedModel) v = selectedModel.lm > 0 ? selectedModel.lm : 0;
-    var cur = parseFloat(lumensInput.value, 10);
-    if (lumensInput.value === '' || cur === autoLumens) {
-      lumensInput.value = v > 0 ? Math.round(v) : '';
+  function refreshLumensDisplay() {
+    var v = effectiveLumens();
+    if (v > 0) {
+      lumensDisplay.textContent = 'Projector lumens: ' + Math.round(v).toLocaleString('en-US') + ' (manufacturer spec)';
+      lumensDisplay.hidden = false;
+    } else {
+      lumensDisplay.hidden = true;
     }
-    autoLumens = v > 0 ? Math.round(v) : 0;
   }
 
   function chooseModel(x) {
@@ -143,7 +140,7 @@
     suggest.innerHTML = '';
     modelInput.setAttribute('aria-expanded', 'false');
     syncLensPicker();
-    autoFillLumens();
+    refreshLumensDisplay();
     refreshSelectedLine();
     recalc();
   }
@@ -173,13 +170,11 @@
   }
 
   modelInput.addEventListener('input', function () {
-    var cur = parseFloat(lumensInput.value, 10);
-    if (lumensInput.value !== '' && cur === autoLumens) lumensInput.value = '';
-    autoLumens = 0;
     selectedModel = null;
     selectedLens = 0;
     syncLensPicker();
     selectedLine.hidden = true;
+    refreshLumensDisplay();
     renderSuggest(modelInput.value.trim().toLowerCase());
     recalc();
   });
@@ -193,16 +188,8 @@
   });
 
   lensSelect.addEventListener('change', function () {
-    var oldAuto = lensLumens(selectedModel, selectedLens);
-    if (!(oldAuto > 0) && selectedModel) oldAuto = selectedModel.lm > 0 ? selectedModel.lm : 0;
     selectedLens = parseInt(lensSelect.value, 10) || 0;
-    var newAuto = lensLumens(selectedModel, selectedLens);
-    if (!(newAuto > 0) && selectedModel) newAuto = selectedModel.lm > 0 ? selectedModel.lm : 0;
-    var cur = parseFloat(lumensInput.value, 10);
-    if (oldAuto > 0 && cur === Math.round(oldAuto)) {
-      lumensInput.value = newAuto > 0 ? Math.round(newAuto) : '';
-    }
-    autoLumens = newAuto > 0 ? Math.round(newAuto) : 0;
+    refreshLumensDisplay();
     refreshSelectedLine();
     recalc();
   });
@@ -324,7 +311,7 @@
   });
 
   /* ---------- every other input recalcs ---------- */
-  [lumensInput, roomLen, roomWid,
+  [roomLen, roomWid,
    hitInput, throwInput, openerDist, gainInput].forEach(function (el) {
     el.addEventListener('input', recalc);
   });
@@ -423,7 +410,7 @@
           'light this will look dim - a brighter projector is worth it.</p>');
       }
     } else if (td > 0) {
-      out.push('<p><strong>Brightness:</strong> enter lumens (or pick a model) to see the foot-lambert estimate.</p>');
+      out.push('<p><strong>Brightness:</strong> pick a model with published lumens to see the foot-lambert estimate.</p>');
     }
 
     /* Throw check: garage opener eats into the room for ceiling mounts. */
