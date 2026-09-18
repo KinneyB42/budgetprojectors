@@ -422,11 +422,13 @@
     if (!r) {
       results.innerHTML = '<p>Pick a projector model above to see your simulator plan. The published manufacturer throw ratio is used automatically.</p>';
       clearSvgs();
+      planData = null;
       return;
     }
     if (!(sw > 0) || !(sh > 0)) {
       results.innerHTML = '<p>Enter your screen width and height.</p>';
       clearSvgs();
+      planData = null;
       return;
     }
 
@@ -473,6 +475,7 @@
     }
 
     /* Garage opener: usable length + conflict warnings (red). */
+    var openerBlocked = false, openerTooClose = false;
     if (roomType === 'garage' && opener && openerD > 0 && rl > 0) {
       if (placement === 'ceiling') {
         out.push('<p><strong>Room:</strong> ' + ft(rl) + ' minus the opener at ' + ft(openerD) +
@@ -480,24 +483,26 @@
       }
       if (placement === 'ceiling' || placement === 'frame') {
         if (projDist > openerD) {
+          openerBlocked = true;
           out.push('<p style="color:' + WARN + '"><strong>Garage door opener in the way:</strong> it hangs between the projector and the screen and will block the image. Move the projector closer than ' + ft(openerD) +
             ' (in front of the opener), or mount it beside the opener.</p>');
         } else if (openerD - projDist < 2) {
+          openerTooClose = true;
           out.push('<p style="color:' + WARN + '"><strong>Too close to the opener:</strong> leave at least 2 ft between the projector and the opener, or mount the projector beside the opener instead of in line with it.</p>');
         }
       }
     }
 
     /* Brightness: foot-lamberts over the image area. */
-    var lumens = effectiveLumens();
+    var lumens = effectiveLumens(), fl = 0, brightNote = '';
     if (lumens > 0 && imageW > 0 && imageH > 0) {
-      var fl = lumens * gain / (imageW * imageH);
-      var note = fl < 12 ? 'dim, best in a fully dark room' :
+      fl = lumens * gain / (imageW * imageH);
+      brightNote = fl < 12 ? 'dim, best in a fully dark room' :
         fl < 30 ? 'good with the lights off' :
         fl < 60 ? 'holds up with some ambient light' : 'bright enough for lights-on viewing';
       var color = fl < 12 ? WARN : fl < 30 ? AMBER : OK;
       out.push('<p><strong>Brightness:</strong> ~' + fmt(fl, 0) + ' fL - <span style="color:' + color + '">' +
-        note + '</span>.</p>');
+        brightNote + '</span>.</p>');
       if (fl < 30) {
         out.push('<p style="color:' + WARN + '"><strong>Heads up:</strong> on a grey golf screen with ambient ' +
           'light this will look dim - a brighter projector is worth it.</p>');
@@ -546,7 +551,32 @@
     drawTop(r, sw, sh, drl, drw, hit, projDist, openerD);
     drawFront(sw, sh, drawW, drawH, unusedSide, overflow, projDist);
     if (svgSide) drawSide(sw, sh, drl, dch, hit, projDist, drawW, drawH, openerD, projH, drawGh, hasGh, fmtHt);
+
+    /* Snapshot for the JPG/PNG/PDF export. */
+    var warnHtml = out.filter(function (s) { return s.indexOf(WARN) !== -1; });
+    planData = {
+      model: selectedModel.b + ' ' + selectedModel.m,
+      lens: modelLenses(selectedModel) ? modelLenses(selectedModel)[selectedLens][0] : '',
+      ratio: fmt(ratio, 2) + ':1' + (zoomable ? '' : ' fixed'),
+      zoom: zoomable ? zoomPct + '%' : '',
+      throwDist: ft(projDist),
+      placement: PLACE_LABEL[placement] || placement,
+      screen: fmt(sw, 1) + ' x ' + fmt(sh, 1) + ' ft',
+      room: roomAssumed ? 'typical ' + ft(drl) + ' x ' + ft(drw) + ', ' + ft(dch) + ' ceiling (illustrative)' :
+        ft(rl) + ' x ' + ft(rw) + ', ' + ft(ch) + ' ceiling',
+      hit: hit > 0 ? ft(hit) : '',
+      height: hasGh ? fmtHt(gh) : '',
+      opener: (roomType === 'garage' && opener && openerD > 0) ? ft(openerD) + ' from the screen' : '',
+      openerIssue: openerBlocked ? 'BLOCKS THE IMAGE' : openerTooClose ? 'too close - leave 2 ft' : '',
+      fit: !overflow && !openerBlocked && !openerTooClose,
+      fitNote: overflow ? 'image overflows the screen' : (unusedSide > 0.02 ? ft(sw - imageW) + ' of screen unused' : 'image fills the screen'),
+      brightness: fl > 0 ? '~' + fmt(fl, 0) + ' fL - ' + brightNote : '',
+      warnings: warnHtml.map(function (s) { return s.replace(/<[^>]+>/g, ''); }),
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    };
   }
+
+  var planData = null; // set by recalc; used by the export buttons
 
   /* ---------- SVG A: top-down ---------- */
   function drawTop(r, sw, sh, rl, rw, hit, td, openerD) {
@@ -821,6 +851,263 @@
     svgSide.innerHTML = parts.join('');
   }
 
+  /* ---------- export: JPG / PNG / PDF ---------- */
+  var MOUNT_LIST = 'https://amzn.to/4vALW2k';
+  var CABLE_LIST = 'https://amzn.to/4oFKjxP';
+  var HDMI_LIST = 'https://www.amazon.com/shop/brandonkinney/list/T1MTOGHLPMRU?ref_=aipsflist';
+  var ACCESSORY_LIST = 'https://www.amazon.com/shop/brandonkinney/list/33RRH1863AJE5?ref_=aipsflist';
+  var TAGLINE = 'Your professional estimate was generated based on your customized space provided by BudgetProjectors.org';
+
+  function nudgeExport() {
+    results.innerHTML = '<p>Pick a projector model above to export your simulator plan.</p>';
+    if (modelInput && modelInput.focus) modelInput.focus();
+  }
+
+  function roundRectPath(cx, x, y, w, h, r) {
+    cx.beginPath();
+    cx.moveTo(x + r, y);
+    cx.arcTo(x + w, y, x + w, y + h, r);
+    cx.arcTo(x + w, y + h, x, y + h, r);
+    cx.arcTo(x, y + h, x, y, r);
+    cx.arcTo(x, y, x + w, y, r);
+    cx.closePath();
+  }
+
+  function rasterizeGolfSvg(el, pxW, cb) {
+    try {
+      var clone = el.cloneNode(true);
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      var pxH = Math.round(pxW * 400 / 620);
+      clone.setAttribute('width', String(pxW));
+      clone.setAttribute('height', String(pxH));
+      var st = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      st.textContent = 'text{font-family:Arial,Helvetica,sans-serif}';
+      clone.insertBefore(st, clone.firstChild);
+      var url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }));
+      var img = new Image();
+      img.onload = function () { URL.revokeObjectURL(url); cb(img, pxH); };
+      img.onerror = function () { URL.revokeObjectURL(url); cb(null, pxH); };
+      img.src = url;
+    } catch (e) { cb(null, 0); }
+  }
+
+  function golfSpecRows(P) {
+    var rows = [
+      ['Projector', P.model + (P.lens ? ' - ' + P.lens : '')],
+      ['Placement from screen', P.throwDist],
+      ['Placement method', P.placement],
+      ['Throw ratio', P.ratio + (P.zoom ? ' - zoom ' + P.zoom : '')],
+      ['Screen', P.screen],
+      ['Room', P.room]
+    ];
+    if (P.hit) rows.push(['Hitting distance', P.hit]);
+    if (P.height) rows.push(['Your height', P.height]);
+    if (P.opener) rows.push(['Garage door opener', P.opener + (P.openerIssue ? ' - ' + P.openerIssue : '')]);
+    if (P.brightness) rows.push(['Brightness', P.brightness]);
+    return rows;
+  }
+
+  function golfSteps(P) {
+    var steps = ['Mount the projector ' + P.throwDist + ' from the screen (' + P.placement.toLowerCase() + ').'];
+    if (P.zoom) steps.push('Adjust the lens zoom to ' + P.zoom + ' (throw ratio ' + P.ratio + ') so the image fills the screen.');
+    else steps.push('Fixed lens, no zoom to set - the image fills the screen from that spot.');
+    steps.push('Check the side view: the projector clears your swing and the throw beam clears your head.');
+    return steps;
+  }
+
+  /* Single code path draws the document or just measures its height. */
+  function renderGolfDoc(P, imgs, L) {
+    var W = 1600, M = 80, CW = W - M * 2;
+    function text(str, x, y, font, color, align) {
+      if (L.measure) return;
+      L.cx.font = font; L.cx.fillStyle = color; L.cx.textAlign = align || 'left'; L.cx.textBaseline = 'alphabetic';
+      L.cx.fillText(str, x, y);
+    }
+    function wrapped(str, x, y, maxW, font, color, lineH) {
+      L.cx.font = font;
+      var words = String(str).split(' '), line = '', yy = y;
+      function emit(ln) {
+        if (!L.measure) { L.cx.fillStyle = color; L.cx.textAlign = 'left'; L.cx.fillText(ln, x, yy); }
+        yy += lineH;
+      }
+      words.forEach(function (w) {
+        var t = line ? line + ' ' + w : w;
+        if (L.cx.measureText(t).width > maxW && line) { emit(line); line = w; } else line = t;
+      });
+      if (line) emit(line);
+      return yy;
+    }
+    var y = L.y;
+    if (!L.measure) { L.cx.fillStyle = '#0c2244'; L.cx.fillRect(0, y, W, 200); }
+    text('BUDGETPROJECTORS.ORG', M, y + 66, '600 20px Arial,sans-serif', '#8fa3c8');
+    text('Golf Simulator Plan', M, y + 132, '700 52px Arial,sans-serif', '#ffffff');
+    text(P.date, W - M, y + 66, '400 20px Arial,sans-serif', '#8fa3c8', 'right');
+    y += 200;
+    y = wrapped(TAGLINE, M, y + 52, CW, 'italic 400 22px Arial,sans-serif', '#5c5c5c', 32) + 30;
+
+    var rows = golfSpecRows(P), colW = CW / 2, perCol = Math.ceil(rows.length / 2), rh = 84;
+    rows.forEach(function (r, i) {
+      var x = M + (i < perCol ? 0 : colW), ry = y + 24 + (i % perCol) * rh;
+      text(r[0].toUpperCase(), x, ry, '600 15px Arial,sans-serif', '#8fa3c8');
+      text(String(r[1]).substring(0, 46), x, ry + 36, '400 26px Arial,sans-serif', '#0c2244');
+    });
+    y += 24 + perCol * rh + 20;
+
+    var fitColor = P.fit ? '#2e7d5b' : '#c0392b';
+    if (!L.measure) { L.cx.fillStyle = fitColor; roundRectPath(L.cx, M, y, CW, 104, 14); L.cx.fill(); }
+    text('WILL IT FIT: ' + (P.fit ? 'YES' : 'NO'), M + 32, y + 66, '700 36px Arial,sans-serif', '#ffffff');
+    text(P.fitNote.substring(0, 44), W - M - 32, y + 62, '400 22px Arial,sans-serif', '#ffffff', 'right');
+    y += 104 + 44;
+
+    text('3D views', M, y + 34, '700 32px Arial,sans-serif', '#0c2244');
+    y += 66;
+    var vw1 = 740, vh1 = Math.round(vw1 * 400 / 620);
+    if (!L.measure) {
+      L.cx.strokeStyle = '#d8d8d8'; L.cx.lineWidth = 2;
+      if (imgs[0].img) L.cx.drawImage(imgs[0].img, M, y, vw1, vh1);
+      L.cx.strokeRect(M, y, vw1, vh1);
+      if (imgs[1].img) L.cx.drawImage(imgs[1].img, M + vw1 + 40, y, vw1, vh1);
+      L.cx.strokeRect(M + vw1 + 40, y, vw1, vh1);
+    }
+    text('Top-down view', M, y + vh1 + 34, '600 19px Arial,sans-serif', '#0c2244');
+    text('What you see from the hitting mat', M + vw1 + 40, y + vh1 + 34, '600 19px Arial,sans-serif', '#0c2244');
+    y += vh1 + 68;
+    var vh2 = Math.round(CW * 400 / 620);
+    if (!L.measure) {
+      if (imgs[2].img) L.cx.drawImage(imgs[2].img, M, y, CW, vh2);
+      L.cx.strokeStyle = '#d8d8d8'; L.cx.lineWidth = 2; L.cx.strokeRect(M, y, CW, vh2);
+    }
+    text('Side view', M, y + vh2 + 34, '600 19px Arial,sans-serif', '#0c2244');
+    y += vh2 + 68;
+
+    text('To set it up', M, y + 34, '700 32px Arial,sans-serif', '#0c2244');
+    y += 66;
+    golfSteps(P).forEach(function (s, i) {
+      y = wrapped((i + 1) + '. ' + s, M, y + 6, CW, '400 22px Arial,sans-serif', '#222222', 32) + 16;
+    });
+    y += 24;
+
+    if (P.warnings.length) {
+      text('Watch out for', M, y + 34, '700 32px Arial,sans-serif', '#c0392b');
+      y += 66;
+      P.warnings.forEach(function (w) {
+        y = wrapped('\u2022  ' + w, M, y + 6, CW, '400 22px Arial,sans-serif', '#c0392b', 32) + 16;
+      });
+      y += 24;
+    }
+
+    text('Recommended accessories', M, y + 34, '700 32px Arial,sans-serif', '#0c2244');
+    y += 66;
+    [['Projector mounts', MOUNT_LIST], ['HDMI cables', CABLE_LIST],
+     ['HDMI extenders and switches', HDMI_LIST], ['More home theater accessories', ACCESSORY_LIST]
+    ].forEach(function (a) {
+      text(a[0] + ':', M, y + 8, '600 22px Arial,sans-serif', '#0c2244');
+      y = wrapped(a[1], M, y + 42, CW, '400 20px Arial,sans-serif', '#1a56db', 28) + 20;
+    });
+    y += 34;
+
+    if (!L.measure) { L.cx.fillStyle = '#0c2244'; L.cx.fillRect(0, y, W, 128); }
+    text('BudgetProjectors.org', M, y + 54, '600 22px Arial,sans-serif', '#ffffff');
+    text('Generated ' + P.date, W - M, y + 54, '400 18px Arial,sans-serif', '#8fa3c8', 'right');
+    text(TAGLINE, M, y + 92, 'italic 400 15px Arial,sans-serif', '#8fa3c8');
+    y += 128;
+    L.y = y;
+  }
+
+  function drawGolfWatermark(cx, W, H) {
+    cx.save();
+    cx.globalAlpha = 0.05;
+    cx.fillStyle = '#0c2244';
+    cx.font = '700 130px Arial,sans-serif';
+    cx.textAlign = 'center';
+    cx.translate(W / 2, H / 2);
+    cx.rotate(-0.32);
+    for (var i = -2; i <= 2; i++) cx.fillText('BudgetProjectors.org', 0, i * 280);
+    cx.restore();
+  }
+
+  function downloadGolfBlob(blob, name) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 800);
+  }
+
+  function composeGolfImage(kind, P, imgs) {
+    var W = 1600;
+    var scratch = document.createElement('canvas');
+    var Lm = { cx: scratch.getContext('2d'), y: 0, measure: true };
+    renderGolfDoc(P, imgs, Lm);
+    var H = Math.ceil(Lm.y) + 40;
+    var cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    var cx = cv.getContext('2d');
+    cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, W, H);
+    renderGolfDoc(P, imgs, { cx: cx, y: 0, measure: false });
+    drawGolfWatermark(cx, W, H);
+    cv.toBlob(function (blob) {
+      if (blob) downloadGolfBlob(blob, 'budgetprojectors-golf-plan.' + kind);
+    }, kind === 'jpg' ? 'image/jpeg' : 'image/png', 0.92);
+  }
+
+  function exportGolfImage(kind) {
+    if (!planData) { nudgeExport(); return; }
+    var P = planData;
+    var srcs = [svgTop, svgFront, svgSide];
+    var imgs = [], loaded = 0;
+    srcs.forEach(function (src, i) {
+      if (!src) { imgs[i] = { img: null, h: 0 }; if (++loaded === srcs.length) composeGolfImage(kind, P, imgs); return; }
+      rasterizeGolfSvg(src, 1240, function (img, h) {
+        imgs[i] = { img: img, h: h };
+        if (++loaded === srcs.length) composeGolfImage(kind, P, imgs);
+      });
+    });
+  }
+
+  function exportGolfPdf() {
+    if (!planData) { nudgeExport(); return; }
+    var P = planData;
+    var sheet = document.getElementById('golf-print');
+    if (!sheet) return;
+    var rows = golfSpecRows(P).map(function (r) {
+      return '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>';
+    }).join('');
+    var steps = golfSteps(P).map(function (s) { return '<li>' + s + '</li>'; }).join('');
+    var warns = P.warnings.length ?
+      '<h2>Watch out for</h2><ul class="gp-warn">' +
+      P.warnings.map(function (w) { return '<li>' + w + '</li>'; }).join('') + '</ul>' : '';
+    sheet.innerHTML =
+      '<div class="gp-watermark">BudgetProjectors.org</div>' +
+      '<div class="gp-head"><div class="gp-brand">BUDGETPROJECTORS.ORG</div>' +
+      '<h1>Golf Simulator Plan</h1><div class="gp-date">' + P.date + '</div></div>' +
+      '<p class="gp-tagline">' + TAGLINE + '</p>' +
+      '<table class="gp-specs">' + rows + '</table>' +
+      '<div class="gp-fit ' + (P.fit ? 'yes' : 'no') + '">WILL IT FIT: ' + (P.fit ? 'YES' : 'NO') +
+      '<span>' + P.fitNote + '</span></div>' +
+      '<h2>3D views</h2><div class="gp-views">' +
+      '<figure><figcaption>Top-down view</figcaption><div class="gp-svg" id="gp-v0"></div></figure>' +
+      '<figure><figcaption>What you see from the hitting mat</figcaption><div class="gp-svg" id="gp-v1"></div></figure>' +
+      '<figure><figcaption>Side view</figcaption><div class="gp-svg" id="gp-v2"></div></figure></div>' +
+      '<h2>To set it up</h2><ol class="gp-steps">' + steps + '</ol>' + warns +
+      '<h2>Recommended accessories</h2><ul class="gp-acc">' +
+      '<li>Projector mounts: <a href="' + MOUNT_LIST + '">' + MOUNT_LIST + '</a></li>' +
+      '<li>HDMI cables: <a href="' + CABLE_LIST + '">' + CABLE_LIST + '</a></li>' +
+      '<li>HDMI extenders and switches: <a href="' + HDMI_LIST + '">' + HDMI_LIST + '</a></li>' +
+      '<li>More home theater accessories: <a href="' + ACCESSORY_LIST + '">' + ACCESSORY_LIST + '</a></li></ul>' +
+      '<div class="gp-foot"><strong>BudgetProjectors.org</strong> &middot; Generated ' + P.date + '<br>' + TAGLINE + '</div>';
+    [svgTop, svgFront, svgSide].forEach(function (src, i) {
+      var slot = document.getElementById('gp-v' + i);
+      if (slot && src) slot.appendChild(src.cloneNode(true));
+    });
+    window.print();
+  }
+
   /* ---------- init ---------- */
+  var golfJpgBtn = $('golf-export-jpg'), golfPngBtn = $('golf-export-png'), golfPdfBtn = $('golf-export-pdf');
+  if (golfJpgBtn) golfJpgBtn.addEventListener('click', function () { exportGolfImage('jpg'); });
+  if (golfPngBtn) golfPngBtn.addEventListener('click', function () { exportGolfImage('png'); });
+  if (golfPdfBtn) golfPdfBtn.addEventListener('click', exportGolfPdf);
   recalc();
 })();

@@ -397,3 +397,33 @@ h3 { font-size: 22px; margin-bottom: 12px; }
   .calc.golf-layout { grid-template-columns: 1fr; }
   .golf-side { position: static; }
 }
+
+/* Golf plan export */
+.golf-export-section { border-top: 1px solid var(--line); }
+.golf-export-buttons { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+#golf-print { display: none; }
+@media print {
+  body > *:not(#golf-print) { display: none !important; }
+  #golf-print { display: block !important; padding: 8px 4px; color: #111; font-family: Poppins, Arial, Helvetica, sans-serif; }
+  .gp-head { background: #0c2244; color: #fff; padding: 26px 30px; border-radius: 10px; }
+  .gp-brand { letter-spacing: 2px; font-size: 13px; color: #8fa3c8; font-weight: 600; }
+  .gp-head h1 { margin: 6px 0 0; font-size: 30px; }
+  .gp-date { color: #8fa3c8; font-size: 13px; margin-top: 4px; }
+  .gp-tagline { font-style: italic; color: #555; font-size: 14px; }
+  .gp-specs { width: 100%; border-collapse: collapse; margin: 10px 0 16px; }
+  .gp-specs th, .gp-specs td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #ddd; font-size: 14px; vertical-align: top; }
+  .gp-specs th { color: #666; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; width: 210px; }
+  .gp-fit { border-radius: 10px; padding: 16px 22px; font-size: 22px; font-weight: 700; color: #fff; margin: 12px 0 18px; }
+  .gp-fit.yes { background: #2e7d5b; }
+  .gp-fit.no { background: #c0392b; }
+  .gp-fit span { display: block; font-size: 14px; font-weight: 400; margin-top: 4px; }
+  #golf-print h2 { font-size: 20px; color: #0c2244; margin: 22px 0 10px; }
+  .gp-views figure { margin: 0 0 16px; page-break-inside: avoid; }
+  .gp-views svg { width: 100%; height: auto; border: 1px solid #ccc; border-radius: 6px; }
+  .gp-views figcaption { font-weight: 600; margin-bottom: 6px; font-size: 15px; }
+  .gp-steps li, .gp-acc li { font-size: 14px; margin-bottom: 6px; }
+  .gp-warn li { color: #c0392b; font-size: 14px; margin-bottom: 6px; }
+  .gp-acc a { color: #1a56db; word-break: break-all; }
+  .gp-foot { margin-top: 26px; border-top: 2px solid #0c2244; padding-top: 12px; font-size: 12px; color: #555; }
+  .gp-watermark { position: fixed; top: 42%; left: 0; right: 0; text-align: center; transform: rotate(-24deg); font-size: 84px; font-weight: 700; color: #0c2244; opacity: 0.05; pointer-events: none; }
+}
