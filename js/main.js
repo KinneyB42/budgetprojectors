@@ -1405,6 +1405,36 @@
     });
   }
 
+  /* ---------- Viewer projector toggle (Advanced): all three or one at a time ---------- */
+  var viewerProj = 'all';
+  try {
+    var vpSaved = localStorage.getItem('calc-viewerproj');
+    if (vpSaved === 'all' || vpSaved === 'a' || vpSaved === 'b' || vpSaved === 'c') viewerProj = vpSaved;
+  } catch (e) {}
+  function syncViewerProjUI() {
+    var row = document.getElementById('calc-viewerproj');
+    if (!row) return;
+    if ((viewerProj === 'b' && !compareB) || (viewerProj === 'c' && !compareC)) {
+      viewerProj = 'all';
+      try { localStorage.setItem('calc-viewerproj', 'all'); } catch (e) {}
+    }
+    row.hidden = !(advMode && compareOn && (compareB || compareC));
+    row.querySelectorAll('.calc__chip').forEach(function (c) {
+      var vp = c.getAttribute('data-vp');
+      c.classList.toggle('chosen', vp === viewerProj);
+      if (vp === 'b') c.style.display = compareB ? '' : 'none';
+      if (vp === 'c') c.style.display = compareC ? '' : 'none';
+    });
+  }
+  document.querySelectorAll('#calc-viewerproj .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      viewerProj = chip.getAttribute('data-vp');
+      try { localStorage.setItem('calc-viewerproj', viewerProj); } catch (e) {}
+      syncViewerProjUI();
+      recalc();
+    });
+  });
+
   /* ---------- Basic / Advanced mode ---------- */
   var advMode = false;
   function setAdvMode(on) {
@@ -1565,6 +1595,7 @@
     if (!(effLumens > 0) && selectedModel && selectedModel.lm > 0) effLumens = selectedModel.lm;
 
     syncZoom(r, imgWIn);
+    syncViewerProjUI();
     var zoomPct = (zoomWrap && !zoomWrap.hidden) ? Math.round(zoomFrac() * 100) : -1;
     var drawO = { L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
       scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType,
@@ -2728,6 +2759,9 @@
       el3('circle', { cx: px.toFixed(1), cy: py.toFixed(1), r: r, fill: '#9fd0ff', opacity: op == null ? 1 : op });
       el3('circle', { cx: px.toFixed(1), cy: py.toFixed(1), r: (r * 0.45).toFixed(1), fill: '#e8f4ff', opacity: op == null ? 1 : op });
     }
+    // A = the main projector; B/C comparison projectors are drawn after this block
+    var showA = (viewerProj === 'all' || viewerProj === 'a');
+    if (showA) {
     if (isUstV) {
       if (sy + scrH < VH - 120) {
         var uuw = Math.min(150, scrW * 0.5), uux = VW / 2 - uuw / 2, uuy = sy + scrH + 10;
@@ -2774,6 +2808,52 @@
       projLens3(bbx, 33, 6, 0.6);
       tx3(bbx, 58, 'projector on a shelf behind you', 11, 'middle', mut);
     }
+    } // end showA
+    // Head-to-head B/C comparison projectors in the viewer, per the projector toggle.
+    var cmpShow = [];
+    if (compareOn && advMode && o.extraProj) {
+      o.extraProj.forEach(function (xp) {
+        var k = (xp.tag || '').toLowerCase();
+        if (viewerProj === 'all' || viewerProj === k) cmpShow.push(xp);
+      });
+    }
+    function viewerCmpMarker(xp, cx) {
+      var col = xp.tag === 'B' ? '#2e7d5b' : '#c07a1e';
+      var fitMark = xp.fit === true ? '✓ ' : (xp.fit === false ? '✗ ' : '');
+      var lab = fitMark + xp.tag + ' · Throw ' + xp.dist;
+      var labCol = xp.fit === false ? (night ? '#e08a8a' : '#b3402e') : mut;
+      var pos = xp.ust ? 'ust' : xp.pos;
+      if (pos === 'ceiling') {
+        var mTop = ceilY, mBodyY = mTop + 26;
+        if (mBodyY + 36 > sy - 8) { mTop = 4; mBodyY = 30; } // ceiling too low: top indicator
+        el3('line', { x1: cx, y1: mTop, x2: cx, y2: mBodyY, stroke: projTrimC, 'stroke-width': 4 });
+        el3('rect', { x: (cx - 22).toFixed(1), y: mBodyY.toFixed(1), width: 44, height: 16, rx: 4, fill: col });
+        projLens3(cx, mBodyY + 8, 4.5);
+        tx3(cx, mBodyY + 32, lab, 10, 'middle', labCol);
+      } else if (pos === 'table' && !(xp.px > seat)) {
+        el3('rect', { x: (cx - 18).toFixed(1), y: (floorY - 36).toFixed(1), width: 36, height: 12, rx: 3, fill: col });
+        projLens3(cx, floorY - 30, 3.5);
+        el3('rect', { x: (cx - 22).toFixed(1), y: (floorY - 24).toFixed(1), width: 44, height: 5, rx: 2, fill: projTrimC });
+        el3('line', { x1: cx - 18, y1: floorY - 19, x2: cx - 18, y2: floorY, stroke: projTrimC, 'stroke-width': 3 });
+        el3('line', { x1: cx + 18, y1: floorY - 19, x2: cx + 18, y2: floorY, stroke: projTrimC, 'stroke-width': 3 });
+        tx3(cx, floorY + 16, lab, 10, 'middle', labCol);
+      } else if (pos === 'ust') {
+        if (sy + scrH < VH - 120) {
+          var muw = 60, mux = cx - muw / 2, muy = sy + scrH + 8;
+          el3('rect', { x: mux.toFixed(1), y: muy.toFixed(1), width: muw, height: 14, rx: 3, fill: col });
+          projLens3(cx, muy + 6, 3.5);
+          tx3(cx, muy + 28, lab, 10, 'middle', labCol);
+        }
+      } else {
+        // behind the viewer (or rear): small indicator at the top
+        el3('rect', { x: (cx - 20).toFixed(1), y: 22, width: 40, height: 12, rx: 3, fill: col, opacity: 0.6 });
+        projLens3(cx, 28, 3.5, 0.7);
+        tx3(cx, 52, lab, 10, 'middle', labCol);
+      }
+    }
+    cmpShow.forEach(function (xp, i) {
+      viewerCmpMarker(xp, VW / 2 + (i - (cmpShow.length - 1) / 2) * 140);
+    });
     // screen distances off the floor / to the ceiling, as side callouts
     var maV = mountAdvice(o, eyeHeightIn());
     function dimCallout(dx, dy, dir, label) {
