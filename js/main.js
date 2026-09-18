@@ -380,7 +380,23 @@
     var outdoor = type === 'outdoors';
     if (dimsBox) dimsBox.style.display = outdoor ? 'none' : '';
     if (roomTip) roomTip.textContent = R.tip;
+    gateOutdoorOptions();
     recalc();
+  }
+
+  // Outdoors has no ceiling: hide the ceiling-mount position and the indoor-only
+  // screen styles (acoustic frame, floor rising), falling back to safe choices.
+  function gateOutdoorOptions() {
+    var outdoor = roomType === 'outdoors';
+    document.querySelectorAll('#calc-projpos .calc__chip').forEach(function (c) {
+      if (c.getAttribute('data-pos') === 'ceiling') c.style.display = outdoor ? 'none' : '';
+    });
+    document.querySelectorAll('#calc-screenstyle .calc__chip').forEach(function (c) {
+      var ss = c.getAttribute('data-ss');
+      if (ss === 'acoustic' || ss === 'floor') c.style.display = outdoor ? 'none' : '';
+    });
+    if (outdoor && projPos === 'ceiling') setProjPos('table');
+    if (outdoor && (screenStyle === 'acoustic' || screenStyle === 'floor')) setScreenStyle('fixed');
   }
 
   document.querySelectorAll('.calc__chip[data-room]').forEach(function (chip) {
@@ -487,14 +503,17 @@
   /* ---------- Projector position (standard mode) ---------- */
   var projPos = 'behind';
   var projposWrap = document.getElementById('calc-projpos-wrap');
+  function setProjPos(pos) {
+    projPos = pos;
+    document.querySelectorAll('#calc-projpos .calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', c.getAttribute('data-pos') === pos);
+    });
+    syncMountTypeUI();
+    recalc();
+  }
   document.querySelectorAll('#calc-projpos .calc__chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
-      projPos = chip.getAttribute('data-pos');
-      document.querySelectorAll('#calc-projpos .calc__chip').forEach(function (c) {
-        c.classList.toggle('chosen', c === chip);
-      });
-      syncMountTypeUI();
-      recalc();
+      setProjPos(chip.getAttribute('data-pos'));
     });
   });
 
@@ -604,13 +623,16 @@
 
   /* ---------- Screen style (physical) and front speakers for the viewer view ---------- */
   var screenStyle = 'fixed';
+  function setScreenStyle(ss) {
+    screenStyle = ss;
+    document.querySelectorAll('#calc-screenstyle .calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', c.getAttribute('data-ss') === ss);
+    });
+    recalc();
+  }
   document.querySelectorAll('#calc-screenstyle .calc__chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
-      screenStyle = chip.getAttribute('data-ss');
-      document.querySelectorAll('#calc-screenstyle .calc__chip').forEach(function (c) {
-        c.classList.toggle('chosen', c === chip);
-      });
-      recalc();
+      setScreenStyle(chip.getAttribute('data-ss'));
     });
   });
   var speakerMode = 'none';
@@ -940,6 +962,7 @@
     if (p.li === '1' && !lightsOn && lightsToggle) lightsToggle.click();
     if (p.sun === '1' && !sunOn && sunToggle) sunToggle.click();
     if (p.sun === '0' && sunOn && sunToggle) sunToggle.click();
+    gateOutdoorOptions(); // a shared link can carry ceiling/acoustic/floor with outdoors
     recalc();
   }
 
