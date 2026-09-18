@@ -115,7 +115,7 @@
     lensSelect.addEventListener('change', function () {
       selectedLens = parseInt(lensSelect.value, 10) || 0;
       resetZoom();
-      if (zoomLocked) needLockCapture = true;
+      if (lockMode === 'projector') needLockCapture = true;
       refreshSelectedLine();
       recalc();
     });
@@ -156,6 +156,7 @@
     var show = !!r && r[1] > r[0] && !reverseMode && !golfMode && imgWIn > 0;
     zoomWrap.hidden = !show;
     if (zoomLockRow) zoomLockRow.hidden = !show;
+    if (!show && lockMode !== 'off') setLockMode('off'); // locks only make sense with a zoom model
     if (show) syncZoomNum(r, imgWIn);
   }
 
@@ -174,19 +175,22 @@
       var near = imgWIn * r[0] / 12, far = imgWIn * r[1] / 12;
       var c = Math.min(far, Math.max(near, toFt(v)));
       setZoomPercent((c - near) / (far - near) * 100);
-      if (zoomLocked) { lockedD = c; lastMoved = null; } // explicit placement moves the locked point
+      if (lockMode === 'projector') { lockedD = c; lastMoved = null; } // explicit placement moves the locked point
       else lastMoved = 'zoom';
       recalc();
     });
   }
 
   /* ---------- Image size / zoom lock ---------- */
-  // When locked, the projector's throw distance stays fixed: dragging the screen
-  // size slider drives the zoom slider to compensate, and vice versa.
+  // Two mutually exclusive locks:
+  // - Lock projector position: the throw distance stays fixed; dragging the screen
+  //   size slider drives the zoom slider to compensate, and vice versa.
+  // - Lock image size: the screen size is frozen; the zoom slider only moves the projector.
   var zoomLockRow = document.getElementById('calc-zoom-lockrow');
   var zoomLockBtn = document.getElementById('calc-zoom-lock');
-  var zoomLocked = false;
-  var lockedD = 0;      // throw distance held fixed while locked, ft
+  var imageLockBtn = document.getElementById('calc-image-lock');
+  var lockMode = 'off'; // 'off' | 'projector' | 'image'
+  var lockedD = 0;      // throw distance held fixed while projector-locked, ft
   var lastMoved = null; // 'size' | 'zoom' — which slider the user just dragged
   var needLockCapture = false;
 
@@ -195,17 +199,31 @@
     var ad = Math.sqrt(a[0] * a[0] + a[1] * a[1]);
     return a[0] / ad; // image-width inches per diagonal inch
   }
-  function setZoomLocked(on) {
-    zoomLocked = on;
+  function setLockMode(mode) {
+    lockMode = mode;
+    var proj = mode === 'projector', img = mode === 'image';
     if (zoomLockBtn) {
-      zoomLockBtn.classList.toggle('chosen', on);
-      zoomLockBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      zoomLockBtn.classList.toggle('chosen', proj);
+      zoomLockBtn.setAttribute('aria-pressed', proj ? 'true' : 'false');
     }
-    if (on) needLockCapture = true; // capture the current throw distance on next recalc
+    if (imageLockBtn) {
+      imageLockBtn.classList.toggle('chosen', img);
+      imageLockBtn.setAttribute('aria-pressed', img ? 'true' : 'false');
+    }
+    // Locking the image size freezes the screen-size controls.
+    if (sizeInput) sizeInput.disabled = img;
+    if (sizeNum) sizeNum.disabled = img;
+    if (proj) needLockCapture = true; // capture the current throw distance on next recalc
   }
   if (zoomLockBtn) {
     zoomLockBtn.addEventListener('click', function () {
-      setZoomLocked(!zoomLocked);
+      setLockMode(lockMode === 'projector' ? 'off' : 'projector');
+      recalc();
+    });
+  }
+  if (imageLockBtn) {
+    imageLockBtn.addEventListener('click', function () {
+      setLockMode(lockMode === 'image' ? 'off' : 'image');
       recalc();
     });
   }
@@ -231,7 +249,7 @@
     selectedModel = entry;
     selectedLens = 0;
     resetZoom();
-    if (zoomLocked) needLockCapture = true; // re-lock at the new model's position
+    if (lockMode === 'projector') needLockCapture = true; // re-lock at the new model's position
     if (modelInput) modelInput.value = entry.b + ' ' + entry.m;
     if (suggest) { suggest.hidden = true; suggest.innerHTML = ''; }
     if (manualBox) manualBox.hidden = true;
@@ -584,7 +602,7 @@
     if (lumensInput && parseFloat(lumensInput.value, 10) > 0) enc('lm', Math.round(parseFloat(lumensInput.value, 10)));
     if (gainInput && parseFloat(gainInput.value, 10) > 0) enc('gn', parseFloat(gainInput.value, 10));
     if (zoomFrac() > 0) enc('z', Math.round(zoomFrac() * 100));
-    if (zoomLocked) enc('lk', '1');
+    if (lockMode !== 'off') enc('lk', lockMode === 'projector' ? '1' : '2');
     enc('li', lightsOn ? '1' : '0');
     enc('sun', sunOn ? '1' : '0');
     return window.location.href.split('#')[0] + '#calc=' + parts.join(';');
@@ -706,7 +724,7 @@
     if (!isNaN(num('lm')) && lumensInput) lumensInput.value = Math.round(num('lm'));
     if (!isNaN(num('gn')) && gainInput) gainInput.value = p.gn;
     if (!isNaN(num('z')) && zoomInput) zoomInput.value = Math.max(0, Math.min(100, Math.round(num('z'))));
-    if (p.lk === '1') setZoomLocked(true);
+    if (p.lk === '1') setLockMode('projector'); else if (p.lk === '2') setLockMode('image');
     if (p.li === '0' && lightsOn && lightsToggle) lightsToggle.click();
     if (p.li === '1' && !lightsOn && lightsToggle) lightsToggle.click();
     if (p.sun === '1' && !sunOn && sunToggle) sunToggle.click();
@@ -1005,7 +1023,7 @@
     var dimsKnown = outdoor || (L > 0 && W > 0);
 
     // Zoom lock: hold the projector's throw distance fixed by driving the other slider.
-    if (zoomLocked && lockedD > 0 && !reverseMode && !golfMode && lastMoved && sizeInput) {
+    if (lockMode === 'projector' && lockedD > 0 && !reverseMode && !golfMode && lastMoved && sizeInput) {
       if (r && r[1] > r[0]) {
         if (lastMoved === 'size') {
           var dgL = parseFloat(sizeInput.value, 10);
