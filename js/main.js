@@ -532,6 +532,7 @@
       var H = inFt(ceilInput); if (H > 0) enc('H', r2(H));
     }
     enc('u', unit);
+    if (screenType === 'alr') enc('st', 'alr');
     if (gainInput && parseFloat(gainInput.value, 10) > 0) enc('gn', parseFloat(gainInput.value, 10));
     if (zoomFrac() > 0) enc('z', Math.round(zoomFrac() * 100));
     if (lockMode !== 'off') enc('lk', lockMode === 'projector' ? '1' : '2');
@@ -585,7 +586,7 @@
     function num(k) { var v = parseFloat(p[k], 10); return v >= 0 ? v : NaN; }
     function toDisp(ft) { return unit === 'm' ? fmt(ft * M_PER_FT, 2) : String(Math.round(ft * 100) / 100); }
     // Links carrying advanced-only settings open in Advanced mode.
-    if (p.g === '1' || p.dir === '1' || p.cb || p.cc || p.cbl || p.ccl || p.lm || p.gn || p.pp || p.gp || p.gw || p.gh || p.ga) setAdvMode(true);
+    if (p.g === '1' || p.dir === '1' || p.cb || p.cc || p.cbl || p.ccl || p.gn || p.pp || p.gp || p.gw || p.gh || p.ga) setAdvMode(true);
     if (p.u === 'm' || p.u === 'ft') setUnit(p.u, false);
     if (p.m) {
       var found = null;
@@ -644,6 +645,7 @@
       });
     }
     if (!isNaN(num('gn')) && gainInput) gainInput.value = p.gn;
+    if (p.st === 'alr') setScreenType('alr');
     if (!isNaN(num('z')) && zoomInput) zoomInput.value = Math.max(0, Math.min(100, Math.round(num('z'))));
     if (p.lk === '1') setLockMode('projector'); else if (p.lk === '2') setLockMode('image');
     if (p.li === '0' && lightsOn && lightsToggle) lightsToggle.click();
@@ -681,10 +683,12 @@
       img.src = url;
     }
     var svg2 = document.getElementById('calc-svg-side');
+    var svg3 = document.getElementById('calc-svg-viewer');
     rasterize(svg, 1320, 880, function (img1, url1) {
-      function compose(img2, url2) {
+      function step2(img2, url2) {
+        function compose(img3, url3) {
         try {
-          var CW = 1600, CH = 1150, PW = 540;
+          var CW = 1600, CH = 1560, PW = 540;
           var cv = document.createElement('canvas');
           cv.width = CW; cv.height = CH;
           var cx = cv.getContext('2d');
@@ -696,16 +700,15 @@
           cx.fillStyle = night ? '#0e1320' : '#ffffff';
           cx.fillRect(PW, 0, CW - PW, CH);
           var RW = CW - PW;
-          if (img1) {
-            var s1 = Math.min((RW - 40) / 660, 520 / 440);
-            var dw1 = 660 * s1, dh1 = 440 * s1;
-            cx.drawImage(img1, PW + (RW - dw1) / 2, 30 + (520 - dh1) / 2, dw1, dh1);
+          function place(img, vw, vh, slotY) {
+            if (!img) return;
+            var s = Math.min((RW - 40) / vw, 480 / vh);
+            var dw = vw * s, dh = vh * s;
+            cx.drawImage(img, PW + (RW - dw) / 2, slotY + (480 - dh) / 2, dw, dh);
           }
-          if (img2) {
-            var s2 = Math.min((RW - 40) / 660, 520 / 380);
-            var dw2 = 660 * s2, dh2 = 380 * s2;
-            cx.drawImage(img2, PW + (RW - dw2) / 2, 580 + (520 - dh2) / 2, dw2, dh2);
-          }
+          place(img1, 660, 440, 30);
+          place(img2, 660, 380, 530);
+          place(img3, 660, 360, 1030);
           // measurements text
           var S = planSummary;
           function row(label, value, y) {
@@ -742,14 +745,17 @@
           cx.fillText('Made with the BudgetProjectors throw-distance calculator', 48, CH - 28);
           cv.toBlob(function (blob) {
             if (blob) downloadBlob(blob, 'budgetprojectors-room-plan.' + kind);
-            URL.revokeObjectURL(url1); URL.revokeObjectURL(url2);
+            URL.revokeObjectURL(url1); URL.revokeObjectURL(url2); URL.revokeObjectURL(url3);
           }, mime, 0.92);
         } catch (e) {
-          URL.revokeObjectURL(url1); URL.revokeObjectURL(url2);
+          URL.revokeObjectURL(url1); URL.revokeObjectURL(url2); URL.revokeObjectURL(url3);
         }
       }
-      if (svg2) rasterize(svg2, 1320, 760, compose);
-      else compose(null, null);
+        if (svg3) rasterize(svg3, 1320, 720, compose);
+        else compose(null, null);
+      }
+      if (svg2) rasterize(svg2, 1320, 760, step2);
+      else step2(null, null);
     });
   }
 
@@ -785,6 +791,7 @@
       '<div class="cp-fit ' + (fits ? 'yes' : 'warn') + '">' + escHtml(S.verdict) + '</div>' +
       '<h2>3D view</h2><div class="cp-view" id="cp-view"></div>' +
       '<h2>Side view</h2><div class="cp-view" id="cp-view-side"></div>' +
+      '<h2>Viewer view</h2><div class="cp-view" id="cp-view-viewer"></div>' +
       '<div class="cp-foot"><strong>BudgetProjectors.org</strong> &middot; Generated ' + date + '<br>' + tagline + '</div>';
     var slot = document.getElementById('cp-view');
     var clone = svg.cloneNode(true);
@@ -796,6 +803,13 @@
       var clone2 = svg2.cloneNode(true);
       clone2.removeAttribute('id');
       slot2.appendChild(clone2);
+    }
+    var slot3 = document.getElementById('cp-view-viewer');
+    var svg3 = document.getElementById('calc-svg-viewer');
+    if (slot3 && svg3) {
+      var clone3 = svg3.cloneNode(true);
+      clone3.removeAttribute('id');
+      slot3.appendChild(clone3);
     }
     document.body.classList.add('printing-calc');
     window.print();
@@ -834,6 +848,32 @@
     });
   }
   if (gainInput) gainInput.addEventListener('input', recalc);
+
+  /* ---------- Screen material: standard matte white vs ALR ---------- */
+  var screenType = 'standard';
+  try { var _sst = localStorage.getItem('calc-screentype'); if (_sst === 'alr' || _sst === 'standard') screenType = _sst; } catch (e) {}
+  function setScreenType(st) {
+    screenType = st === 'alr' ? 'alr' : 'standard';
+    document.querySelectorAll('#calc-screentype .calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', c.getAttribute('data-st') === screenType);
+    });
+    try { localStorage.setItem('calc-screentype', screenType); } catch (e) {}
+  }
+  document.querySelectorAll('#calc-screentype .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      setScreenType(chip.getAttribute('data-st'));
+      recalc();
+    });
+  });
+  setScreenType(screenType);
+  // Effective screen gain: ALR surfaces run lower gain (typical 0.6) but reject
+  // ambient light; the gain box multiplies either base.
+  function effGain() {
+    var g = gainInput ? parseFloat(gainInput.value, 10) : NaN;
+    if (!(g > 0)) g = 1;
+    if (screenType === 'alr') g *= 0.6;
+    return g;
+  }
   document.querySelectorAll('#calc-aspect-std .calc__chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
       stdAspect = chip.getAttribute('data-ar');
@@ -1127,7 +1167,7 @@
       scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType,
       px: px, py: py, pz: pz, pmount: pmount, projPos: projPos, extraProj: extraProj,
       throwD: throwD, zpct: zoomPct, projLocked: lockMode === 'projector',
-      lumens: effLumens > 0 ? effLumens : 0 });
+      lumens: effLumens > 0 ? effLumens : 0, screenType: screenType });
 
     // Reference viewing distance from viewing angle: 36 deg (immersive) to 30 deg (SMPTE minimum).
     var dClose = (imgWIn / 2) / Math.tan(18 * Math.PI / 180) / 12; // ft
@@ -1155,8 +1195,7 @@
     var fl = NaN, flNote = '';
     var lumens = effLumens;
     if (lumens > 0) {
-      var gain = gainInput ? parseFloat(gainInput.value, 10) : NaN;
-      if (!(gain > 0)) gain = 1;
+      var gain = effGain();
       var imgHIn = scrHIn;
       var areaSqFt = imgWIn * imgHIn / 144;
       if (areaSqFt > 0) {
@@ -1164,7 +1203,8 @@
         flNote = fl < 12 ? 'dim, best in a fully dark room' :
           fl < 30 ? 'good with the lights off' :
           fl < 60 ? 'holds up with some ambient light' : 'bright enough for lights-on viewing';
-        bits.push('Brightness: about ' + fmt(fl, 0) + ' foot-lamberts on this screen, ' + flNote + '.');
+        bits.push('Brightness: about ' + fmt(fl, 0) + ' foot-lamberts on this screen, ' + flNote +
+          (screenType === 'alr' ? ' The ALR surface holds contrast with the lights on.' : '.'));
       }
     }
     var fitsRoom;
@@ -1219,11 +1259,12 @@
 
     var revMode = reverseMode;
     var headStr = revMode ? dRange + '&Prime; screen' : throwStr + ' throw';
+    var scrMatNote = screenType === 'alr' ? ' ALR' : '';
     planSummary = {
       model: modelName,
       throw: revMode ? dispDist(tdFt) + ' throw' : throwStr + ' throw',
-      screen: revMode ? dRange.replace(/&ndash;/g, '–') + '″ ' + stdAspect :
-        fmt(diag, 0) + '″ ' + stdAspect,
+      screen: revMode ? dRange.replace(/&ndash;/g, '–') + '″ ' + stdAspect + scrMatNote :
+        fmt(diag, 0) + '″ ' + stdAspect + scrMatNote,
       room: ROOMS[roomType].label + (outdoor ? '' : (dimsKnown ?
         ', ' + dispShort(L) + ' × ' + dispShort(W) + ((H >= 0) ? ', ' + dispShort(H) + ' ceiling' : '') :
         ' (enter your room size)')),
@@ -1406,11 +1447,33 @@
       if (H > 0 && z0 + sh > H - 0.5) z0 = Math.max(0.5, H - sh - 0.5);
       zc = z0 + sh / 2;
       var yA = yc - sw / 2, yB = yc + sw / 2;
-      // screen (with a glow when the lights are off)
+      var alr = o.screenType === 'alr';
+      var scrPts = [[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]];
+      // screen (with a glow when the lights are off). ALR surfaces are grey;
+      // matte white washes out when the lights or sun are on, ALR holds contrast.
       if (scene === 'night') {
-        poly([[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]], '#bcd0ff', { opacity: 0.5, filter: 'url(#calc-glow)' });
+        poly(scrPts, '#bcd0ff', { opacity: 0.5, filter: 'url(#calc-glow)' });
       }
-      poly([[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]], '#ffffff', { stroke: NAVY, 'stroke-width': 2 });
+      poly(scrPts, alr ? '#878e99' : '#ffffff', { stroke: NAVY, 'stroke-width': 2 });
+      if (scene !== 'night' && !alr) {
+        poly(scrPts, '#fff3d0', { opacity: 0.55 });
+      }
+      // viewing cone: ALR brightness falls off-axis, matte white is ~180 degrees
+      var coneHalf = alr ? 30 : 75;
+      var coneLen = Math.min(W * 0.85, 14);
+      var ca = coneHalf * Math.PI / 180;
+      var cdx = Math.cos(ca) * coneLen, cdy = Math.sin(ca) * coneLen;
+      var coneStyle = { stroke: '#8a94a8', 'stroke-width': 1, 'stroke-dasharray': '5 4', opacity: 0.55 };
+      var coneO = P(0, yc, zc), coneU = P(cdx, yc + cdy, zc), coneD = P(cdx, yc - cdy, zc);
+      el('line', { x1: coneO[0].toFixed(1), y1: coneO[1].toFixed(1),
+        x2: coneU[0].toFixed(1), y2: coneU[1].toFixed(1),
+        stroke: coneStyle.stroke, 'stroke-width': coneStyle['stroke-width'],
+        'stroke-dasharray': coneStyle['stroke-dasharray'], opacity: coneStyle.opacity });
+      el('line', { x1: coneO[0].toFixed(1), y1: coneO[1].toFixed(1),
+        x2: coneD[0].toFixed(1), y2: coneD[1].toFixed(1),
+        stroke: coneStyle.stroke, 'stroke-width': coneStyle['stroke-width'],
+        'stroke-dasharray': coneStyle['stroke-dasharray'], opacity: coneStyle.opacity });
+      txt(cdx, yc + cdy, zc + 0.4, 'viewing cone', 11);
       // diagonal size arrow across the screen face
       if (sw > 2 && sh > 1.5) {
         var ax = 0.45;
@@ -1489,8 +1552,7 @@
       }
       // brightness verdict in the white margin: is this screen size too dim for these lumens?
       if (o.lumens > 0 && imgWIn > 0) {
-        var bGain = gainInput ? parseFloat(gainInput.value, 10) : NaN;
-        if (!(bGain > 0)) bGain = 1;
+        var bGain = effGain();
         var bImgHIn = o.shFt * 12;
         var bArea = imgWIn * bImgHIn / 144;
         if (bArea > 0) {
@@ -1612,7 +1674,7 @@
     var night = !sunOn && !lightsOn;
     var ink = night ? '#dbe2f0' : NAVY;
     var mut = night ? '#8a94a8' : MUTED;
-    var scrFill = night ? '#bcd0ff' : '#dbe7ff';
+    var scrFill = night ? '#bcd0ff' : (o.screenType === 'alr' ? '#878e99' : '#dbe7ff');
     function el2(name, attrs) {
       var e = document.createElementNS(NS, name);
       for (var k in attrs) e.setAttribute(k, attrs[k]);
@@ -1697,7 +1759,12 @@
     // screen
     el2('rect', { x: (X(0) - 7).toFixed(1), y: Z(z0 + sh).toFixed(1), width: 7, height: (sh * s).toFixed(1),
       fill: scrFill, stroke: ink, 'stroke-width': 1.5 });
-    tx(X(0) + 10, Z(zc) + 4, 'screen ' + dispShort(sh), 11, 'start', mut);
+    if (!night && o.screenType !== 'alr') {
+      // matte white washes out with the lights on; ALR holds its contrast
+      el2('rect', { x: (X(0) - 7).toFixed(1), y: Z(z0 + sh).toFixed(1), width: 7, height: (sh * s).toFixed(1),
+        fill: '#fff3d0', opacity: 0.6 });
+    }
+    tx(X(0) + 10, Z(zc) + 4, 'screen ' + dispShort(sh) + (o.screenType === 'alr' ? ' · ALR' : ''), 11, 'start', mut);
     // throw beam: lens to screen top and bottom
     var lx = X(pxx), lz = Z(pzz);
     el2('line', { x1: lx.toFixed(1), y1: lz.toFixed(1), x2: X(0).toFixed(1), y2: Z(z0).toFixed(1),
@@ -1734,7 +1801,82 @@
     wmt.setAttribute('opacity', 0.55);
   }
 
-  function drawAll(o) { drawViz(o); drawSideViz(o); }
+  // First-person view from the seating position: the screen drawn at its true
+  // angular size inside a ~90-degree field-of-view viewport, with 30°/36°
+  // reference frames (SMPTE minimum / immersive target).
+  function drawViewerViz(o) {
+    var svg3 = document.getElementById('calc-svg-viewer');
+    if (!svg3) return;
+    while (svg3.firstChild) svg3.removeChild(svg3.firstChild);
+    var VW = 660, VH = 360;
+    var night = !sunOn && !lightsOn;
+    var mut = night ? '#8a94a8' : MUTED;
+    var alr = o.screenType === 'alr';
+    function el3(name, attrs) {
+      var e = document.createElementNS(NS, name);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      svg3.appendChild(e); return e;
+    }
+    function tx3(x, y, str, size, anchor, fill) {
+      var t = el3('text', { x: x.toFixed(1), y: y.toFixed(1), 'text-anchor': anchor || 'middle',
+        'font-size': size || 12, fill: fill || mut });
+      t.textContent = str; return t;
+    }
+    el3('rect', { x: 0, y: 0, width: VW, height: VH, fill: night ? '#0e1320' : '#e8e2d4' });
+
+    var sw = o.swFt, sh = o.shFt, seat = o.seat;
+    function watermark3() {
+      var w = tx3(VW - 12, VH - 12, 'BudgetProjectors.org', 13, 'end', mut);
+      w.setAttribute('opacity', 0.55);
+    }
+    if (!(sw > 0 && sh > 0)) {
+      tx3(VW / 2, VH / 2 - 8, 'Pick a screen size above to see the viewer perspective.', 15, 'middle', mut);
+      watermark3(); return;
+    }
+    if (!(seat > 0)) {
+      tx3(VW / 2, VH / 2 - 8, 'Enter your seating distance above to see the viewer perspective.', 15, 'middle', mut);
+      watermark3(); return;
+    }
+    // viewport width = 90° horizontal field of view
+    var tanHalfFov = Math.tan(45 * Math.PI / 180);
+    function wForDeg(deg) { return VW * Math.tan(deg * Math.PI / 360) / tanHalfFov; }
+    var screenDeg = 2 * Math.atan((sw / 2) / seat) * 180 / Math.PI;
+    // the screen at its true angular size
+    var scrW = wForDeg(Math.min(screenDeg, 90)), scrH = scrW * (sh / sw);
+    var sx = VW / 2 - scrW / 2, sy = VH / 2 - scrH / 2;
+    var face = night ? (alr ? '#9aa2ad' : '#eef3ff') : (alr ? '#878e99' : '#f7f4ec');
+    el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
+      fill: face, stroke: NAVY, 'stroke-width': 2 });
+    if (!night && !alr) {
+      el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
+        fill: '#fff3d0', opacity: 0.55 });
+    }
+    if (night) {
+      el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
+        fill: '#ffffff', opacity: 0.18 });
+    }
+    // 30° / 36° reference frames, drawn over the screen
+    [{ deg: 36, lab: 'top' }, { deg: 30, lab: 'bottom' }].forEach(function (ref) {
+      var rw = wForDeg(ref.deg), rh = rw * (sh / sw);
+      var rx = VW / 2 - rw / 2, ry = VH / 2 - rh / 2;
+      el3('rect', { x: rx.toFixed(1), y: ry.toFixed(1), width: rw.toFixed(1), height: rh.toFixed(1),
+        fill: 'none', stroke: mut, 'stroke-width': 1, 'stroke-dasharray': '6 4', opacity: 0.7 });
+      if (ref.lab === 'top') tx3(rx + rw - 6, ry + 16, ref.deg + '°', 11, 'end', mut);
+      else tx3(rx + rw - 6, ry + rh - 8, ref.deg + '°', 11, 'end', mut);
+    });
+    var fillsAll = screenDeg >= 90;
+    tx3(VW / 2, 26, 'From your seat · ' + dispDist(seat) + ' away', 14, 'middle', night ? '#dbe2f0' : NAVY);
+    tx3(VW / 2, VH - 34, fillsAll ? 'The screen fills your entire field of view' :
+      'The screen fills about ' + Math.round(screenDeg) + '° of your view' +
+      (screenDeg < 30 ? ' · below the 30° cinematic minimum' :
+       screenDeg <= 40 ? ' · right in the cinematic sweet spot' : ' · bigger than the 36° immersive target'),
+      12, 'middle', mut);
+    if (!night && !alr) tx3(VW / 2, VH - 16, 'matte white washes out with the lights on', 11, 'middle', mut);
+    if (!night && alr) tx3(VW / 2, VH - 16, 'ALR holds contrast with the lights on', 11, 'middle', mut);
+    watermark3();
+  }
+
+  function drawAll(o) { drawViz(o); drawSideViz(o); drawViewerViz(o); }
 
   // init
   var savedMode = 'basic';
