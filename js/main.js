@@ -2503,16 +2503,30 @@
     var wallTone = night ? '#141c30' : '#d9d2c0';
     var floorTone = night ? '#0b101d' : '#c9c0a9';
     var trimCol = night ? '#232f4d' : '#a89e86';
-    el3('polygon', { points: '0,0 58,' + floorY + ' 0,' + VH, fill: wallTone });
-    el3('polygon', { points: VW + ',0 ' + (VW - 58) + ',' + floorY + ' ' + VW + ',' + VH, fill: wallTone });
-    el3('polygon', { points: '0,' + VH + ' ' + VW + ',' + VH + ' ' + (VW - 58) + ',' + floorY + ' 58,' + floorY,
-      fill: floorTone });
-    [150, 260, 400, 510].forEach(function (fx) {
-      el3('line', { x1: fx, y1: VH, x2: (VW / 2 + (fx - VW / 2) * 0.12).toFixed(1), y2: floorY + 4,
-        stroke: trimCol, 'stroke-width': 1, opacity: 0.45 });
-    });
-    el3('line', { x1: 58, y1: floorY, x2: VW - 58, y2: floorY,
-      stroke: trimCol, 'stroke-width': 2, opacity: 0.8 });
+    var concreteWall = o.outdoor && screenStyle === 'fixed';
+    if (concreteWall) {
+      // outdoors with a fixed frame: the screen hangs on a concrete wall
+      var concTone = night ? '#252d42' : '#b7b2a6';
+      var concLine = night ? '#313b55' : '#a29d90';
+      el3('rect', { x: 0, y: 0, width: VW, height: floorY, fill: concTone });
+      [0.3, 0.55, 0.8].forEach(function (f) {
+        el3('line', { x1: 0, y1: (floorY * f).toFixed(1), x2: VW, y2: (floorY * f).toFixed(1),
+          stroke: concLine, 'stroke-width': 2, opacity: 0.55 });
+      });
+      el3('rect', { x: 0, y: floorY, width: VW, height: VH - floorY, fill: floorTone });
+      el3('line', { x1: 0, y1: floorY, x2: VW, y2: floorY, stroke: trimCol, 'stroke-width': 2, opacity: 0.8 });
+    } else {
+      el3('polygon', { points: '0,0 58,' + floorY + ' 0,' + VH, fill: wallTone });
+      el3('polygon', { points: VW + ',0 ' + (VW - 58) + ',' + floorY + ' ' + VW + ',' + VH, fill: wallTone });
+      el3('polygon', { points: '0,' + VH + ' ' + VW + ',' + VH + ' ' + (VW - 58) + ',' + floorY + ' 58,' + floorY,
+        fill: floorTone });
+      [150, 260, 400, 510].forEach(function (fx) {
+        el3('line', { x1: fx, y1: VH, x2: (VW / 2 + (fx - VW / 2) * 0.12).toFixed(1), y2: floorY + 4,
+          stroke: trimCol, 'stroke-width': 1, opacity: 0.45 });
+      });
+      el3('line', { x1: 58, y1: floorY, x2: VW - 58, y2: floorY,
+        stroke: trimCol, 'stroke-width': 2, opacity: 0.8 });
+    }
     // ceiling band across the top of the room (no ceiling outdoors)
     var ceilY = 56;
     if (!o.outdoor) {
@@ -2584,6 +2598,11 @@
         el3('rect', { x: sx.toFixed(1), y: leadTop.toFixed(1), width: scrW.toFixed(1),
           height: (leadBot - leadTop).toFixed(1), fill: night ? '#04060c' : '#151515' });
       }
+    }
+    if (concreteWall) {
+      // drop shadow so the fixed frame reads as mounted on the wall
+      el3('rect', { x: (sx + 7).toFixed(1), y: (sy + 9).toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
+        fill: '#000000', opacity: night ? 0.5 : 0.22 });
     }
     el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
       fill: face, stroke: frameCol, 'stroke-width': screenStyle === 'acoustic' ? 5 : 3 });
