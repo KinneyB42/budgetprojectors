@@ -2661,6 +2661,9 @@
       });
       p.dx = dx; p.dy = dy; placed.push(p);
     });
+    if (!svgMeasureCtx) svgMeasureCtx = document.createElement('canvas').getContext('2d');
+    var mctx = svgMeasureCtx; mctx.font = '12px sans-serif';
+    var placedLabels = [];
     projs.forEach(function (p) {
       var cx = X(p.dx), cy = Y(p.dy), bw = 1.2 * s, bh = 1.0 * s;
       var body = { x: (cx - bw / 2).toFixed(1), y: (cy - bh / 2).toFixed(1),
@@ -2673,7 +2676,20 @@
         fill: night ? '#dbe2f0' : '#ffffff', stroke: ink, 'stroke-width': 1 });
       // mount point for ceiling mounts
       if (p.ceiling) el6('circle', { cx: cx.toFixed(1), cy: cy.toFixed(1), r: 3.5, fill: night ? '#0e1320' : '#ffffff' });
-      tx6(cx, cy + bh / 2 + 17, p.tag + ' · ' + p.dist, 12, 'middle', p.col);
+      // throw label, bumped to a lower row when it would collide with a neighbor's label
+      var lab = p.tag + ' · ' + p.dist;
+      var lw = mctx.measureText(lab).width;
+      var lx0 = cx - lw / 2, lx1 = cx + lw / 2, ly = cy + bh / 2 + 17, tries = 0, clear = false;
+      while (!clear && tries < 4) {
+        clear = true;
+        for (var li = 0; li < placedLabels.length; li++) {
+          var q = placedLabels[li];
+          if (lx0 < q.x1 + 6 && lx1 > q.x0 - 6 && Math.abs(ly - q.y) < 15) { clear = false; break; }
+        }
+        if (!clear) { ly += 18; tries++; }
+      }
+      tx6(cx, ly, lab, 12, 'middle', p.col);
+      placedLabels.push({ x0: lx0, x1: lx1, y: ly });
     });
     // dimensions
     var dyL = Y(W) + 30;
