@@ -38,6 +38,7 @@
   var lumensInput = $('golf-lumens');
   var screenW = $('golf-screen-w');
   var screenH = $('golf-screen-h');
+  var screenPresets = $('golf-screen-presets');
   var aspectSel = $('golf-aspect');
   var roomLen = $('golf-room-len');
   var roomWid = $('golf-room-wid');
@@ -228,9 +229,37 @@
   }
 
   aspectSel.addEventListener('change', function () { applyAspect(); recalc(); });
+  function markPreset(chip) {
+    if (!screenPresets) return;
+    screenPresets.querySelectorAll('.calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', c === chip);
+    });
+  }
+  function syncPresetChips() {
+    if (!screenPresets) return;
+    var w = parseFloat(screenW.value, 10), match = null;
+    screenPresets.querySelectorAll('.calc__chip').forEach(function (c) {
+      var v = c.getAttribute('data-sw');
+      if (v !== 'custom' && w > 0 && parseFloat(v, 10) === w) match = c;
+    });
+    markPreset(match || screenPresets.querySelector('[data-sw="custom"]'));
+  }
+  if (screenPresets) screenPresets.querySelectorAll('.calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var v = chip.getAttribute('data-sw');
+      markPreset(chip);
+      if (v !== 'custom') {
+        screenW.value = v;
+        if (aspectSel.value !== 'custom') applyAspect();
+      } else {
+        screenW.focus();
+      }
+      recalc();
+    });
+  });
   screenW.addEventListener('input', function () {
     if (aspectSel.value !== 'custom') applyAspect();
-    syncAspectFromDims(); recalc();
+    syncAspectFromDims(); syncPresetChips(); recalc();
   });
   screenH.addEventListener('input', function () { syncAspectFromDims(); recalc(); });
 
