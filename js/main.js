@@ -53,7 +53,70 @@
       if (a > 0 && b > 0) return [Math.min(a, b), Math.max(a, b)];
       return null;
     }
-    return selectedModel ? selectedModel.t : null;
+    return effectiveRatio(selectedModel, selectedLens);
+  }
+
+  /* ---------- Interchangeable lenses ---------- */
+  // Entries may carry l: [[lensName, throwMin, throwMax], ...].
+  var selectedLens = 0;
+  var lensWrap = document.getElementById('calc-lens-wrap');
+  var lensSelect = document.getElementById('calc-lens');
+
+  function modelLenses(entry) {
+    return (entry && entry.l && entry.l.length) ? entry.l : null;
+  }
+
+  function effectiveRatio(entry, lensIdx) {
+    if (!entry) return null;
+    var lenses = modelLenses(entry);
+    if (lenses && lenses[lensIdx] && lenses[lensIdx][1] > 0) {
+      return [lenses[lensIdx][1], lenses[lensIdx][2]];
+    }
+    return entry.t;
+  }
+
+  function selectedLensName() {
+    var lenses = modelLenses(selectedModel);
+    return (lenses && lenses[selectedLens]) ? lenses[selectedLens][0] : null;
+  }
+
+  function refreshSelectedLine() {
+    if (!selectedLine || !selectedModel) return;
+    var txt = 'Using ' + selectedModel.b + ' ' + selectedModel.m;
+    var lname = selectedLensName();
+    if (lname) txt += ' · lens ' + lname;
+    var r = currentRatio();
+    if (r) txt += ' · throw ' + ratioLabel(r);
+    selectedLine.textContent = txt;
+  }
+
+  function syncLensPicker() {
+    var lenses = modelLenses(selectedModel);
+    if (!lensWrap || !lensSelect) return;
+    if (!lenses) {
+      lensWrap.hidden = true;
+      lensSelect.innerHTML = '';
+      selectedLens = 0;
+      return;
+    }
+    if (selectedLens < 0 || selectedLens >= lenses.length) selectedLens = 0;
+    lensSelect.innerHTML = '';
+    lenses.forEach(function (L, i) {
+      var opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = L[0] + ' · ' + ratioLabel([L[1], L[2]]);
+      if (i === selectedLens) opt.selected = true;
+      lensSelect.appendChild(opt);
+    });
+    lensWrap.hidden = false;
+  }
+
+  if (lensSelect) {
+    lensSelect.addEventListener('change', function () {
+      selectedLens = parseInt(lensSelect.value, 10) || 0;
+      refreshSelectedLine();
+      recalc();
+    });
   }
 
   function clearModelChips() {
@@ -64,15 +127,15 @@
 
   function chooseModel(entry, chip) {
     selectedModel = entry;
+    selectedLens = 0;
     if (modelInput) modelInput.value = entry.b + ' ' + entry.m;
     if (suggest) { suggest.hidden = true; suggest.innerHTML = ''; }
     if (manualBox) manualBox.hidden = true;
     clearModelChips();
     if (chip) chip.classList.add('chosen');
-    if (selectedLine) {
-      selectedLine.hidden = false;
-      selectedLine.textContent = 'Using ' + entry.b + ' ' + entry.m + ' · throw ' + ratioLabel(entry.t);
-    }
+    syncLensPicker();
+    if (selectedLine) selectedLine.hidden = false;
+    refreshSelectedLine();
     recalc();
   }
 
@@ -92,7 +155,7 @@
       brand.className = 'calc__suggest-brand';
       brand.textContent = x.b;
       btn.appendChild(brand);
-      btn.appendChild(document.createTextNode(x.m + ' · ' + ratioLabel(x.t)));
+      btn.appendChild(document.createTextNode(x.m + ' · ' + ratioLabel(x.t) + (modelLenses(x) ? ' · ' + x.l.length + ' lenses' : '')));
       btn.addEventListener('click', function () { chooseModel(x, null); });
       suggest.appendChild(btn);
     });
@@ -103,6 +166,8 @@
   if (modelInput) {
     modelInput.addEventListener('input', function () {
       selectedModel = null;
+      selectedLens = 0;
+      syncLensPicker();
       if (selectedLine) selectedLine.hidden = true;
       clearModelChips();
       renderSuggest(modelInput.value.trim().toLowerCase());
@@ -132,6 +197,8 @@
   if (manualToggle) {
     manualToggle.addEventListener('click', function () {
       selectedModel = null;
+      selectedLens = 0;
+      syncLensPicker();
       if (modelInput) modelInput.value = '';
       if (selectedLine) selectedLine.hidden = true;
       clearModelChips();
@@ -385,6 +452,7 @@
     function r2(v) { return Math.round(v * 100) / 100; }
     if (selectedModel) {
       enc('m', selectedModel.b + ' ' + selectedModel.m);
+      if (modelLenses(selectedModel)) enc('ml', selectedLens);
     } else if (manualBox && !manualBox.hidden) {
       var a = parseFloat(ratioMinInput.value, 10), b = parseFloat(ratioMaxInput.value, 10);
       if (a > 0 && b > 0) enc('mr', Math.min(a, b) + ',' + Math.max(a, b));
@@ -395,8 +463,8 @@
     enc('ar', stdAspect);
     enc('dir', reverseMode ? '1' : '0');
     if (reverseMode && !golfMode) { var td = inFt(throwDistInput); if (td > 0) enc('td', r2(td)); }
-    if (compareB) enc('cb', compareB.b + ' ' + compareB.m);
-    if (compareC) enc('cc', compareC.b + ' ' + compareC.m);
+    if (compareB) { enc('cb', compareB.b + ' ' + compareB.m); if (modelLenses(compareB)) enc('cbl', compareLens.b); }
+    if (compareC) { enc('cc', compareC.b + ' ' + compareC.m); if (modelLenses(compareC)) enc('ccl', compareLens.c); }
     var seat = inFt(seatInput); if (seat > 0) enc('seat', r2(seat));
     enc('pp', projPos);
     if (golfMode) {
@@ -462,12 +530,20 @@
     function num(k) { var v = parseFloat(p[k], 10); return v >= 0 ? v : NaN; }
     function toDisp(ft) { return unit === 'm' ? fmt(ft * M_PER_FT, 2) : String(Math.round(ft * 100) / 100); }
     // Links carrying advanced-only settings open in Advanced mode.
-    if (p.g === '1' || p.dir === '1' || p.cb || p.cc || p.lm || p.gn || p.pp || p.gp || p.gw || p.gh || p.ga || p.L || p.W || p.H) setAdvMode(true);
+    if (p.g === '1' || p.dir === '1' || p.cb || p.cc || p.cbl || p.ccl || p.lm || p.gn || p.pp || p.gp || p.gw || p.gh || p.ga || p.L || p.W || p.H) setAdvMode(true);
     if (p.u === 'm' || p.u === 'ft') setUnit(p.u, false);
     if (p.m) {
       var found = null;
       THROW.forEach(function (x) { if ((x.b + ' ' + x.m) === p.m) found = x; });
-      if (found) chooseModel(found, null);
+      if (found) {
+        chooseModel(found, null);
+        var li = parseInt(p.ml, 10);
+        if (!isNaN(li) && modelLenses(found) && li >= 0 && li < found.l.length) {
+          selectedLens = li;
+          syncLensPicker();
+          refreshSelectedLine();
+        }
+      }
     } else if (p.mr && manualToggle && ratioMinInput && ratioMaxInput) {
       if (manualBox.hidden) manualToggle.click();
       var mm = p.mr.split(',');
@@ -484,12 +560,17 @@
     if (!isNaN(num('td')) && throwDistInput) throwDistInput.value = toDisp(num('td'));
     if (p.cb || p.cc) {
       if (!compareOn && compareToggle) compareToggle.click();
-      [['b', p.cb], ['c', p.cc]].forEach(function (q) {
+      [['b', p.cb, p.cbl], ['c', p.cc, p.ccl]].forEach(function (q) {
         if (!q[1]) return;
         var found = null;
         THROW.forEach(function (x) { if ((x.b + ' ' + x.m) === q[1]) found = x; });
         if (found) {
           setCompare(q[0], found);
+          var cli = parseInt(q[2], 10);
+          if (!isNaN(cli) && modelLenses(found) && cli >= 0 && cli < found.l.length) {
+            compareLens[q[0]] = cli;
+            syncCompareLens(q[0]);
+          }
           var ci = document.getElementById(q[0] === 'b' ? 'calc-model-b' : 'calc-model-c');
           if (ci) ci.value = q[1];
         }
@@ -660,11 +741,58 @@
 
   /* ---------- Head-to-head model comparison ---------- */
   var compareOn = false, compareB = null, compareC = null;
+  var compareLens = { b: 0, c: 0 };
   var compareToggle = document.getElementById('calc-compare-toggle');
   var compareWrap = document.getElementById('calc-compare-wrap');
+  function compareEntry(which) { return which === 'b' ? compareB : compareC; }
+  function compareRatio(which) {
+    return effectiveRatio(compareEntry(which), compareLens[which] || 0);
+  }
+  function compareLensName(which) {
+    var lenses = modelLenses(compareEntry(which));
+    var i = compareLens[which] || 0;
+    return (lenses && lenses[i]) ? lenses[i][0] : null;
+  }
+  function compareFullName(which) {
+    var e = compareEntry(which);
+    if (!e) return '';
+    var ln = compareLensName(which);
+    return e.b + ' ' + e.m + (ln ? ' · ' + ln : '');
+  }
+  function syncCompareLens(which) {
+    var sel = document.getElementById(which === 'b' ? 'calc-lens-b' : 'calc-lens-c');
+    if (!sel) return;
+    var lenses = modelLenses(compareEntry(which));
+    if (!lenses) {
+      sel.hidden = true; sel.innerHTML = '';
+      compareLens[which] = 0;
+      return;
+    }
+    var idx = compareLens[which] || 0;
+    if (idx < 0 || idx >= lenses.length) idx = 0;
+    compareLens[which] = idx;
+    sel.innerHTML = '';
+    lenses.forEach(function (L, i) {
+      var opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = L[0] + ' · ' + ratioLabel([L[1], L[2]]);
+      if (i === idx) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.hidden = false;
+  }
   function setCompare(which, entry) {
     if (which === 'b') compareB = entry; else compareC = entry;
+    compareLens[which] = 0;
+    syncCompareLens(which);
   }
+  ['b', 'c'].forEach(function (which) {
+    var sel = document.getElementById(which === 'b' ? 'calc-lens-b' : 'calc-lens-c');
+    if (sel) sel.addEventListener('change', function () {
+      compareLens[which] = parseInt(sel.value, 10) || 0;
+      recalc();
+    });
+  });
   function bindCompareInput(inputId, suggestId, which) {
     var inp = document.getElementById(inputId), sug = document.getElementById(suggestId);
     if (!inp || !sug) return;
@@ -701,8 +829,12 @@
       compareToggle.textContent = compareOn ? 'Hide comparison' : 'Compare multiple models';
       if (!compareOn) {
         compareB = compareC = null;
+        compareLens.b = compareLens.c = 0;
         ['calc-model-b', 'calc-model-c'].forEach(function (id) {
           var i = document.getElementById(id); if (i) i.value = '';
+        });
+        ['calc-lens-b', 'calc-lens-c'].forEach(function (id) {
+          var s = document.getElementById(id); if (s) { s.hidden = true; s.innerHTML = ''; }
         });
       }
       recalc();
@@ -828,7 +960,7 @@
 
     var near = imgWIn * r[0] / 12; // ft
     var far = imgWIn * r[1] / 12; // ft
-    var modelName = selectedModel ? selectedModel.b + ' ' + selectedModel.m : 'throw ' + ratioLabel(r);
+    var modelName = selectedModel ? selectedModel.b + ' ' + selectedModel.m + (selectedLensName() ? ' · ' + selectedLensName() : '') : 'throw ' + ratioLabel(r);
 
     // Golf-sim projector placement (also drives the 3D projector position).
     var hitD = seat; // hitting distance from the screen, ft
@@ -851,7 +983,7 @@
       [['B', compareB], ['C', compareC]].forEach(function (q) {
         var entry = q[1];
         if (!entry) return;
-        var t = entry.t, xust = t[1] < 1;
+        var t = compareRatio(q[0].toLowerCase()), xust = t[1] < 1;
         var nX = imgWIn * t[0] / 12;
         var sp = {
           tag: q[0], ust: xust,
@@ -990,8 +1122,8 @@
     var cmpHtml = '';
     if (compareOn && advMode && (compareB || compareC)) {
       var cmpModels = [{ tag: 'A', name: modelName, t: r }];
-      if (compareB) cmpModels.push({ tag: 'B', name: compareB.b + ' ' + compareB.m, t: compareB.t });
-      if (compareC) cmpModels.push({ tag: 'C', name: compareC.b + ' ' + compareC.m, t: compareC.t });
+      if (compareB) cmpModels.push({ tag: 'B', name: compareFullName('b'), t: compareRatio('b') });
+      if (compareC) cmpModels.push({ tag: 'C', name: compareFullName('c'), t: compareRatio('c') });
       cmpHtml = '<table class="ref-table calc__compare-table"><thead><tr><th></th><th>Model</th>';
       if (revMode) {
         var cwf = stdWidthFactor();

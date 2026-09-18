@@ -331,6 +331,9 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__compare { margin-top: 10px; }
 .calc__compare > div { margin-bottom: 10px; }
 .calc__compare .calc__suggest { margin: -6px 0 10px; }
+.calc__lens { margin: 10px 0 4px; }
+.calc__lens select { font-size: 17px; padding: 12px 14px; }
+.calc__lens-sm { margin: -2px 0 10px; font-size: 15px; padding: 10px 12px; }
 .calc__compare-table { margin-top: 16px; font-size: 14px; }
 .calc__compare-table th, .calc__compare-table td { padding: 9px 10px; }
 

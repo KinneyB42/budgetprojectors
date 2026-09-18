@@ -58,6 +58,11 @@
           <button type="button" class="calc__chip" data-model="JMGO IRIS ULTRA MAX">JMGO IRIS ULTRA MAX</button>
         </div>
         <p class="calc__selected" id="calc-selected" hidden></p>
+        <div class="calc__lens" id="calc-lens-wrap" hidden>
+          <label for="calc-lens">Lens</label>
+          <select id="calc-lens"></select>
+          <p class="calc__hint">This projector takes interchangeable lenses. Pick the one installed to plan with its exact throw ratio.</p>
+        </div>
         <p class="calc__hint" id="calc-model-hint">Search <span id="calc-model-count"></span> recommended models. Can&rsquo;t find yours? <button type="button" class="calc__linkbtn" id="calc-manual-toggle">Enter the throw ratio manually</button>.</p>
         <div class="calc__manual" id="calc-manual" hidden>
           <div class="calc__manual-row">
@@ -78,11 +83,13 @@
             <label for="calc-model-b">Second model</label>
             <input type="text" id="calc-model-b" placeholder="Start typing&hellip;" autocomplete="off">
             <div class="calc__suggest" id="calc-suggest-b" hidden></div>
+            <select id="calc-lens-b" class="calc__lens-sm" hidden aria-label="Lens for second model"></select>
           </div>
           <div>
             <label for="calc-model-c">Third model (optional)</label>
             <input type="text" id="calc-model-c" placeholder="Start typing&hellip;" autocomplete="off">
             <div class="calc__suggest" id="calc-suggest-c" hidden></div>
+            <select id="calc-lens-c" class="calc__lens-sm" hidden aria-label="Lens for third model"></select>
           </div>
         </div>
       </div>
