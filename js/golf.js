@@ -21,6 +21,7 @@
   /* ---------- state ---------- */
   var selectedModel = null; // {b, m, t:[min,max], lm?, l?}
   var selectedLens = 0;
+  var suggestTimer = false;
   var placement = 'ceiling';
   var opener = false;
   var roomType = 'garage';
@@ -156,7 +157,26 @@
       suggest.hidden = false;
       modelInput.setAttribute('aria-expanded', 'true');
     }
-    if (!THROW.length) { emptyNote('Loading projector database - try again in a moment.'); return; }
+    if (!THROW.length) {
+      emptyNote('Loading projector database - results will appear automatically.');
+      if (!suggestTimer) {
+        suggestTimer = true;
+        var s = document.createElement('script');
+        s.src = 'js/throw-data.js';
+        s.onload = function () {
+          THROW = window.THROW_DATA || [];
+          suggestTimer = false;
+          var q2 = modelInput.value.trim().toLowerCase();
+          if (q2.length >= 2) renderSuggest(q2);
+        };
+        s.onerror = function () {
+          suggestTimer = false;
+          emptyNote('Could not load the projector database - check your connection and refresh.');
+        };
+        document.head.appendChild(s);
+      }
+      return;
+    }
     var matches = THROW.filter(function (x) {
       return (x.b + ' ' + x.m).toLowerCase().indexOf(q) !== -1;
     }).slice(0, 20);
