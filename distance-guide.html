@@ -186,8 +186,7 @@
               <input type="number" class="calc__slider-num" id="calc-size-num" min="0" max="300" step="1" value="100" inputmode="numeric" aria-label="Screen size in inches">
             </div>
             <div class="calc__slider-ends"><span>0&Prime;</span><span>300&Prime;</span></div>
-            <div class="calc__lockrow" id="calc-zoom-lockrow" hidden>
-              <button type="button" class="calc__chip" id="calc-zoom-lock" aria-pressed="false">&#x1F512; Lock projector position</button>
+            <div class="calc__lockrow" id="calc-image-lockrow" hidden>
               <button type="button" class="calc__chip" id="calc-image-lock" aria-pressed="false">&#x1F512; Lock image size</button>
             </div>
             <div class="calc__zoom" id="calc-zoom-wrap" hidden>
@@ -197,6 +196,9 @@
                 <input type="number" class="calc__slider-num" id="calc-zoom-num" step="0.1" inputmode="decimal" aria-label="Throw distance at this zoom">
               </div>
               <div class="calc__slider-ends"><span>Wide</span><span>Tele</span></div>
+            </div>
+            <div class="calc__lockrow" id="calc-zoom-lockrow" hidden>
+              <button type="button" class="calc__chip" id="calc-zoom-lock" aria-pressed="false">&#x1F512; Lock projector position</button>
             </div>
           </div>
           <div id="calc-throwmode-wrap" hidden>

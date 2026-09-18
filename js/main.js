@@ -156,6 +156,7 @@
     var show = !!r && r[1] > r[0] && !reverseMode && !golfMode && imgWIn > 0;
     zoomWrap.hidden = !show;
     if (zoomLockRow) zoomLockRow.hidden = !show;
+    if (imageLockRow) imageLockRow.hidden = !show;
     if (!show && lockMode !== 'off') setLockMode('off'); // locks only make sense with a zoom model
     if (show) syncZoomNum(r, imgWIn);
   }
@@ -187,6 +188,7 @@
   //   size slider drives the zoom slider to compensate, and vice versa.
   // - Lock image size: the screen size is frozen; the zoom slider only moves the projector.
   var zoomLockRow = document.getElementById('calc-zoom-lockrow');
+  var imageLockRow = document.getElementById('calc-image-lockrow');
   var zoomLockBtn = document.getElementById('calc-zoom-lock');
   var imageLockBtn = document.getElementById('calc-image-lock');
   var lockMode = 'off'; // 'off' | 'projector' | 'image'
