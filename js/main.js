@@ -1364,7 +1364,7 @@
       scrWIn = dMax * rwf; scrHIn = scrWIn * ra[1] / ra[0];
       imgWIn = scrWIn;
       dRange = fmt(dMin, 0) + (Math.abs(dMax - dMin) < 0.5 ? '' : '&ndash;' + fmt(dMax, 0));
-      scrLabel = dRange + '&Prime; ' + stdAspect;
+      scrLabel = dRange + '&Prime; image size @ ' + stdAspect;
     } else {
       if (!(diag > 0)) {
         drawAll({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType });
@@ -1377,7 +1377,7 @@
       var ad = Math.sqrt(a[0] * a[0] + a[1] * a[1]);
       scrWIn = diag * a[0] / ad; scrHIn = diag * a[1] / ad;
       imgWIn = scrWIn;
-      scrLabel = fmt(diag, 0) + '&Prime; ' + stdAspect;
+      scrLabel = fmt(diag, 0) + '&Prime; image size @ ' + stdAspect;
     }
 
     var ust = r[1] < 1;
