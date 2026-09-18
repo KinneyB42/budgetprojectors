@@ -662,7 +662,7 @@
   }
 
   /* ---------- Lights on/off for the 3D preview ---------- */
-  var lightsOn = true;
+  var lightsOn = false;
   var lightsToggle = document.getElementById('calc-lights-toggle');
   if (lightsToggle) {
     lightsToggle.addEventListener('click', function () {

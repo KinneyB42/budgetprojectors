@@ -237,14 +237,12 @@
       <div class="calc__viz-head">
         <span class="calc__viz-title" id="calc-viz-title">Room preview</span>
         <div class="calc__viz-toggles">
-          <button type="button" class="calc__chip" id="calc-lights-toggle" aria-pressed="true">Lights: On</button>
+          <button type="button" class="calc__chip" id="calc-lights-toggle" aria-pressed="false">Lights: Off</button>
           <button type="button" class="calc__chip" id="calc-sun-toggle" aria-pressed="false">Sunlight: Off</button>
           <button type="button" class="calc__chip" id="calc-share">Share link</button>
-          <button type="button" class="calc__chip" id="calc-export-png">Export PNG</button>
-          <button type="button" class="calc__chip" id="calc-export-jpg">Export JPG</button>
-          <button type="button" class="calc__chip" id="calc-export-pdf">Export PDF</button>
         </div>
       </div>
+      <div class="calc__viz-note">room lighting simulation</div>
       <div class="calc__viz">
         <figure class="calc__fig">
           <svg id="calc-svg" viewBox="0 0 660 440" role="img" aria-label="3D room visualization"></svg>
@@ -258,6 +256,12 @@
           <svg id="calc-svg-viewer" viewBox="0 0 660 360" role="img" aria-label="Viewer perspective from the seating position"></svg>
           <figcaption>Viewer view</figcaption>
         </figure>
+      </div>
+      <div class="calc__export-row">
+        <span class="calc__export-label">Export</span>
+        <button type="button" class="calc__chip" id="calc-export-png">Export PNG</button>
+        <button type="button" class="calc__chip" id="calc-export-jpg">Export JPG</button>
+        <button type="button" class="calc__chip" id="calc-export-pdf">Export PDF</button>
       </div>
 
       <div class="calc__result show" id="calc-plan-result" aria-live="polite"></div>
@@ -494,7 +498,7 @@
 </footer>
 
 <script src="js/throw-data.js"></script>
-<script src="js/main.js?v=20260918i"></script>
+<script src="js/main.js?v=20260918j"></script>
 <script src="js/golf.js?v=20260918h"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>
