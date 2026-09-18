@@ -114,9 +114,40 @@
   if (lensSelect) {
     lensSelect.addEventListener('change', function () {
       selectedLens = parseInt(lensSelect.value, 10) || 0;
+      resetZoom();
       refreshSelectedLine();
       recalc();
     });
+  }
+
+  /* ---------- Lens zoom slider ---------- */
+  // Zoom-lens models (throw ratio is a range): the slider picks where in the
+  // zoom range the projector sits. 0 = wide (min throw), 100 = tele (max throw).
+  var zoomWrap = document.getElementById('calc-zoom-wrap');
+  var zoomInput = document.getElementById('calc-zoom');
+  var zoomVal = document.getElementById('calc-zoom-val');
+
+  function zoomFrac() {
+    if (!zoomInput) return 0;
+    var v = parseFloat(zoomInput.value, 10);
+    if (!(v >= 0)) return 0;
+    return Math.min(v, 100) / 100;
+  }
+  function zoomThrowFt(r, imgWIn) {
+    return imgWIn / 12 * (r[0] + zoomFrac() * (r[1] - r[0]));
+  }
+  function resetZoom() { if (zoomInput) zoomInput.value = 0; }
+  function syncZoom(r, imgWIn) {
+    if (!zoomWrap || !zoomInput) return;
+    var show = !!r && r[1] > r[0] && !reverseMode && !golfMode && imgWIn > 0;
+    zoomWrap.hidden = !show;
+    if (show) {
+      if (zoomVal) zoomVal.textContent = fmtDist(zoomThrowFt(r, imgWIn) * 12);
+    }
+  }
+
+  if (zoomInput) {
+    zoomInput.addEventListener('input', recalc);
   }
 
   function clearModelChips() {
@@ -139,6 +170,7 @@
   function chooseModel(entry, chip) {
     selectedModel = entry;
     selectedLens = 0;
+    resetZoom();
     if (modelInput) modelInput.value = entry.b + ' ' + entry.m;
     if (suggest) { suggest.hidden = true; suggest.innerHTML = ''; }
     if (manualBox) manualBox.hidden = true;
@@ -489,6 +521,7 @@
     enc('u', unit);
     if (lumensInput && parseFloat(lumensInput.value, 10) > 0) enc('lm', Math.round(parseFloat(lumensInput.value, 10)));
     if (gainInput && parseFloat(gainInput.value, 10) > 0) enc('gn', parseFloat(gainInput.value, 10));
+    if (zoomFrac() > 0) enc('z', Math.round(zoomFrac() * 100));
     enc('li', lightsOn ? '1' : '0');
     enc('sun', sunOn ? '1' : '0');
     return window.location.href.split('#')[0] + '#calc=' + parts.join(';');
@@ -609,6 +642,7 @@
     if (p.ga && aspectSel) aspectSel.value = p.ga;
     if (!isNaN(num('lm')) && lumensInput) lumensInput.value = Math.round(num('lm'));
     if (!isNaN(num('gn')) && gainInput) gainInput.value = p.gn;
+    if (!isNaN(num('z')) && zoomInput) zoomInput.value = Math.max(0, Math.min(100, Math.round(num('z'))));
     if (p.li === '0' && lightsOn && lightsToggle) lightsToggle.click();
     if (p.li === '1' && !lightsOn && lightsToggle) lightsToggle.click();
     if (p.sun === '1' && !sunOn && sunToggle) sunToggle.click();
@@ -899,6 +933,7 @@
       drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: null, seat: seat, room: roomType, golf: golfMode });
       planResult.innerHTML = '<strong>Pick your projector model</strong>' +
         '<span>Choose your model from the list above (or enter its throw ratio manually) and your room plan will appear here.</span>';
+      syncZoom(null, 0);
       return;
     }
 
@@ -913,6 +948,7 @@
         drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType, golf: golfMode });
         planResult.innerHTML = '<strong>Enter your screen dimensions</strong>' +
           '<span>Type the screen width and height for your golf simulator and the planner will do the rest.</span>';
+        syncZoom(null, 0);
         return;
       }
       scrWIn = wFt * 12; scrHIn = hFt * 12;
@@ -941,6 +977,7 @@
         drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType, golf: golfMode });
         planResult.innerHTML = '<strong>Enter a throw distance</strong>' +
           '<span>Type how far back the projector will sit and the planner will show the screen sizes it can fill.</span>';
+        syncZoom(null, 0);
         return;
       }
       var ra = ASPECTS[stdAspect] || ASPECTS['16:9'];
@@ -956,6 +993,7 @@
         drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType, golf: golfMode });
         planResult.innerHTML = '<strong>Enter a screen size</strong>' +
           '<span>Type the screen diagonal you want and the planner will show throw distance, seating, and whether it fits your room.</span>';
+        syncZoom(null, 0);
         return;
       }
       var a = ASPECTS[stdAspect] || ASPECTS['16:9'];
@@ -970,11 +1008,13 @@
 
     var near = imgWIn * r[0] / 12; // ft
     var far = imgWIn * r[1] / 12; // ft
+    // Projector position on the zoom slider; the slider only applies in standard screen-size mode.
+    var throwD = (reverseMode || golfMode) ? near : near + zoomFrac() * (far - near); // ft
     var modelName = selectedModel ? selectedModel.b + ' ' + selectedModel.m + (selectedLensName() ? ' · ' + selectedLensName() : '') : 'throw ' + ratioLabel(r);
 
     // Golf-sim projector placement (also drives the 3D projector position).
     var hitD = seat; // hitting distance from the screen, ft
-    var px = near, py = W / 2, pz = ust ? 1 : 3, pmount = false;
+    var px = throwD, py = W / 2, pz = ust ? 1 : 3, pmount = false;
     if (golfMode) {
       if (placement === 'ceiling') {
         px = near; pz = H > 0 ? Math.max(H - 0.9, 2) : 6; pmount = H > 0;
@@ -1018,10 +1058,11 @@
     var effLumens = lumensInput ? parseFloat(lumensInput.value, 10) : NaN;
     if (!(effLumens > 0) && selectedModel && selectedModel.lm > 0) effLumens = selectedModel.lm;
 
+    syncZoom(r, imgWIn);
     drawViz({ L: L, W: W, H: H, outdoor: outdoor, swFt: scrWIn / 12, shFt: scrHIn / 12,
       scrLabel: scrLabel, imgWIn: imgWIn, r: r, seat: seat, room: roomType, golf: golfMode,
       px: px, py: py, pz: pz, pmount: pmount, projPos: projPos, extraProj: extraProj,
-      lumens: effLumens > 0 ? effLumens : 0 });
+      throwD: throwD, lumens: effLumens > 0 ? effLumens : 0 });
 
     // Reference viewing distance from viewing angle: 36 deg (immersive) to 30 deg (SMPTE minimum).
     var dClose = (imgWIn / 2) / Math.tan(18 * Math.PI / 180) / 12; // ft
@@ -1067,7 +1108,7 @@
       bits.push('Enter your room size above to check whether this fits.');
     } else if (!outdoor) {
       var maxW = Math.min(L * 12 / r[1], (W - 1) * 12);
-      fitsRoom = reverseMode ? (tdFt <= L && scrWIn / 12 <= W - 1) : (far <= L && scrWIn / 12 <= W - 1);
+      fitsRoom = reverseMode ? (tdFt <= L && scrWIn / 12 <= W - 1) : (throwD <= L && scrWIn / 12 <= W - 1);
       if (fitsRoom) {
         bits.push('It fits your ' + ROOMS[roomType].label.toLowerCase() + '.');
       } else if (golfMode) {
@@ -1120,6 +1161,10 @@
       throwStr += ' – ' + fmtDist(imgWIn * r[1]);
       placeStr = posWord + ' the ' + modelName + ' between ' + fmtDist(imgWIn * r[0]) + ' and ' +
         fmtDist(imgWIn * r[1]) + ' from ' + imgRef + posTail + '. ';
+      // When the zoom slider is off the wide end, name the selected throw position.
+      if (zoomFrac() > 0.005) {
+        placeStr += 'Zoom is set to about ' + dispDist(throwD) + ' of throw. ';
+      }
     }
 
     var revMode = reverseMode && !golfMode;
@@ -1159,7 +1204,7 @@
         cmpModels.forEach(function (m) {
           var cn = imgWIn * m.t[0], cf = imgWIn * m.t[1];
           var ctr = fmtDist(cn) + (m.t[1] !== m.t[0] ? '&ndash;' + fmtDist(cf) : '');
-          var cfit = outdoor ? '&ndash;' : (!dimsKnown ? '?' : (cf / 12 <= L ? 'Yes' : 'No'));
+          var cfit = outdoor ? '&ndash;' : (!dimsKnown ? '?' : (cn / 12 <= L ? 'Yes' : 'No'));
           cmpHtml += '<tr><td>' + m.tag + '</td><td>' + m.name + '</td><td>' + ctr + '</td><td>' + cfit + '</td></tr>';
         });
       }
@@ -1376,7 +1421,9 @@
       throwTag.appendChild(tThrow);
       // Only judge the fit when the user has entered a room length.
       if (!o.outdoor && o.L > 0) {
-        var throwInRange = far <= o.L;
+        // Judge the selected zoom position, not the far end of the zoom range.
+        var selD = (o.throwD > 0) ? o.throwD : far;
+        var throwInRange = selD <= o.L;
         var tStat = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
         tStat.textContent = throwInRange ? ' · In range' : ' · Out of range';
         tStat.setAttribute('fill', throwInRange
