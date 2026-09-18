@@ -386,7 +386,7 @@
 
   // Outdoors has no ceiling: hide the ceiling-mount position and the indoor-only
   // screen styles (acoustic frame, floor rising), falling back to safe choices.
-  // Outdoors also has no lights or sunlight controls.
+  // Outdoors also has no lights, sunlight, or ceiling-fan controls.
   function gateOutdoorOptions() {
     var outdoor = roomType === 'outdoors';
     document.querySelectorAll('#calc-projpos .calc__chip').forEach(function (c) {
@@ -396,7 +396,7 @@
       var ss = c.getAttribute('data-ss');
       if (ss === 'acoustic' || ss === 'floor') c.style.display = outdoor ? 'none' : '';
     });
-    ['calc-lights-toggle', 'calc-sun-toggle'].forEach(function (id) {
+    ['calc-lights-toggle', 'calc-sun-toggle', 'calc-fan-toggle'].forEach(function (id) {
       var b = document.getElementById(id);
       if (b) b.style.display = outdoor ? 'none' : '';
     });
@@ -405,6 +405,7 @@
     if (outdoor) {
       if (lightsOn && lightsToggle) lightsToggle.click();
       if (sunOn && sunToggle) sunToggle.click();
+      if (fanOn && fanToggle) fanToggle.click();
     }
     if (outdoor && projPos === 'ceiling') setProjPos('table');
     if (outdoor && (screenStyle === 'acoustic' || screenStyle === 'floor')) setScreenStyle('fixed');
