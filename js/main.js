@@ -252,6 +252,7 @@
     if (selectedLine) selectedLine.hidden = true;
     clearModelChips();
     if (suggest) suggest.hidden = true;
+    syncShiftControls();
     recalc();
   }
 
@@ -268,6 +269,7 @@
     syncLensPicker();
     if (selectedLine) selectedLine.hidden = false;
     refreshSelectedLine();
+    syncShiftControls();
     recalc();
   }
 
@@ -303,6 +305,7 @@
       if (selectedLine) selectedLine.hidden = true;
       clearModelChips();
       renderSuggest(modelInput.value.trim().toLowerCase());
+      syncShiftControls();
       recalc();
     });
     modelInput.addEventListener('keydown', function (e) {
@@ -477,12 +480,73 @@
     });
   });
 
-  /* ---------- Lens shift (user-declared; the model DB carries no shift specs) ---------- */
-  var shiftOn = false, shiftPct = 0;
+  /* ---------- Lens shift: up/down moves the projector body (established planner
+     behavior); left/right shifts the projected image while the body stays put.
+     Verified ranges come from the model's sv/sh fields in throw-data.js.
+     Unknown models get a manual +/-60% vertical fallback; never invent ranges. ---------- */
+  var shiftOn = false, shiftPct = 0, shiftHPct = 0;
   var shiftChip = document.getElementById('calc-shift-chip');
   var shiftWrap = document.getElementById('calc-shift-wrap');
   var shiftInput = document.getElementById('calc-shift');
   var shiftVal = document.getElementById('calc-shift-val');
+  var shiftHint = document.getElementById('calc-shift-hint');
+  var shiftHRow = document.getElementById('calc-shift-h-row');
+  var shiftHInput = document.getElementById('calc-shift-h');
+  var shiftHVal = document.getElementById('calc-shift-h-val');
+  var shiftHHint = document.getElementById('calc-shift-h-hint');
+
+  /* Pure helper: model -> lens-shift control config. Side-effect free so the range
+     logic can be unit-tested without a browser. */
+  function shiftConfigFor(model) {
+    var cfg = {
+      vMin: -60, vMax: 60, vStep: 5, vDisabled: false,
+      vHint: 'Manual fallback \u2014 check your model\u2019s spec sheet for its real shift range.',
+      hShow: false, hMin: -50, hMax: 50, hStep: 1, hHint: ''
+    };
+    var sv = model && model.sv, sh = model && model.sh;
+    var vKnown = !!(sv && sv.length === 2), hKnown = !!(sh && sh.length === 2);
+    var vHas = vKnown && (sv[0] !== 0 || sv[1] !== 0);
+    var hHas = hKnown && (sh[0] !== 0 || sh[1] !== 0);
+    if (vKnown && vHas) {
+      cfg.vMin = sv[0]; cfg.vMax = sv[1]; cfg.vStep = 1; // step 1 so the verified endpoints are reachable
+      cfg.vHint = 'Verified range for ' + model.b + ' ' + model.m + ': ' +
+        sv[0] + '% to ' + sv[1] + '% of image height (manufacture sheet).';
+    } else if (vKnown && !vHas) {
+      cfg.vMin = 0; cfg.vMax = 0; cfg.vDisabled = true;
+      cfg.vHint = 'This model has no lens shift \u2014 keep the projector aligned with the screen.';
+    }
+    if (hHas) {
+      cfg.hShow = true; cfg.hMin = sh[0]; cfg.hMax = sh[1];
+      cfg.hHint = 'Verified: ' + sh[0] + '% to ' + sh[1] + '% of image width.';
+    }
+    return cfg;
+  }
+
+  /* Clamp a shift value to the slider's live (model-aware) min/max. */
+  function clampShiftVal(input, val, dMin, dMax) {
+    var mn = parseFloat(input.min), mx = parseFloat(input.max);
+    if (isNaN(mn)) mn = dMin; if (isNaN(mx)) mx = dMax;
+    return Math.max(mn, Math.min(mx, val));
+  }
+
+  /* Apply the selected model's verified shift ranges to the sliders. Called on
+     model choose/clear and on manual-input changes. Resets both values to 0 so
+     stale out-of-range values never linger. */
+  function syncShiftControls() {
+    if (!shiftInput) return;
+    var cfg = shiftConfigFor(selectedModel);
+    shiftInput.min = cfg.vMin; shiftInput.max = cfg.vMax; shiftInput.step = cfg.vStep;
+    shiftInput.disabled = cfg.vDisabled;
+    if (shiftHint) shiftHint.textContent = cfg.vHint;
+    if (shiftHRow) shiftHRow.hidden = !cfg.hShow;
+    if (shiftHInput) { shiftHInput.min = cfg.hMin; shiftHInput.max = cfg.hMax; shiftHInput.step = cfg.hStep; }
+    if (shiftHHint) shiftHHint.textContent = cfg.hHint;
+    shiftPct = 0; shiftHPct = 0;
+    shiftInput.value = 0;
+    if (shiftHInput) shiftHInput.value = 0;
+    if (shiftVal) shiftVal.textContent = '0%';
+    if (shiftHVal) shiftHVal.textContent = '0%';
+  }
   if (shiftChip) {
     shiftChip.addEventListener('click', function () {
       shiftOn = !shiftOn;
@@ -496,6 +560,13 @@
     shiftInput.addEventListener('input', function () {
       shiftPct = parseFloat(shiftInput.value, 10) || 0;
       if (shiftVal) shiftVal.textContent = (shiftPct > 0 ? '+' : '') + shiftPct + '%';
+      recalc();
+    });
+  }
+  if (shiftHInput) {
+    shiftHInput.addEventListener('input', function () {
+      shiftHPct = parseFloat(shiftHInput.value, 10) || 0;
+      if (shiftHVal) shiftHVal.textContent = (shiftHPct > 0 ? '+' : '') + shiftHPct + '%';
       recalc();
     });
   }
@@ -649,7 +720,7 @@
     if (screenStyle !== 'fixed') enc('ss', screenStyle);
     if (speakerMode !== 'none') enc('spk', speakerMode);
     if (fanOn) enc('cf', '1');
-    if (shiftOn) { enc('ls', '1'); if (shiftPct !== 0) enc('lsv', shiftPct); }
+    if (shiftOn) { enc('ls', '1'); if (shiftPct !== 0) enc('lsv', shiftPct); if (shiftHPct !== 0) enc('lsh', shiftHPct); }
     if (gainInput && parseFloat(gainInput.value, 10) > 0) enc('gn', parseFloat(gainInput.value, 10));
     if (zoomFrac() > 0) enc('z', Math.round(zoomFrac() * 100));
     if (lockMode !== 'off') enc('lk', lockMode === 'projector' ? '1' : '2');
@@ -778,8 +849,12 @@
     if (p.cf === '1' && !fanOn && fanToggle) fanToggle.click();
     if (p.ls === '1' && !shiftOn && shiftChip) shiftChip.click();
     if (p.lsv && shiftInput) {
-      shiftInput.value = Math.max(-60, Math.min(60, parseFloat(p.lsv) || 0));
+      shiftInput.value = clampShiftVal(shiftInput, parseFloat(p.lsv) || 0, -60, 60);
       shiftInput.dispatchEvent(new Event('input'));
+    }
+    if (p.lsh && shiftHInput) {
+      shiftHInput.value = clampShiftVal(shiftHInput, parseFloat(p.lsh) || 0, -50, 50);
+      shiftHInput.dispatchEvent(new Event('input'));
     }
     if (!isNaN(num('z')) && zoomInput) zoomInput.value = Math.max(0, Math.min(100, Math.round(num('z'))));
     if (p.lk === '1') setLockMode('projector'); else if (p.lk === '2') setLockMode('image');
@@ -1602,6 +1677,12 @@
       if (H > 0 && z0 + sh > H - 0.5) z0 = Math.max(0.5, H - sh - 0.5);
       zc = z0 + sh / 2;
       var yA = yc - sw / 2, yB = yc + sw / 2;
+      // horizontal lens shift: the image lands sideways on the screen wall while the
+      // projector body stays put (+ shifts toward +y). Screen, beam targets, viewing
+      // cone, and labels follow the image.
+      var hOff = (shiftOn && shiftHPct) ? (shiftHPct / 100) * sw : 0; // ft
+      var ycI = yc + hOff; // shifted image center
+      yA += hOff; yB += hOff;
       var alr = o.screenType === 'alr';
       var scrPts = [[0,yA,z0],[0,yB,z0],[0,yB,z0+sh],[0,yA,z0+sh]];
       // screen (with a glow when the lights are off). ALR surfaces are grey;
@@ -1619,7 +1700,7 @@
       var ca = coneHalf * Math.PI / 180;
       var cdx = Math.cos(ca) * coneLen, cdy = Math.sin(ca) * coneLen;
       var coneStyle = { stroke: '#8a94a8', 'stroke-width': 1, 'stroke-dasharray': '5 4', opacity: 0.55 };
-      var coneO = P(0, yc, zc), coneU = P(cdx, yc + cdy, zc), coneD = P(cdx, yc - cdy, zc);
+      var coneO = P(0, ycI, zc), coneU = P(cdx, ycI + cdy, zc), coneD = P(cdx, ycI - cdy, zc);
       el('line', { x1: coneO[0].toFixed(1), y1: coneO[1].toFixed(1),
         x2: coneU[0].toFixed(1), y2: coneU[1].toFixed(1),
         stroke: coneStyle.stroke, 'stroke-width': coneStyle['stroke-width'],
@@ -1628,7 +1709,7 @@
         x2: coneD[0].toFixed(1), y2: coneD[1].toFixed(1),
         stroke: coneStyle.stroke, 'stroke-width': coneStyle['stroke-width'],
         'stroke-dasharray': coneStyle['stroke-dasharray'], opacity: coneStyle.opacity });
-      txt(cdx, yc + cdy, zc + 0.4, 'viewing cone', 11);
+      txt(cdx, ycI + cdy, zc + 0.4, 'viewing cone', 11);
       // diagonal size arrow across the screen face
       if (sw > 2 && sh > 1.5) {
         var ax = 0.45;
@@ -1644,7 +1725,7 @@
         var adiag = Math.sqrt(sw * sw + sh * sh) * 12;
         txt(ax, (ay1 + ay2) / 2 + anx * 0.62, (az1 + az2) / 2 + anz * 0.62, fmt(adiag, 0) + '"', 13);
       }
-      txt(0, yc, z0 + sh + 0.7, (o.scrLabel || 'screen').replace(/&Prime;/g, '″'), 12);
+      txt(0, ycI, z0 + sh + 0.7, (o.scrLabel || 'screen').replace(/&Prime;/g, '″'), 12);
       if (o.outdoor) {
         // simple stand legs
         box(0.15, yA + 0.3, z0 / 2, 0.25, 0.25, z0, pal.stand[0], pal.stand[1], pal.stand[2]);
@@ -2072,6 +2153,12 @@
     // the screen at its true angular size
     var scrW = wForDeg(Math.min(screenDeg, 90)), scrH = scrW * (sh / sw);
     var sx = VW / 2 - scrW / 2, sy = VH / 2 - scrH / 2;
+    // horizontal lens shift: the image center moves (shiftHPct/100)*sw feet sideways
+    // at the screen; convert that lateral offset to pixels from the seat's viewing
+    // angle (pixels = VW * tan(atan(d/seat)) / tan(45°), and tan(45°) = 1)
+    var hOffFt = (shiftOn && shiftHPct) ? (shiftHPct / 100) * sw : 0;
+    var hPix = (seat > 0 && hOffFt) ? VW * hOffFt / seat : 0;
+    sx += hPix;
     var face = night ? (alr ? '#9aa2ad' : '#eef3ff') : (alr ? '#878e99' : '#f7f4ec');
     var styleName = { fixed: 'Fixed frame', pulldown: 'Manual pull-down', acoustic: 'Acoustic frame',
       floor: 'Floor rising', portable: 'Portable on legs' }[screenStyle] || 'Fixed frame';
@@ -2120,6 +2207,20 @@
         });
       });
     }
+    // center channel behind the screen (acoustic-transparent): drawn over the image
+    // with reduced opacity and a dashed outline so it reads as "behind"; follows the
+    // shifted image position. Only for wall/tower speaker layouts.
+    if (speakerMode === 'wall' || speakerMode === 'tower') {
+      var ccw = scrW * 0.28, cch = 22;
+      var ccx = sx + scrW / 2 - ccw / 2, ccy = VH / 2 - cch / 2;
+      el3('rect', { x: ccx.toFixed(1), y: ccy.toFixed(1), width: ccw.toFixed(1), height: cch,
+        rx: 8, fill: spkFill, opacity: 0.85, stroke: spkCone, 'stroke-width': 1.5, 'stroke-dasharray': '6 4' });
+      [0.25, 0.5, 0.75].forEach(function (f) {
+        el3('circle', { cx: (ccx + ccw * f).toFixed(1), cy: (VH / 2).toFixed(1), r: 6, fill: spkCone, opacity: 0.5 });
+      });
+      tx3(sx + scrW / 2, ccy + cch + 15, 'center channel (behind screen)', 11, 'middle',
+        night ? '#dbe2f0' : NAVY);
+    }
     if (!night && !alr) {
       el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
         fill: '#fff3d0', opacity: 0.55 });
@@ -2139,11 +2240,13 @@
     });
     var fillsAll = screenDeg >= 90;
     var isRearV = !!(o.obst && o.obst.ppos === 'rear');
+    var shiftNote = (shiftOn && shiftHPct) ? ' · image shifted ' + (shiftHPct > 0 ? 'right' : 'left') +
+      ' ' + Math.abs(shiftHPct) + '% (lens shift)' : '';
     tx3(VW / 2, 26, 'From your seat · ' + dispDist(seat) + ' away · ' + styleName, 14, 'middle', night ? '#dbe2f0' : NAVY);
-    tx3(VW / 2, VH - 34, fillsAll ? 'The screen fills your entire field of view' :
+    tx3(VW / 2, VH - 34, fillsAll ? 'The screen fills your entire field of view' + shiftNote :
       'The screen fills about ' + Math.round(screenDeg) + '° of your view' +
       (screenDeg < 30 ? ' · below the 30° cinematic minimum' :
-       screenDeg <= 40 ? ' · right in the cinematic sweet spot' : ' · bigger than the 36° immersive target'),
+       screenDeg <= 40 ? ' · right in the cinematic sweet spot' : ' · bigger than the 36° immersive target') + shiftNote,
       12, 'middle', mut);
     if (isRearV) tx3(VW / 2, VH - 16, 'Rear projection needs a dedicated rear-projection screen', 11, 'middle', mut);
     else if (!night && !alr) tx3(VW / 2, VH - 16, 'matte white washes out with the lights on', 11, 'middle', mut);

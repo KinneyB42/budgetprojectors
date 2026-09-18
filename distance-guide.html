@@ -142,7 +142,14 @@
           <div class="calc__slider-row">
             <input type="range" id="calc-shift" min="-60" max="60" step="5" value="0">
           </div>
-          <p class="calc__hint">Stay within your model's shift range (often &plusmn;60% of image height or less) — check its spec.</p>
+          <p class="calc__hint" id="calc-shift-hint">Stay within your model's shift range (often &plusmn;60% of image height or less) — check its spec.</p>
+          <div id="calc-shift-h-row" hidden>
+            <label for="calc-shift-h">Move image left/right (lens shift): <span id="calc-shift-h-val">0%</span></label>
+            <div class="calc__slider-row">
+              <input type="range" id="calc-shift-h" min="-50" max="50" step="5" value="0">
+            </div>
+            <p class="calc__hint" id="calc-shift-h-hint"></p>
+          </div>
         </div>
       </div>
 
@@ -487,7 +494,7 @@
 </footer>
 
 <script src="js/throw-data.js"></script>
-<script src="js/main.js?v=20260918f"></script>
+<script src="js/main.js?v=20260918g"></script>
 <script src="js/golf.js?v=20260918h"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>
