@@ -35,8 +35,6 @@
   var selectedLine = $('golf-selected');
   var lensWrap = $('golf-lens-wrap');
   var lensSelect = $('golf-lens');
-  var ratioMinInput = $('golf-ratio-min');
-  var ratioMaxInput = $('golf-ratio-max');
   var lumensInput = $('golf-lumens');
   var screenW = $('golf-screen-w');
   var screenH = $('golf-screen-h');
@@ -92,9 +90,6 @@
   }
 
   function currentRatio() {
-    var a = parseFloat(ratioMinInput.value, 10);
-    var b = parseFloat(ratioMaxInput.value, 10);
-    if (a > 0 && b > 0) return [Math.min(a, b), Math.max(a, b)];
     return effectiveRatio(selectedModel, selectedLens);
   }
 
@@ -297,7 +292,7 @@
   });
 
   /* ---------- every other input recalcs ---------- */
-  [ratioMinInput, ratioMaxInput, lumensInput, roomLen, roomWid,
+  [lumensInput, roomLen, roomWid,
    hitInput, throwInput, openerDist, gainInput].forEach(function (el) {
     el.addEventListener('input', recalc);
   });
@@ -321,7 +316,7 @@
     if (!(gain > 0)) gain = 1;
 
     if (!r) {
-      results.innerHTML = '<p>Pick a projector model or enter a throw ratio to see your simulator plan.</p>';
+      results.innerHTML = '<p>Pick a projector model above to see your simulator plan. The published manufacturer throw ratio is used automatically.</p>';
       clearSvgs();
       return;
     }
