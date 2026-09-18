@@ -57,13 +57,21 @@
   }
 
   /* ---------- Interchangeable lenses ---------- */
-  // Entries may carry l: [[lensName, throwMin, throwMax], ...].
+  // Entries may carry l: [[lensName, throwMin, throwMax, lumens?], ...].
+  // The optional 4th element is a per-lens published lumen output, used when
+  // a lens limits the body's brightness (e.g. long-throw lenses).
   var selectedLens = 0;
   var lensWrap = document.getElementById('calc-lens-wrap');
   var lensSelect = document.getElementById('calc-lens');
 
   function modelLenses(entry) {
     return (entry && entry.l && entry.l.length) ? entry.l : null;
+  }
+
+  function lensLumens(entry, lensIdx) {
+    var lenses = modelLenses(entry);
+    if (lenses && lenses[lensIdx] && lenses[lensIdx][3] > 0) return lenses[lensIdx][3];
+    return 0;
   }
 
   function effectiveRatio(entry, lensIdx) {
@@ -113,7 +121,16 @@
 
   if (lensSelect) {
     lensSelect.addEventListener('change', function () {
+      // If the lumens box still shows the previous auto-filled value (the user
+      // hasn't typed their own), refresh it for the newly selected lens.
+      var oldAuto = lensLumens(selectedModel, selectedLens);
+      if (!(oldAuto > 0) && selectedModel) oldAuto = selectedModel.lm > 0 ? selectedModel.lm : 0;
       selectedLens = parseInt(lensSelect.value, 10) || 0;
+      var newAuto = lensLumens(selectedModel, selectedLens);
+      if (!(newAuto > 0) && selectedModel) newAuto = selectedModel.lm > 0 ? selectedModel.lm : 0;
+      if (lumensInput && oldAuto > 0 && parseFloat(lumensInput.value, 10) === Math.round(oldAuto)) {
+        lumensInput.value = newAuto > 0 ? Math.round(newAuto) : '';
+      }
       resetZoom();
       if (lockMode === 'projector') needLockCapture = true;
       refreshSelectedLine();
@@ -262,8 +279,12 @@
     if (selectedLine) selectedLine.hidden = false;
     refreshSelectedLine();
     // Auto-fill the published lumen output so it never has to be typed by hand;
-    // the box stays editable as a manual override.
-    if (lumensInput) lumensInput.value = (entry.lm > 0) ? Math.round(entry.lm) : '';
+    // the box stays editable as a manual override. A lens with its own published
+    // output (a brightness-limiting lens) wins over the body's rating.
+    var autoLm = (entry.lm > 0) ? entry.lm : 0;
+    var entryLensLm = lensLumens(entry, selectedLens);
+    if (entryLensLm > 0) autoLm = entryLensLm;
+    if (lumensInput) lumensInput.value = autoLm > 0 ? Math.round(autoLm) : '';
     recalc();
   }
 
@@ -1186,9 +1207,14 @@
       });
     }
 
-    // Effective lumens for brightness: manual input wins, else the model's published output.
+    // Effective lumens for brightness: manual input wins, then the selected
+    // lens's published output, then the model's published output.
     var effLumens = lumensInput ? parseFloat(lumensInput.value, 10) : NaN;
-    if (!(effLumens > 0) && selectedModel && selectedModel.lm > 0) effLumens = selectedModel.lm;
+    if (!(effLumens > 0)) {
+      var selLensLm = lensLumens(selectedModel, selectedLens);
+      if (selLensLm > 0) effLumens = selLensLm;
+      else if (selectedModel && selectedModel.lm > 0) effLumens = selectedModel.lm;
+    }
 
     syncZoom(r, imgWIn);
     var zoomPct = (zoomWrap && !zoomWrap.hidden) ? Math.round(zoomFrac() * 100) : -1;
