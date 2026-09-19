@@ -574,6 +574,8 @@
       warnings: warnHtml.map(function (s) { return s.replace(/<[^>]+>/g, ''); }),
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     };
+    // The file-name box shows the auto name it will use when left blank.
+    if (golfExportNameInput) golfExportNameInput.placeholder = defaultGolfExportBase();
   }
 
   var planData = null; // set by recalc; used by the export buttons
@@ -1050,7 +1052,16 @@
     if (golfExportNameInput && savedGolfExportName) golfExportNameInput.value = savedGolfExportName;
   } catch (e) {}
   function golfExportBaseName() {
-    return sanitizeGolfExportName(golfExportNameInput ? golfExportNameInput.value : '', GOLF_EXPORT_FALLBACK);
+    // A typed name always wins; otherwise <model-slug>.BudgetProjectors.
+    if (golfExportNameInput && /\S/.test(golfExportNameInput.value)) {
+      return sanitizeGolfExportName(golfExportNameInput.value, GOLF_EXPORT_FALLBACK);
+    }
+    return defaultGolfExportBase();
+  }
+  function defaultGolfExportBase() {
+    var m = (typeof planData !== 'undefined' && planData && planData.model) ? planData.model : '';
+    var slug = String(m).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return slug ? slug + '.BudgetProjectors' : GOLF_EXPORT_FALLBACK;
   }
   if (golfExportNameInput) golfExportNameInput.addEventListener('input', function () {
     try { localStorage.setItem('golf-export-name', golfExportNameInput.value); } catch (e) {}

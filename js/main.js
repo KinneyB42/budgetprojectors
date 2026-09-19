@@ -1229,7 +1229,25 @@
     if (exportNameInput && savedExportName) exportNameInput.value = savedExportName;
   } catch (e) {}
   function exportBaseName() {
-    return sanitizeExportName(exportNameInput ? exportNameInput.value : '', EXPORT_FALLBACK);
+    // A typed name always wins; otherwise the name follows the setup:
+    // multi-projector comparison -> MultiPJ.BudgetProjectors,
+    // single model -> <model-slug>.BudgetProjectors, else the old default.
+    if (exportNameInput && /\S/.test(exportNameInput.value)) {
+      return sanitizeExportName(exportNameInput.value, EXPORT_FALLBACK);
+    }
+    return defaultExportBase();
+  }
+  function modelFileSlug(name) {
+    return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+  function defaultExportBase() {
+    if (typeof compareOn !== 'undefined' && compareOn && advMode && (compareB || compareC)) {
+      return 'MultiPJ.BudgetProjectors';
+    }
+    var m = (typeof selectedModel !== 'undefined' && selectedModel) ?
+      (selectedModel.b + ' ' + selectedModel.m) : '';
+    var slug = modelFileSlug(m);
+    return slug ? slug + '.BudgetProjectors' : EXPORT_FALLBACK;
   }
   if (exportNameInput) exportNameInput.addEventListener('input', function () {
     try { localStorage.setItem('calc-export-name', exportNameInput.value); } catch (e) {}
@@ -1772,6 +1790,8 @@
         (!dimsKnown ? 'Enter your room size to check fit' :
         (fitsRoom ? 'Fits your ' + ROOMS[roomType].label.toLowerCase() : 'Too big for this room'))
     };
+    // The file-name box shows the auto name it will use when left blank.
+    if (exportNameInput) exportNameInput.placeholder = defaultExportBase();
 
     // Head-to-head comparison table (A = main model, B/C = compare models).
     var cmpHtml = '';
