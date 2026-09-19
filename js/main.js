@@ -1073,11 +1073,11 @@
             if (line) lines.push(line);
             return lines;
           }
-          function row(label, value, y) {
+          function row(label, value, y, valColor) {
             cx.fillStyle = '#8fa3c8';
             cx.font = '600 13px Arial,sans-serif';
             cx.fillText(label.toUpperCase(), 48, y);
-            cx.fillStyle = '#ffffff';
+            cx.fillStyle = valColor || '#ffffff';
             cx.font = '400 23px Arial,sans-serif';
             var lines = wrapVal(value);
             if (lines.length > 3) {
@@ -1101,10 +1101,12 @@
           var y = 184;
           if (S.model) { y += 44 + row('Projector', S.model, y) * 30; }
           if (S.throw) { y += 44 + row('Throw distance', S.throw, y) * 30; }
+          if (S.fitA) y += 44 + row('Fit', S.fitA, y, S.fitA === 'Fit' ? '#7fd6a4' : '#ff9d8a') * 30;
           (S.cmp || []).forEach(function (c) {
             y += 44 + row('Projector ' + c.tag, c.name, y) * 30;
-            y += 44 + row('Throw distance ' + c.tag, c.throw + (c.fitTxt ? ' · ' + c.fitTxt : ''), y) * 30;
+            y += 44 + row('Throw distance ' + c.tag, c.throw, y) * 30;
             if (c.bright) y += 44 + row('Brightness ' + c.tag, c.bright, y) * 30;
+            if (c.fitTxt) y += 44 + row('Fit', c.fitTxt, y, c.fitTxt === 'Fit' ? '#7fd6a4' : '#ff9d8a') * 30;
           });
           if (S.screen) { y += 44 + row('Screen', S.screen, y) * 30; }
           if (S.room) { y += 44 + row('Room', S.room, y) * 30; }
@@ -1155,21 +1157,24 @@
     if (!sheet) return;
     var rows = [
       ['Projector', S.model],
-      ['Throw distance', S.throw],
-      ['Screen', S.screen],
-      ['Room', S.room]
+      ['Throw distance', S.throw]
     ];
+    if (S.fitA) rows.push(['Fit', S.fitA]);
     (S.cmp || []).forEach(function (c) {
       rows.push(['Projector ' + c.tag, c.name]);
-      rows.push(['Throw distance ' + c.tag, c.throw + (c.fitTxt ? ' · ' + c.fitTxt : '')]);
+      rows.push(['Throw distance ' + c.tag, c.throw]);
       if (c.bright) rows.push(['Brightness ' + c.tag, c.bright]);
+      if (c.fitTxt) rows.push(['Fit', c.fitTxt]);
     });
+    rows.push(['Screen', S.screen], ['Room', S.room]);
     if (S.seat) rows.push(['Seating', S.seat]);
     if (S.bright) rows.push(['Brightness', S.bright]);
     if (S.mount) rows.push(['Screen mounting', S.mount]);
     if (S.drop) rows.push(['Mount drop', S.drop]);
     var rowsHtml = rows.map(function (r) {
-      return '<tr><th>' + r[0] + '</th><td>' + escHtml(r[1]) + '</td></tr>';
+      var tdStyle = '';
+      if (r[0] === 'Fit') tdStyle = r[1] === 'Fit' ? ' style="color:#2e7d5b;font-weight:700"' : ' style="color:#c0392b;font-weight:700"';
+      return '<tr><th>' + r[0] + '</th><td' + tdStyle + '>' + escHtml(r[1]) + '</td></tr>';
     }).join('');
     var fits = S.verdict.indexOf('Fits your') === 0;
     var date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -1816,12 +1821,13 @@
           tag: tag,
           name: compareFullName(tag.toLowerCase()),
           throw: fmtDist(imgWIn * t[0]) + (t[1] !== t[0] ? '–' + fmtDist(imgWIn * t[1]) : '') + ' throw',
-          fitTxt: fit === null ? '' : (fit ? 'In range' : 'Out of range'),
+          fitTxt: fit === null ? '' : (fit ? 'Fit' : 'No Fit'),
           bright: (clm > 0 && cmpArea > 0) ? '~' + fmt(clm * effGain() / cmpArea, 0) + ' fL' : ''
         });
       });
     }
     planSummary.cmp = cmpRows;
+    planSummary.fitA = (!outdoor && dimsKnown) ? (fitsRoom ? 'Fit' : 'No Fit') : '';
     // The file-name box shows the auto name it will use when left blank.
     if (exportNameInput) exportNameInput.placeholder = defaultExportBase();
 
