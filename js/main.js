@@ -1101,6 +1101,11 @@
           var y = 184;
           if (S.model) { y += 44 + row('Projector', S.model, y) * 30; }
           if (S.throw) { y += 44 + row('Throw distance', S.throw, y) * 30; }
+          (S.cmp || []).forEach(function (c) {
+            y += 44 + row('Projector ' + c.tag, c.name, y) * 30;
+            y += 44 + row('Throw distance ' + c.tag, c.throw + (c.fitTxt ? ' · ' + c.fitTxt : ''), y) * 30;
+            if (c.bright) y += 44 + row('Brightness ' + c.tag, c.bright, y) * 30;
+          });
           if (S.screen) { y += 44 + row('Screen', S.screen, y) * 30; }
           if (S.room) { y += 44 + row('Room', S.room, y) * 30; }
           if (S.seat) { y += 44 + row('Seating', S.seat, y) * 30; }
@@ -1154,6 +1159,11 @@
       ['Screen', S.screen],
       ['Room', S.room]
     ];
+    (S.cmp || []).forEach(function (c) {
+      rows.push(['Projector ' + c.tag, c.name]);
+      rows.push(['Throw distance ' + c.tag, c.throw + (c.fitTxt ? ' · ' + c.fitTxt : '')]);
+      if (c.bright) rows.push(['Brightness ' + c.tag, c.bright]);
+    });
     if (S.seat) rows.push(['Seating', S.seat]);
     if (S.bright) rows.push(['Brightness', S.bright]);
     if (S.mount) rows.push(['Screen mounting', S.mount]);
@@ -1790,6 +1800,28 @@
         (!dimsKnown ? 'Enter your room size to check fit' :
         (fitsRoom ? 'Fits your ' + ROOMS[roomType].label.toLowerCase() : 'Too big for this room'))
     };
+    // Comparison models for exports: name, throw range, brightness, fit —
+    // the same per-projector data the 3D data lines show.
+    var cmpRows = [];
+    if (compareOn && advMode && !reverseMode && (compareB || compareC)) {
+      var cmpArea = (imgWIn > 0 && scrHIn > 0) ? imgWIn * scrHIn / 144 : 0;
+      [['B', compareB], ['C', compareC]].forEach(function (q) {
+        var tag = q[0], entry = q[1];
+        if (!entry) return;
+        var t = compareRatio(tag.toLowerCase());
+        var nX = imgWIn * t[0] / 12;
+        var fit = (!outdoor && L > 0) ? (nX <= L) : null;
+        var clm = entry.lm || 0;
+        cmpRows.push({
+          tag: tag,
+          name: compareFullName(tag.toLowerCase()),
+          throw: fmtDist(imgWIn * t[0]) + (t[1] !== t[0] ? '–' + fmtDist(imgWIn * t[1]) : '') + ' throw',
+          fitTxt: fit === null ? '' : (fit ? 'In range' : 'Out of range'),
+          bright: (clm > 0 && cmpArea > 0) ? '~' + fmt(clm * effGain() / cmpArea, 0) + ' fL' : ''
+        });
+      });
+    }
+    planSummary.cmp = cmpRows;
     // The file-name box shows the auto name it will use when left blank.
     if (exportNameInput) exportNameInput.placeholder = defaultExportBase();
 
