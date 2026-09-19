@@ -1116,7 +1116,7 @@
           cx.font = '400 13px Arial,sans-serif';
           cx.fillText('Made with the BudgetProjectors throw-distance calculator', 48, CH - 28);
           cv.toBlob(function (blob) {
-            if (blob) downloadBlob(blob, 'budgetprojectors-room-plan.' + kind);
+            if (blob) downloadBlob(blob, exportBaseName() + '.' + kind);
             URL.revokeObjectURL(url1); URL.revokeObjectURL(url2); URL.revokeObjectURL(url3);
             URL.revokeObjectURL(url4); URL.revokeObjectURL(url5);
           }, mime, 0.92);
@@ -1210,7 +1210,36 @@
       slot5.appendChild(clone5);
     } else if (slot5) { slot5.style.display = 'none'; slot5.previousElementSibling.style.display = 'none'; }
     document.body.classList.add('printing-calc');
+    useExportDocTitle(exportBaseName());
     window.print();
+  }
+
+  /* ---------- Export file name: user-customizable, persisted ---------- */
+  var EXPORT_FALLBACK = 'budgetprojectors-room-plan';
+  function sanitizeExportName(raw, fallback) {
+    var s = String(raw == null ? '' : raw).replace(/[\\\/:*?"<>|\u0000-\u001f]/g, '');
+    s = s.replace(/\s+/g, ' ').replace(/^[\s.]+|[\s.]+$/g, '');
+    s = s.replace(/\.(png|jpe?g|pdf)$/i, '').replace(/[\s.]+$/g, '');
+    if (s.length > 80) s = s.slice(0, 80).replace(/[\s.]+$/g, '');
+    return s || fallback;
+  }
+  var exportNameInput = document.getElementById('calc-export-name');
+  try {
+    var savedExportName = localStorage.getItem('calc-export-name');
+    if (exportNameInput && savedExportName) exportNameInput.value = savedExportName;
+  } catch (e) {}
+  function exportBaseName() {
+    return sanitizeExportName(exportNameInput ? exportNameInput.value : '', EXPORT_FALLBACK);
+  }
+  if (exportNameInput) exportNameInput.addEventListener('input', function () {
+    try { localStorage.setItem('calc-export-name', exportNameInput.value); } catch (e) {}
+  });
+  // The PDF goes through the browser print dialog, which suggests the document
+  // title as the file name — swap it for the export name while printing.
+  var savedDocTitle = null;
+  function useExportDocTitle(base) {
+    savedDocTitle = document.title;
+    document.title = base;
   }
 
   var pngBtn = document.getElementById('calc-export-png');
@@ -1221,6 +1250,7 @@
   if (pdfBtn) pdfBtn.addEventListener('click', exportPdf);
   window.addEventListener('afterprint', function () {
     document.body.classList.remove('printing-calc', 'printing-golf');
+    if (savedDocTitle !== null) { document.title = savedDocTitle; savedDocTitle = null; }
   });
 
   var sizeNum = document.getElementById('calc-size-num');

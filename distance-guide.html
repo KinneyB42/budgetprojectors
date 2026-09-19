@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260918h">
+  <link rel="stylesheet" href="css/style.css?v=20260918i">
 </head>
 <body>
 
@@ -314,6 +314,9 @@
         <button type="button" class="calc__chip" id="calc-share">Share link</button>
         <button type="button" class="calc__chip" id="calc-export-png">Export PNG</button>
         <button type="button" class="calc__chip" id="calc-export-pdf">Export PDF</button>
+        <label class="calc__export-name">File name
+          <input id="calc-export-name" type="text" maxlength="80" placeholder="budgetprojectors-room-plan" autocomplete="off" spellcheck="false">
+        </label>
       </div>
 
       <div class="calc__result show" id="calc-plan-result" aria-live="polite"></div>
@@ -527,6 +530,9 @@
     <div class="golf-export-buttons">
       <button type="button" class="calc__chip" id="golf-export-png">PNG</button>
       <button type="button" class="calc__chip" id="golf-export-pdf">PDF</button>
+      <label class="calc__export-name">File name
+        <input id="golf-export-name" type="text" maxlength="80" placeholder="budgetprojectors-golf-plan" autocomplete="off" spellcheck="false">
+      </label>
     </div>
   </div>
 </section>
@@ -549,8 +555,8 @@
 </footer>
 
 <script src="js/throw-data.js?v=20260918m"></script>
-<script src="js/main.js?v=20260919ab"></script>
-<script src="js/golf.js?v=20260918h"></script>
+<script src="js/main.js?v=20260919ac"></script>
+<script src="js/golf.js?v=20260918i"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>
 </body>

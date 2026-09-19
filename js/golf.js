@@ -1035,6 +1035,33 @@
     setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 800);
   }
 
+  /* ---------- Export file name: user-customizable, persisted ---------- */
+  var GOLF_EXPORT_FALLBACK = 'budgetprojectors-golf-plan';
+  function sanitizeGolfExportName(raw, fallback) {
+    var s = String(raw == null ? '' : raw).replace(/[\\\/:*?"<>|\u0000-\u001f]/g, '');
+    s = s.replace(/\s+/g, ' ').replace(/^[\s.]+|[\s.]+$/g, '');
+    s = s.replace(/\.(png|jpe?g|pdf)$/i, '').replace(/[\s.]+$/g, '');
+    if (s.length > 80) s = s.slice(0, 80).replace(/[\s.]+$/g, '');
+    return s || fallback;
+  }
+  var golfExportNameInput = $('golf-export-name');
+  try {
+    var savedGolfExportName = localStorage.getItem('golf-export-name');
+    if (golfExportNameInput && savedGolfExportName) golfExportNameInput.value = savedGolfExportName;
+  } catch (e) {}
+  function golfExportBaseName() {
+    return sanitizeGolfExportName(golfExportNameInput ? golfExportNameInput.value : '', GOLF_EXPORT_FALLBACK);
+  }
+  if (golfExportNameInput) golfExportNameInput.addEventListener('input', function () {
+    try { localStorage.setItem('golf-export-name', golfExportNameInput.value); } catch (e) {}
+  });
+  // The PDF goes through the browser print dialog, which suggests the document
+  // title as the file name — swap it for the export name while printing.
+  var savedGolfDocTitle = null;
+  window.addEventListener('afterprint', function () {
+    if (savedGolfDocTitle !== null) { document.title = savedGolfDocTitle; savedGolfDocTitle = null; }
+  });
+
   function composeGolfImage(kind, P, imgs) {
     var W = 1600;
     var scratch = document.createElement('canvas');
@@ -1048,7 +1075,7 @@
     renderGolfDoc(P, imgs, { cx: cx, y: 0, measure: false });
     drawGolfWatermark(cx, W, H);
     cv.toBlob(function (blob) {
-      if (blob) downloadGolfBlob(blob, 'budgetprojectors-golf-plan.' + kind);
+      if (blob) downloadGolfBlob(blob, golfExportBaseName() + '.' + kind);
     }, kind === 'jpg' ? 'image/jpeg' : 'image/png', 0.92);
   }
 
@@ -1102,6 +1129,8 @@
       if (slot && src) slot.appendChild(src.cloneNode(true));
     });
     document.body.classList.add('printing-golf');
+    savedGolfDocTitle = document.title;
+    document.title = golfExportBaseName();
     window.print();
   }
 
