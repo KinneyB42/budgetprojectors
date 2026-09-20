@@ -83,6 +83,7 @@ a { color: var(--navy); }
 .section--panel { background: var(--panel); }
 .section--tight { padding: 64px 0; }
 .page-intro { padding: 40px 0 0; }
+.page-intro + #calculator { padding-top: 32px; }
 .page-intro .lede { margin: 0; }
 
 .label {
