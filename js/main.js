@@ -272,6 +272,7 @@
     syncShiftControls();
     recalc();
   }
+  window.BPChooseModel = chooseModel; /* Room Finder hook: load a result into the calculator */
 
   function renderSuggest(q) {
     if (!suggest || !modelInput) return;
