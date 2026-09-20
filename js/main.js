@@ -1384,15 +1384,22 @@
   function effectiveFL(lumens, gain, areaSqFt) {
     var raw = lumens * gain / areaSqFt;
     var lux = sunOn ? 1000 : (lightsOn ? 100 : 0);
-    if (!(lux > 0)) return { raw: raw, eff: raw, amb: 0 };
+    if (!(lux > 0)) return { raw: raw, eff: raw, amb: 0, mode: null };
     var amb = lux * gain / Math.PI * 0.2919 * (screenType === 'alr' ? 0.3 : 1);
-    return { raw: raw, eff: Math.max(0, raw - amb), amb: amb };
+    return { raw: raw, eff: Math.max(0, raw - amb), amb: amb, mode: sunOn ? 'sun' : 'lights' };
   }
-  function flVerdict(fl, ambient) {
-    if (ambient) {
-      return fl < 8 ? 'washed out at this light level' :
-        fl < 20 ? 'dim with this much ambient light' :
-        fl < 40 ? 'watchable, but contrast suffers' : 'bright enough to beat the ambient light';
+  function flVerdict(fl, mode) {
+    if (mode === 'sun') {
+      return fl < 8 ? 'the image will barely be visible in this much daylight' :
+        fl < 20 ? 'mostly washed out, needs far more lumens or a darker room' :
+        fl < 40 ? 'watchable, but daylight still crushes the contrast' :
+        'bright enough to punch through daylight';
+    }
+    if (mode === 'lights') {
+      return fl < 8 ? 'washed out with the lights on' :
+        fl < 20 ? 'dim with the lights on' :
+        fl < 40 ? 'watchable with the lights on, but contrast suffers' :
+        'bright enough for lights-on viewing';
     }
     return fl < 12 ? 'dim, best in a fully dark room' :
       fl < 30 ? 'good with the lights off' :
@@ -1761,9 +1768,10 @@
       if (areaSqFt > 0) {
         var f = effectiveFL(lumens, gain, areaSqFt);
         fl = f.eff; flAmb = f.amb;
-        flNote = flVerdict(fl, flAmb > 0);
+        flNote = flVerdict(fl, f.mode);
         bits.push('Brightness: about ' + fmt(fl, 0) + ' foot-lamberts on this screen' +
-          (flAmb > 0 ? ' after ambient washout (about ' + fmt(flAmb, 0) + ' fL of room light on the screen)' : '') +
+          (f.mode ? ' after ambient washout (about ' + fmt(flAmb, 0) + ' fL of ' +
+            (f.mode === 'sun' ? 'daylight' : 'room light') + ' on the screen)' : '') +
           (outdoor ? '.' : ', ' + flNote +
             (screenType === 'alr' ? ' The ALR surface holds contrast with the lights on.' : '.')));
       }
@@ -2344,7 +2352,7 @@
         if (bArea > 0) {
           var bf = effectiveFL(o.lumens, bGain, bArea);
           var bFl = bf.eff;
-          var bNote = flVerdict(bFl, bf.amb > 0);
+          var bNote = flVerdict(bFl, bf.mode);
           var bCol = bFl < 12 ? (scene === 'night' ? '#ff9d8a' : '#c0392b') :
             bFl < 30 ? (scene === 'night' ? '#ffd28a' : '#a86e00') :
             (scene === 'night' ? '#7fd6a4' : '#2e7d5b');
