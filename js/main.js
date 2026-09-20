@@ -28,11 +28,38 @@
     });
   }
 
+  /* ---------- Affiliate shop links for the selected model ---------- */
+  var AFF = {
+    amazonTag: 'brandonkinney-20', /* Brandon's Associates tag, from his SiteStripe link 2026-09-20 */
+    amazonSearch: 'https://www.amazon.com/s?k=',
+    ebayCampid: '5339116943', /* Brandon's EPN campaign, confirmed 2026-09-20 */
+    ebayMkrid: '711-53200-19255-0'
+  };
+  function amazonUrl(q) {
+    var u = AFF.amazonSearch + encodeURIComponent(q);
+    if (AFF.amazonTag) u += '&tag=' + encodeURIComponent(AFF.amazonTag);
+    return u;
+  }
+  function ebayUrl(q) {
+    return 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(q) +
+      '&mkcid=1&mkrid=' + AFF.ebayMkrid + '&siteid=0&campid=' + AFF.ebayCampid + '&toolid=80005&mkevt=1';
+  }
+  function shopAnchor(href, label) {
+    var a = document.createElement('a');
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'nofollow sponsored noopener';
+    a.className = 'calc-shop-link';
+    a.textContent = label;
+    return a;
+  }
+
   /* ---------- Model picker ---------- */
   var selectedModel = null; // {b, m, t:[min,max]}
   var modelInput = document.getElementById('calc-model');
   var suggest = document.getElementById('calc-suggest');
   var selectedLine = document.getElementById('calc-selected');
+  var shopDisclosure = document.getElementById('calc-shop-disclosure');
   var manualBox = document.getElementById('calc-manual');
   var manualToggle = document.getElementById('calc-manual-toggle');
   var ratioMinInput = document.getElementById('calc-ratio-min');
@@ -96,6 +123,19 @@
     var r = currentRatio();
     if (r) txt += ' · throw ' + ratioLabel(r);
     selectedLine.textContent = txt;
+    var q = selectedModel.b + ' ' + selectedModel.m;
+    var shop = document.createElement('span');
+    shop.className = 'calc-shop';
+    shop.appendChild(document.createTextNode(' · '));
+    shop.appendChild(shopAnchor(amazonUrl(q), 'Amazon'));
+    shop.appendChild(document.createTextNode(' | '));
+    shop.appendChild(shopAnchor(ebayUrl(q), 'eBay'));
+    selectedLine.appendChild(shop);
+    if (shopDisclosure) shopDisclosure.hidden = false;
+  }
+
+  function hideShopDisclosure() {
+    if (shopDisclosure) shopDisclosure.hidden = true;
   }
 
   function syncLensPicker() {
@@ -250,6 +290,7 @@
     syncLensPicker();
     if (modelInput) modelInput.value = '';
     if (selectedLine) selectedLine.hidden = true;
+    hideShopDisclosure();
     clearModelChips();
     if (suggest) suggest.hidden = true;
     syncShiftControls();
@@ -304,6 +345,7 @@
       selectedLens = 0;
       syncLensPicker();
       if (selectedLine) selectedLine.hidden = true;
+      hideShopDisclosure();
       clearModelChips();
       renderSuggest(modelInput.value.trim().toLowerCase());
       syncShiftControls();

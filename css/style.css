@@ -282,6 +282,8 @@ h3 { font-size: 22px; margin-bottom: 12px; }
   .calc__chip:hover { background: var(--navy); color: var(--white); }
 }
 .calc__selected { font-size: 15px; font-weight: 600; color: var(--navy); margin: 12px 0 4px; }
+.calc-shop-link { font-weight: 700; color: var(--navy); text-decoration: underline; text-underline-offset: 3px; }
+.calc__disclosure { font-size: 13px; color: var(--muted, #666); margin: 0 0 8px; }
 .calc__linkbtn { background: none; border: 0; padding: 0; color: var(--navy); text-decoration: underline; font-size: inherit; cursor: pointer; font-family: inherit; }
 .calc__manual { margin-top: 14px; }
 .calc__manual-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
