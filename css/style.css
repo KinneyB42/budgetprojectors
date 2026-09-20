@@ -488,3 +488,5 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .finder-plan { background: none; border: 2px solid var(--navy); color: var(--navy); border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
 .finder-plan:hover { background: var(--navy); color: #fff; }
 .finder-shop { font-size: 13px; font-weight: 700; color: var(--navy); text-decoration: underline; text-underline-offset: 3px; }
+.finder-plan[aria-expanded="true"] { background: var(--navy); color: #fff; }
+.finder-shop-row { display: flex; gap: 18px; flex: 1 1 100%; padding: 2px 4px 4px; }

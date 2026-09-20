@@ -221,9 +221,24 @@
       plan.addEventListener('click', function () { planInCalculator(e, diagRaw, roomLenRaw); });
       actions.appendChild(plan);
       var q = e.b + ' ' + e.m;
-      actions.appendChild(shopLink(amazonUrl(q), 'Amazon'));
-      actions.appendChild(shopLink(ebayUrl(q), 'eBay'));
+      var shopBtn = document.createElement('button');
+      shopBtn.type = 'button';
+      shopBtn.className = 'finder-plan';
+      shopBtn.setAttribute('aria-expanded', 'false');
+      shopBtn.textContent = 'Shop';
+      var shopRow = document.createElement('div');
+      shopRow.className = 'finder-shop-row';
+      shopRow.hidden = true;
+      shopRow.appendChild(shopLink(amazonUrl(q), 'Amazon'));
+      shopRow.appendChild(shopLink(ebayUrl(q), 'eBay'));
+      shopBtn.addEventListener('click', function () {
+        var open = shopRow.hidden;
+        shopRow.hidden = !open;
+        shopBtn.setAttribute('aria-expanded', String(open));
+      });
+      actions.appendChild(shopBtn);
       row.appendChild(actions);
+      row.appendChild(shopRow);
 
       out.appendChild(row);
     });
