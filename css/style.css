@@ -468,7 +468,7 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 /* ---------- Room Finder ---------- */
 #room-finder { margin-top: 64px; padding-top: 48px; border-top: 1px solid var(--line); }
 #room-finder h2 { font-family: var(--serif); }
-#room-finder .calc__panel { margin-top: 20px; }
+#room-finder .calc__panel { display: block; margin-top: 20px; }
 #room-finder .calc__row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px; }
 @media (max-width: 700px) { #room-finder .calc__row { grid-template-columns: 1fr; } }
 .finder-field--btn { align-self: end; }
