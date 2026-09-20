@@ -823,7 +823,6 @@
     enc('dir', reverseMode ? '1' : '0');
     if (reverseMode) { var td = inFt(throwDistInput); if (td > 0) enc('td', r2(td)); }
     if (compareB) { enc('cb', compareB.b + ' ' + compareB.m); if (modelLenses(compareB)) enc('cbl', compareLens.b); }
-    if (compareC) { enc('cc', compareC.b + ' ' + compareC.m); if (modelLenses(compareC)) enc('ccl', compareLens.c); }
     var seat = inFt(seatInput); if (seat > 0) enc('seat', r2(seat));
     enc('pp', projPos);
     if (projPos === 'ceiling') {
@@ -894,7 +893,7 @@
     function num(k) { var v = parseFloat(p[k], 10); return v >= 0 ? v : NaN; }
     function toDisp(ft) { return unit === 'm' ? fmt(ft * M_PER_FT, 2) : String(Math.round(ft * 100) / 100); }
     // Links carrying advanced-only settings open in Advanced mode.
-    if (p.g === '1' || p.dir === '1' || p.cb || p.cc || p.cbl || p.ccl || p.gn || p.gp || p.gw || p.gh || p.ga) setAdvMode(true);
+    if (p.g === '1' || p.dir === '1' || p.cb || p.cbl || p.gn || p.gp || p.gw || p.gh || p.ga) setAdvMode(true);
     if (p.u === 'm' || p.u === 'ft') setUnit(p.u, false);
     if (p.m) {
       var found = null;
@@ -921,9 +920,9 @@
     if (p.dir === '1') setDirection('throw');
     if (!isNaN(num('sz')) && sizeInput) { sizeInput.value = Math.round(num('sz')); syncSizeVal(); }
     if (!isNaN(num('td')) && throwDistInput) throwDistInput.value = toDisp(num('td'));
-    if (p.cb || p.cc) {
+    if (p.cb) {
       if (!compareOn && compareToggle) compareToggle.click();
-      [['b', p.cb, p.cbl], ['c', p.cc, p.ccl]].forEach(function (q) {
+      [['b', p.cb, p.cbl]].forEach(function (q) {
         if (!q[1]) return;
         var found = null;
         THROW.forEach(function (x) { if ((x.b + ' ' + x.m) === q[1]) found = x; });
@@ -934,7 +933,7 @@
             compareLens[q[0]] = cli;
             syncCompareLens(q[0]);
           }
-          var ci = document.getElementById(q[0] === 'b' ? 'calc-model-b' : 'calc-model-c');
+          var ci = document.getElementById('calc-model-b');
           if (ci) ci.value = q[1];
         }
       });
@@ -1256,7 +1255,7 @@
     return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
   function defaultExportBase() {
-    if (typeof compareOn !== 'undefined' && compareOn && advMode && (compareB || compareC)) {
+    if (typeof compareOn !== 'undefined' && compareOn && advMode && compareB) {
       return 'MultiPJ.BudgetProjectors';
     }
     var m = (typeof selectedModel !== 'undefined' && selectedModel) ?
@@ -1367,11 +1366,11 @@
   if (throwDistInput) throwDistInput.addEventListener('input', recalc);
 
   /* ---------- Head-to-head model comparison ---------- */
-  var compareOn = false, compareB = null, compareC = null;
-  var compareLens = { b: 0, c: 0 };
+  var compareOn = false, compareB = null;
+  var compareLens = { b: 0 };
   var compareToggle = document.getElementById('calc-compare-toggle');
   var compareWrap = document.getElementById('calc-compare-wrap');
-  function compareEntry(which) { return which === 'b' ? compareB : compareC; }
+  function compareEntry(which) { return compareB; }
   function compareRatio(which) {
     return effectiveRatio(compareEntry(which), compareLens[which] || 0);
   }
@@ -1387,7 +1386,7 @@
     return e.b + ' ' + e.m + (ln ? ' · ' + ln : '');
   }
   function syncCompareLens(which) {
-    var sel = document.getElementById(which === 'b' ? 'calc-lens-b' : 'calc-lens-c');
+    var sel = document.getElementById('calc-lens-b');
     if (!sel) return;
     var lenses = modelLenses(compareEntry(which));
     if (!lenses) {
@@ -1409,12 +1408,12 @@
     sel.hidden = false;
   }
   function setCompare(which, entry) {
-    if (which === 'b') compareB = entry; else compareC = entry;
+    compareB = entry;
     compareLens[which] = 0;
     syncCompareLens(which);
   }
-  ['b', 'c'].forEach(function (which) {
-    var sel = document.getElementById(which === 'b' ? 'calc-lens-b' : 'calc-lens-c');
+  ['b'].forEach(function (which) {
+    var sel = document.getElementById('calc-lens-b');
     if (sel) sel.addEventListener('change', function () {
       compareLens[which] = parseInt(sel.value, 10) || 0;
       recalc();
@@ -1448,19 +1447,18 @@
     });
   }
   bindCompareInput('calc-model-b', 'calc-suggest-b', 'b');
-  bindCompareInput('calc-model-c', 'calc-suggest-c', 'c');
   if (compareToggle) {
     compareToggle.addEventListener('click', function () {
       compareOn = !compareOn;
       if (compareWrap) compareWrap.hidden = !compareOn;
-      compareToggle.textContent = compareOn ? 'Hide comparison' : 'Compare multiple models';
+      compareToggle.textContent = compareOn ? 'Hide comparison' : 'Compare a second model';
       if (!compareOn) {
-        compareB = compareC = null;
-        compareLens.b = compareLens.c = 0;
-        ['calc-model-b', 'calc-model-c'].forEach(function (id) {
+        compareB = null;
+        compareLens.b = 0;
+        ['calc-model-b'].forEach(function (id) {
           var i = document.getElementById(id); if (i) i.value = '';
         });
-        ['calc-lens-b', 'calc-lens-c'].forEach(function (id) {
+        ['calc-lens-b'].forEach(function (id) {
           var s = document.getElementById(id); if (s) { s.hidden = true; s.innerHTML = ''; }
         });
       }
@@ -1468,25 +1466,24 @@
     });
   }
 
-  /* ---------- Viewer projector toggle (Advanced): all three or one at a time ---------- */
+  /* ---------- Viewer projector toggle (Advanced): both or one at a time ---------- */
   var viewerProj = 'all';
   try {
     var vpSaved = localStorage.getItem('calc-viewerproj');
-    if (vpSaved === 'all' || vpSaved === 'a' || vpSaved === 'b' || vpSaved === 'c') viewerProj = vpSaved;
+    if (vpSaved === 'all' || vpSaved === 'a' || vpSaved === 'b') viewerProj = vpSaved;
   } catch (e) {}
   function syncViewerProjUI() {
     var row = document.getElementById('calc-viewerproj');
     if (!row) return;
-    if ((viewerProj === 'b' && !compareB) || (viewerProj === 'c' && !compareC)) {
+    if (viewerProj === 'b' && !compareB) {
       viewerProj = 'all';
       try { localStorage.setItem('calc-viewerproj', 'all'); } catch (e) {}
     }
-    row.style.display = (advMode && compareOn && (compareB || compareC)) ? '' : 'none';
+    row.style.display = (advMode && compareOn && compareB) ? '' : 'none';
     row.querySelectorAll('.calc__chip').forEach(function (c) {
       var vp = c.getAttribute('data-vp');
       c.classList.toggle('chosen', vp === viewerProj);
       if (vp === 'b') c.style.display = compareB ? '' : 'none';
-      if (vp === 'c') c.style.display = compareC ? '' : 'none';
     });
   }
   document.querySelectorAll('#calc-viewerproj .calc__chip').forEach(function (chip) {
@@ -1631,8 +1628,8 @@
 
     // Head-to-head: extra projectors drawn at their own throw distances for the same screen.
     var extraProj = [];
-    if (compareOn && advMode && !reverseMode && (compareB || compareC)) {
-      [['B', compareB], ['C', compareC]].forEach(function (q) {
+    if (compareOn && advMode && !reverseMode && compareB) {
+      [['B', compareB]].forEach(function (q) {
         var entry = q[1];
         if (!entry) return;
         var t = compareRatio(q[0].toLowerCase()), xust = t[1] < 1;
@@ -1808,9 +1805,9 @@
     // Comparison models for exports: name, throw range, brightness, fit —
     // the same per-projector data the 3D data lines show.
     var cmpRows = [];
-    if (compareOn && advMode && !reverseMode && (compareB || compareC)) {
+    if (compareOn && advMode && !reverseMode && compareB) {
       var cmpArea = (imgWIn > 0 && scrHIn > 0) ? imgWIn * scrHIn / 144 : 0;
-      [['B', compareB], ['C', compareC]].forEach(function (q) {
+      [['B', compareB]].forEach(function (q) {
         var tag = q[0], entry = q[1];
         if (!entry) return;
         var t = compareRatio(tag.toLowerCase());
@@ -1831,12 +1828,11 @@
     // The file-name box shows the auto name it will use when left blank.
     if (exportNameInput) exportNameInput.placeholder = defaultExportBase();
 
-    // Head-to-head comparison table (A = main model, B/C = compare models).
+    // Head-to-head comparison table (A = main model, B = compare model).
     var cmpHtml = '';
-    if (compareOn && advMode && (compareB || compareC)) {
+    if (compareOn && advMode && compareB) {
       var cmpModels = [{ tag: 'A', name: modelName, t: r }];
       if (compareB) cmpModels.push({ tag: 'B', name: compareFullName('b'), t: compareRatio('b') });
-      if (compareC) cmpModels.push({ tag: 'C', name: compareFullName('c'), t: compareRatio('c') });
       cmpHtml = '<table class="ref-table calc__compare-table"><thead><tr><th></th><th>Model</th>';
       if (revMode) {
         var cwf = stdWidthFactor();
@@ -1867,8 +1863,8 @@
   var NS = 'http://www.w3.org/2000/svg';
   var NAVY = '#0c2244', MUTED = '#5c5c5c';
 
-  // Color-key legend entries for the tagged projectors (A = first, B/C = compare).
-  // mainOnly=true lists just the main projector (views that don't draw B/C bodies).
+  // Color-key legend entries for the tagged projectors (A = first, B = compare).
+  // mainOnly=true lists just the main projector (views that don't draw the B body).
   function compareLegendItems(o, cols, mainOnly) {
     var items = [];
     var cmp = !mainOnly && (o.extraProj || []).length > 0;
@@ -1877,7 +1873,7 @@
     items.push({ col: cols.a, label: (cmp ? 'A · ' : '') + (mainName || 'Manual throw ratio') });
     if (mainOnly) return items;
     (o.extraProj || []).forEach(function (xp, xi) {
-      items.push({ col: xi === 0 ? cols.b : cols.c, label: xp.tag + ' · ' + compareFullName(xi === 0 ? 'b' : 'c') });
+      items.push({ col: cols.b, label: xp.tag + ' · ' + compareFullName('b') });
     });
     return items;
   }
@@ -2157,7 +2153,7 @@
         box(pxx, pyy, (pzz + H) / 2, 0.18, 0.18, H - pzz, pal.stand[0], pal.stand[1], pal.stand[2]); // mount pole
       }
       box(pxx, pyy, pzz, 1.1, 0.9, 0.55, pal.proj[0], pal.proj[1], pal.proj[2]);
-      // head-to-head: tag the first projector A so it matches the B/C labels
+      // head-to-head: tag the first projector A so it matches the B label
       var projLabel = isRear ? 'rear projector' : 'projector';
       if (!isRear && (o.extraProj || []).length > 0 && o.r) {
         projLabel = 'A ' + fmtDist(imgWIn * o.r[0]) + (o.r[1] !== o.r[0] ? '–' + fmtDist(imgWIn * o.r[1]) : '');
@@ -2238,7 +2234,7 @@
         (o.extraProj || []).forEach(function (xp, xi) {
           var xpThrow = 'Throw ' + xp.dist;
           if (xp.zpct >= 0) xpThrow += ' · Zoom ' + xp.zpct + '%';
-          dataLine(44 + xi * 18, xp.tag, xi === 0 ? '#2e7d5b' : '#c07a1e',
+          dataLine(44 + xi * 18, xp.tag, '#2e7d5b',
             xpThrow, xp.lm || 0, xp.fit);
         });
         if (o.seat > 0) {
@@ -2318,7 +2314,7 @@
       }
       // head-to-head: extra projectors at their own throw distances (B green, C orange)
       (o.extraProj || []).forEach(function (xp, xi) {
-        var cols = xi === 0 ? ['#2e7d5b', '#1d5c40', '#123c29'] : ['#c07a1e', '#8f5a12', '#5f3c0b'];
+        var cols = ['#2e7d5b', '#1d5c40', '#123c29'];
         var ex = xp.px, ey = xp.py != null ? xp.py : yc, ez;
         if (!xp.ust && xp.pos === 'ceiling' && H > 0) {
           ez = H - ceilingDropFt();
@@ -2391,7 +2387,7 @@
     }
 
     // legend at the bottom: color key for the projector labels
-    drawLegend(el, compareLegendItems(o, { a: pal.proj[0], b: '#2e7d5b', c: '#c07a1e' }), 16, VH - 14, 420, pal.label, false);
+    drawLegend(el, compareLegendItems(o, { a: pal.proj[0], b: '#2e7d5b' }), 16, VH - 14, 420, pal.label, false);
 
     // watermark
     var wm = el('text', { x: VW - 12, y: VH - 10, 'text-anchor': 'end', 'font-size': 13,
@@ -2568,7 +2564,7 @@
     dim(X(0), oy + 40, X(L), oy + 40, dispShort(L) + (o.outdoor ? '' : ' long'));
     if (hKnown) dimV(X(0) - 26, Z(H), oy, dispShort(H) + ' ceiling');
     // legend at the bottom: color key for the projector
-    drawLegend(el2, compareLegendItems(o, { a: night ? '#3b5a94' : NAVY, b: '#2e7d5b', c: '#c07a1e' }, true), 16, VH - 14, 470, mut, false);
+    drawLegend(el2, compareLegendItems(o, { a: night ? '#3b5a94' : NAVY, b: '#2e7d5b' }, true), 16, VH - 14, 470, mut, false);
     var wmt = tx(VW - 12, VH - 10, 'BudgetProjectors.org', 13, 'end', mut);
     wmt.setAttribute('opacity', 0.55);
   }
@@ -2847,7 +2843,7 @@
       el3('circle', { cx: px.toFixed(1), cy: py.toFixed(1), r: r, fill: '#9fd0ff', opacity: op == null ? 1 : op });
       el3('circle', { cx: px.toFixed(1), cy: py.toFixed(1), r: (r * 0.45).toFixed(1), fill: '#e8f4ff', opacity: op == null ? 1 : op });
     }
-    // A = the main projector; B/C comparison projectors are drawn after this block
+    // A = the main projector; the B comparison projector is drawn after this block
     var showA = (viewerProj === 'all' || viewerProj === 'a');
     var aTopLabel = false; // A occupies the top-center label slot (behind-viewer modes)
     if (showA) {
@@ -2900,7 +2896,7 @@
       aTopLabel = true;
     }
     } // end showA
-    // Head-to-head B/C comparison projectors in the viewer, per the projector toggle.
+    // Head-to-head B comparison projector in the viewer, per the projector toggle.
     var cmpShow = [];
     if (compareOn && advMode && o.extraProj) {
       o.extraProj.forEach(function (xp) {
@@ -2909,7 +2905,7 @@
       });
     }
     function viewerCmpMarker(xp, cx) {
-      var col = xp.tag === 'B' ? '#2e7d5b' : '#c07a1e';
+      var col = '#2e7d5b';
       var fitMark = xp.fit === true ? '✓ ' : (xp.fit === false ? '✗ ' : '');
       var lab = fitMark + xp.tag + ' · Throw ' + xp.dist;
       var labCol = xp.fit === false ? (night ? '#e08a8a' : '#b3402e') : mut;
@@ -2984,12 +2980,12 @@
     if (sunOn) tx3(VW / 2, capY, 'Simulated sunlight — actual brightness varies by room', 11, 'middle',
       night ? '#dbe2f0' : '#8a6a2a');
     // legend at the top-left: color key for the projector
-    drawLegend(el3, compareLegendItems(o, { a: projBodyC, b: '#2e7d5b', c: '#c07a1e' }, true), 16, 26, 400, mut, false);
+    drawLegend(el3, compareLegendItems(o, { a: projBodyC, b: '#2e7d5b' }, true), 16, 26, 400, mut, false);
     watermark3();
   }
 
   /* ---------- Ceiling view: looking straight up at the ceiling ----------
-     Plan of the ceiling showing where each projector mounts, so A/B/C
+     Plan of the ceiling showing where each projector mounts, so A/B
      throw differences read at a glance. */
   function drawCeilingViz(o) {
     var svg6 = document.getElementById('calc-svg-ceiling');
@@ -3028,7 +3024,7 @@
     }
     tx6(VW / 2, 24, 'Looking up at the ceiling — where each projector mounts', 14, 'middle', ink);
     // legend under the caption: color key for the projector labels
-    drawLegend(el6, compareLegendItems(o, { a: night ? '#8fb0e8' : NAVY, b: night ? '#57b586' : '#2e7d5b', c: night ? '#e09a3c' : '#c07a1e' }), 0, 46, VW - 40, mut, true);
+    drawLegend(el6, compareLegendItems(o, { a: night ? '#8fb0e8' : NAVY, b: night ? '#57b586' : '#2e7d5b' }), 0, 46, VW - 40, mut, true);
     // plan scale: x = distance from the screen wall, y = across the room
     var padL = 64, padR = 30, padT = 68, padB = 54;
     var s = Math.min((VW - padL - padR) / L, (VH - padT - padB) / W);
@@ -3080,7 +3076,7 @@
     (o.extraProj || []).forEach(function (xp, xi) {
       if (!(xp.px >= 0)) return;
       projs.push({ tag: xp.tag, px: xp.px, py: xp.py != null ? xp.py : W / 2, dist: xp.dist,
-        col: xi === 0 ? (night ? '#57b586' : '#2e7d5b') : (night ? '#e09a3c' : '#c07a1e'),
+        col: (night ? '#57b586' : '#2e7d5b'),
         ceiling: xp.pos === 'ceiling' });
     });
     // stagger glyphs that would sit on top of each other
