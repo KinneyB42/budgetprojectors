@@ -108,7 +108,11 @@
 
     if (!(roomLenRaw > 0) || !(diagRaw > 0)) {
       out.innerHTML = '';
-      if (countLine) countLine.textContent = 'Enter your room length and screen size to see what fits.';
+      if (countLine) {
+        if (roomLenRaw > 0) countLine.textContent = 'Room length set. Now enter a screen size to see what fits.';
+        else if (diagRaw > 0) countLine.textContent = 'Screen size set. Now enter your room length to see what fits.';
+        else countLine.textContent = 'Enter your room length and screen size to see what fits.';
+      }
       return;
     }
 
