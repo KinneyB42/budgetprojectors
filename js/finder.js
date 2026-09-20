@@ -10,7 +10,9 @@
   var AFF = {
     amazonTag: 'brandonkinney-20', /* Brandon's Associates tag, from his SiteStripe link 2026-09-20 */
     amazonSearch: 'https://www.amazon.com/s?k=',
-    ebaySearch: 'https://www.ebay.com/sch/i.html?_nkw='
+    /* Brandon's EPN campaign params, recovered from his own tagged links 2026-09-20 */
+    ebayCampid: '5339116943',
+    ebayMkrid: '711-53200-19255-0'
   };
 
   var ASPECTS = { '16:9': [16, 9], '16:10': [16, 10], '2.35:1': [2.35, 1], '4:3': [4, 3] };
@@ -82,7 +84,10 @@
     if (AFF.amazonTag) u += '&tag=' + encodeURIComponent(AFF.amazonTag);
     return u;
   }
-  function ebayUrl(q) { return AFF.ebaySearch + encodeURIComponent(q); }
+  function ebayUrl(q) {
+    return 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(q) +
+      '&mkcid=1&mkrid=' + AFF.ebayMkrid + '&siteid=0&campid=' + AFF.ebayCampid + '&toolid=80005&mkevt=1';
+  }
 
   function shopLink(href, label) {
     var a = document.createElement('a');
