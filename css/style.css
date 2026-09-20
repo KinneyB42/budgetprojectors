@@ -464,29 +464,3 @@ h3 { font-size: 22px; margin-bottom: 12px; }
   .cp-foot { margin-top: 26px; border-top: 2px solid #0c2244; padding-top: 12px; font-size: 12px; color: #555; }
   .cp-watermark { position: fixed; top: 42%; left: 0; right: 0; text-align: center; transform: rotate(-24deg); font-size: 84px; font-weight: 700; color: #0c2244; opacity: 0.05; pointer-events: none; }
 }
-
-/* ---------- Room Finder ---------- */
-#finder-top { padding-top: 28px; }
-#room-finder { margin-top: 0; padding-top: 0; border-top: none; }
-#room-finder h2 { font-family: var(--serif); }
-#room-finder .calc__panel { display: block; margin-top: 20px; }
-#room-finder .calc__row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px; }
-@media (max-width: 700px) { #room-finder .calc__row { grid-template-columns: 1fr; } }
-.finder-field--btn { align-self: end; }
-.finder-go { display: inline-block; background: var(--navy); color: #fff; border: none; border-radius: 999px; padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; }
-.finder-go:hover { filter: brightness(1.15); }
-.finder-disclosure { font-size: 13px; color: var(--muted, #666); margin: 18px 0 4px; }
-.finder-count { font-weight: 700; margin: 10px 0 12px; }
-.finder-tip { font-size: 14px; color: var(--muted, #666); margin: 8px 0 12px; }
-.finder-row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 14px 4px; border-top: 1px solid var(--line); }
-.finder-row:last-child { border-bottom: 1px solid var(--line); }
-.finder-main { min-width: 0; flex: 1 1 260px; }
-.finder-name { font-weight: 700; font-size: 16px; }
-.finder-badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: var(--navy); color: #fff; border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
-.finder-stats { font-size: 14px; color: var(--muted, #555); margin-top: 2px; }
-.finder-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.finder-plan { background: none; border: 2px solid var(--navy); color: var(--navy); border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
-.finder-plan:hover { background: var(--navy); color: #fff; }
-.finder-shop { font-size: 13px; font-weight: 700; color: var(--navy); text-decoration: underline; text-underline-offset: 3px; }
-.finder-plan[aria-expanded="true"] { background: var(--navy); color: #fff; }
-.finder-shop-row { display: flex; gap: 18px; flex: 1 1 100%; padding: 2px 4px 4px; }

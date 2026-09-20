@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260920c">
+  <link rel="stylesheet" href="css/style.css?v=20260920d">
 </head>
 <body>
 
@@ -38,58 +38,6 @@
   </div>
 </section>
 
-<section class="section" id="finder-top">
-  <div class="wrap">
-          <section id="room-finder" aria-label="Find projectors for my room">
-            <p class="label">Room Finder</p>
-            <h2>Find projectors for my room</h2>
-            <p class="lede">No model in mind? Tell us the room and the screen size. We'll rank every projector in the catalog by whether the throw fits and how bright it lands on that screen.</p>
-            <div class="calc__panel">
-              <div class="calc__row">
-                <div class="calc__field">
-                  <label class="calc__lbl">Units</label>
-                  <div class="calc__chips" id="finder-units">
-                    <button type="button" class="calc__chip chosen" data-u="ft">Feet</button>
-                    <button type="button" class="calc__chip" data-u="m">Meters</button>
-                  </div>
-                </div>
-                <div class="calc__field">
-                  <label class="calc__lbl" for="finder-room-len">Room length (throw direction)</label>
-                  <input type="number" class="calc__input" id="finder-room-len" min="1" step="0.5" inputmode="decimal" placeholder="e.g. 15">
-                </div>
-                <div class="calc__field">
-                  <label class="calc__lbl" for="finder-screen">Screen size (diagonal, inches)</label>
-                  <input type="number" class="calc__input" id="finder-screen" min="20" max="300" step="1" inputmode="numeric" placeholder="e.g. 120">
-                </div>
-              </div>
-              <div class="calc__row">
-                <div class="calc__field">
-                  <label class="calc__lbl">Aspect ratio</label>
-                  <div class="calc__chips" id="finder-aspect">
-                    <button type="button" class="calc__chip chosen" data-ar="16:9">16:9</button>
-                    <button type="button" class="calc__chip" data-ar="16:10">16:10</button>
-                    <button type="button" class="calc__chip" data-ar="2.35:1">2.35:1</button>
-                    <button type="button" class="calc__chip" data-ar="4:3">4:3</button>
-                  </div>
-                </div>
-                <div class="calc__field">
-                  <label class="calc__lbl">Room lighting</label>
-                  <div class="calc__chips" id="finder-lights">
-                    <button type="button" class="calc__chip chosen" data-l="off">Dark room</button>
-                    <button type="button" class="calc__chip" data-l="on">Lights on</button>
-                  </div>
-                </div>
-                <div class="calc__field finder-field--btn">
-                  <button type="button" class="finder-go" id="finder-go">Find projectors</button>
-                </div>
-              </div>
-            </div>
-            <p class="finder-disclosure" id="finder-disclosure">Disclaimer: As an Amazon Associate and eBay Partner, I earn from qualifying purchases made through the links below at no additional cost to you.</p>
-            <p class="finder-count" id="finder-count">Enter your room length and screen size to see what fits.</p>
-            <div id="finder-results" aria-live="polite"></div>
-          </section>
-  </div>
-</section>
 
 <section class="section" id="calculator">
   <div class="wrap">
@@ -584,7 +532,6 @@
 <script src="js/throw-data.js?v=20260918m"></script>
 <script src="js/main.js?v=20260920b"></script>
 <script src="js/golf.js?v=20260918j"></script>
-<script src="js/finder.js?v=20260920e"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>
 </body>
