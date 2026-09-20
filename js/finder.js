@@ -8,7 +8,7 @@
 
   /* ---------- Affiliate config: Brandon fills in his own tags ---------- */
   var AFF = {
-    amazonTag: '', /* e.g. 'myid-20' — appended as &tag= to Amazon search links */
+    amazonTag: 'brandonkinney-20', /* Brandon's Associates tag, from his SiteStripe link 2026-09-20 */
     amazonSearch: 'https://www.amazon.com/s?k=',
     ebaySearch: 'https://www.ebay.com/sch/i.html?_nkw='
   };
