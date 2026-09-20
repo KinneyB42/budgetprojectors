@@ -1377,6 +1377,27 @@
     if (screenType === 'alr') g *= 0.6;
     return g;
   }
+  // Effective foot-lamberts after ambient washout. Room lights (~100 lux) and
+  // daylight (~1,000 lux) bounce off the screen and lift the black floor, so the
+  // image punch is the projector's light minus the reflected ambient light.
+  // ALR rejects most ambient (about 70%). Returns { raw, eff, amb }.
+  function effectiveFL(lumens, gain, areaSqFt) {
+    var raw = lumens * gain / areaSqFt;
+    var lux = sunOn ? 1000 : (lightsOn ? 100 : 0);
+    if (!(lux > 0)) return { raw: raw, eff: raw, amb: 0 };
+    var amb = lux * gain / Math.PI * 0.2919 * (screenType === 'alr' ? 0.3 : 1);
+    return { raw: raw, eff: Math.max(0, raw - amb), amb: amb };
+  }
+  function flVerdict(fl, ambient) {
+    if (ambient) {
+      return fl < 8 ? 'washed out at this light level' :
+        fl < 20 ? 'dim with this much ambient light' :
+        fl < 40 ? 'watchable, but contrast suffers' : 'bright enough to beat the ambient light';
+    }
+    return fl < 12 ? 'dim, best in a fully dark room' :
+      fl < 30 ? 'good with the lights off' :
+      fl < 60 ? 'holds up with some ambient light' : 'bright enough for lights-on viewing';
+  }
   document.querySelectorAll('#calc-aspect-std .calc__chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
       stdAspect = chip.getAttribute('data-ar');
@@ -1729,19 +1750,20 @@
       bits.push('For your ' + dispDist(seat) + ' seating, the 30&ndash;36&deg; sweet spot is a ' +
         fmt(wLo / swf, 0) + '&ndash;' + fmt(wHi / swf, 0) + '&Prime; ' + stdAspect + ' screen.');
     }
-    // Brightness: lumens over the lit image area, in foot-lamberts.
-    var fl = NaN, flNote = '';
+    // Brightness: lumens over the lit image area, in foot-lamberts,
+    // minus the ambient light the room throws back onto the screen.
+    var fl = NaN, flNote = '', flAmb = 0;
     var lumens = effLumens;
     if (lumens > 0) {
       var gain = effGain();
       var imgHIn = scrHIn;
       var areaSqFt = imgWIn * imgHIn / 144;
       if (areaSqFt > 0) {
-        fl = lumens * gain / areaSqFt;
-        flNote = fl < 12 ? 'dim, best in a fully dark room' :
-          fl < 30 ? 'good with the lights off' :
-          fl < 60 ? 'holds up with some ambient light' : 'bright enough for lights-on viewing';
+        var f = effectiveFL(lumens, gain, areaSqFt);
+        fl = f.eff; flAmb = f.amb;
+        flNote = flVerdict(fl, flAmb > 0);
         bits.push('Brightness: about ' + fmt(fl, 0) + ' foot-lamberts on this screen' +
+          (flAmb > 0 ? ' after ambient washout (about ' + fmt(flAmb, 0) + ' fL of room light on the screen)' : '') +
           (outdoor ? '.' : ', ' + flNote +
             (screenType === 'alr' ? ' The ALR surface holds contrast with the lights on.' : '.')));
       }
@@ -2260,8 +2282,8 @@
           tsp(tag + ' · ', tagCol);
           tsp(throwTxt);
           if (lumens > 0 && scrArea > 0) {
-            var fl = lumens * effGain() / scrArea;
-            tsp(' · ~' + fmt(fl, 0) + ' fL', flCol(fl));
+            var ef = effectiveFL(lumens, effGain(), scrArea);
+            tsp(' · ~' + fmt(ef.eff, 0) + ' fL', flCol(ef.eff));
           }
           if (inRange != null) tsp(inRange ? ' · In range' : ' · Out of range', fitCol(inRange));
         }
@@ -2320,10 +2342,9 @@
         var bImgHIn = o.shFt * 12;
         var bArea = imgWIn * bImgHIn / 144;
         if (bArea > 0) {
-          var bFl = o.lumens * bGain / bArea;
-          var bNote = bFl < 12 ? 'dim, best in a fully dark room' :
-            bFl < 30 ? 'good with the lights off' :
-            bFl < 60 ? 'holds up with some ambient light' : 'bright enough for lights-on viewing';
+          var bf = effectiveFL(o.lumens, bGain, bArea);
+          var bFl = bf.eff;
+          var bNote = flVerdict(bFl, bf.amb > 0);
           var bCol = bFl < 12 ? (scene === 'night' ? '#ff9d8a' : '#c0392b') :
             bFl < 30 ? (scene === 'night' ? '#ffd28a' : '#a86e00') :
             (scene === 'night' ? '#7fd6a4' : '#2e7d5b');
