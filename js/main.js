@@ -59,7 +59,7 @@
   var modelInput = document.getElementById('calc-model');
   var suggest = document.getElementById('calc-suggest');
   var selectedLine = document.getElementById('calc-selected');
-  var shopDisclosure = document.getElementById('calc-shop-disclosure');
+  var shopNote = document.getElementById('calc-shop-note');
   var manualBox = document.getElementById('calc-manual');
   var manualToggle = document.getElementById('calc-manual-toggle');
   var ratioMinInput = document.getElementById('calc-ratio-min');
@@ -131,11 +131,11 @@
     shop.appendChild(document.createTextNode(' | '));
     shop.appendChild(shopAnchor(ebayUrl(q), 'eBay'));
     selectedLine.appendChild(shop);
-    if (shopDisclosure) shopDisclosure.hidden = false;
+    if (shopNote) shopNote.hidden = false;
   }
 
   function hideShopDisclosure() {
-    if (shopDisclosure) shopDisclosure.hidden = true;
+    if (shopNote) shopNote.hidden = true;
   }
 
   function syncLensPicker() {
