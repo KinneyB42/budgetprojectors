@@ -346,18 +346,12 @@
   /* ---------- Room planner ---------- */
   // Room types carry no measurements: the user enters their own room size.
   var ROOMS = {
-    living: { label: 'Living Room',
-      tip: 'Living rooms usually have some ambient light. A low-gain or ALR screen helps the image hold up with the lights on.' },
-    bedroom: { label: 'Bedroom',
-      tip: 'Smaller rooms suit short-throw models. Keep the projector ventilated and out of the walkway.' },
-    dedicated: { label: 'Dedicated Space',
-      tip: 'Light-controlled rooms get the most from any projector. Dark walls and ceiling boost perceived contrast.' },
-    garage: { label: 'Garage',
-      tip: 'Garages often have ambient light and light-colored walls, so brightness matters more than contrast here.' },
+    indoors: { label: 'Indoors',
+      tip: 'Set the lights and sunlight toggles to match your room — ambient light decides how much brightness you actually need. Dark walls and ceiling boost perceived contrast.' },
     outdoors: { label: 'Outdoors',
       tip: 'Outside there are no walls to bounce light, so lumens matter most. Plan for after dark and keep the projector dry.' }
   };
-  var roomType = 'living';
+  var roomType = 'indoors';
 
   var lenInput = document.getElementById('calc-room-len');
   var widInput = document.getElementById('calc-room-wid');
@@ -913,7 +907,11 @@
       ratioMinInput.value = mm[0] || '';
       ratioMaxInput.value = mm[1] || mm[0] || '';
     }
-    if (p.r && ROOMS[p.r]) setRoom(p.r);
+    if (p.r) {
+      var legacyRoom = { living: 'indoors', bedroom: 'indoors', dedicated: 'indoors', garage: 'indoors',
+        indoors: 'indoors', outdoors: 'outdoors' }[p.r];
+      if (legacyRoom) setRoom(legacyRoom);
+    }
     if (!isNaN(num('L')) && lenInput) lenInput.value = toDisp(num('L'));
     if (!isNaN(num('W')) && widInput) widInput.value = toDisp(num('W'));
     if (!isNaN(num('H')) && ceilInput) ceilInput.value = toDisp(num('H'));
@@ -1731,7 +1729,7 @@
       fitsRoom = reverseMode ? (tdFt <= L && scrWIn / 12 <= W - 1) :
         isRear ? (scrWIn / 12 <= W - 1) : (throwD <= L && scrWIn / 12 <= W - 1);
       if (fitsRoom) {
-        bits.push('It fits your ' + ROOMS[roomType].label.toLowerCase() + '.');
+        bits.push('It fits your room.');
       } else {
         bits.push('Too big for this room: the largest screen that fits is about ' +
           fmt(maxW / stdWidthFactor(), 0) + '&Prime; ' + stdAspect + '.');
@@ -1800,7 +1798,7 @@
       mount: mountStr, drop: dropStr,
       verdict: outdoor ? 'Outdoor setup: keep the throw path clear' :
         (!dimsKnown ? 'Enter your room size to check fit' :
-        (fitsRoom ? 'Fits your ' + ROOMS[roomType].label.toLowerCase() : 'Too big for this room'))
+        (fitsRoom ? 'Fits your room' : 'Too big for this room'))
     };
     // Comparison models for exports: name, throw range, brightness, fit —
     // the same per-projector data the 3D data lines show.
@@ -2333,7 +2331,7 @@
       // seating furniture per room
       if (o.seat > 0) {
         var sx = Math.min(o.seat, o.outdoor ? L - 1 : L - 0.5);
-        var kind = ({ living: 'couch', dedicated: 'couch', bedroom: 'bed', outdoors: 'campchair' }[o.room] || 'seat');
+        var kind = ({ indoors: 'couch', outdoors: 'campchair' }[o.room] || 'seat');
         var S = pal.seat, fname = 'seat', fz = 3.9;
         if (kind === 'couch') {
           fname = 'couch'; fz = 4.1;
@@ -3411,7 +3409,7 @@
   var savedMode = 'basic';
   try { savedMode = localStorage.getItem('calc-mode') || 'basic'; } catch (e) {}
   setUnit(unit, false);
-  setRoom('living');
+  setRoom('indoors');
   setAdvMode(savedMode === 'advanced');
   applyShareHash();
 })();
