@@ -45,6 +45,8 @@ window.THROW_DATA = [
   {b: "XGIMI", m: "HORIZON S Pro", t: [1.2, 1.2]},
   {b: "XGIMI", m: "Elfin Flip Laser", t: [1.2, 1.2], lm: 1600},
   {b: "XGIMI", m: "Elfin Flip 4K", t: [0.98, 1.3], lm: 1600},
+  {b: "XGIMI", m: "AURA 3 Pro", t: [0.163, 0.163], lm: 4100},
+  {b: "XGIMI", m: "AURA 3 Max", t: [0.163, 0.163], lm: 5700},
   {b: "Optoma", m: "PH31", t: [1.5, 1.65], lm: 1500},
   {b: "Optoma", m: "PK31", t: [1.5, 1.65], lm: 900},
   {b: "Optoma", m: "PK32", t: [1.12, 1.46], lm: 1100},
