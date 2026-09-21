@@ -33,8 +33,18 @@
     amazonTag: 'brandonkinney-20', /* Brandon's Associates tag, from his SiteStripe link 2026-09-20 */
     amazonSearch: 'https://www.amazon.com/s?k=',
     ebayCampid: '5339116943', /* Brandon's EPN campaign, confirmed 2026-09-20 */
-    ebayMkrid: '711-53200-19255-0'
+    ebayMkrid: '711-53200-19255-0',
+    jmgoIrisUltra: '', /* Brandon to supply: JMGO direct affiliate URL for IRIS ULTRA */
+    jmgoIrisUltraMax: '' /* Brandon to supply: JMGO direct affiliate URL for IRIS ULTRA MAX */
   };
+  function isJmgoFeatured() {
+    return selectedModel && selectedModel.b === 'JMGO' &&
+      (selectedModel.m === 'IRIS ULTRA' || selectedModel.m === 'IRIS ULTRA MAX');
+  }
+  function jmgoUrl() {
+    if (!isJmgoFeatured()) return '';
+    return selectedModel.m === 'IRIS ULTRA MAX' ? AFF.jmgoIrisUltraMax : AFF.jmgoIrisUltra;
+  }
   function amazonUrl(q) {
     var u = AFF.amazonSearch + encodeURIComponent(q);
     if (AFF.amazonTag) u += '&tag=' + encodeURIComponent(AFF.amazonTag);
@@ -60,6 +70,7 @@
   var suggest = document.getElementById('calc-suggest');
   var selectedLine = document.getElementById('calc-selected');
   var shopNote = document.getElementById('calc-shop-note');
+  var jmgoNote = document.getElementById('calc-jmgo-note');
   var manualBox = document.getElementById('calc-manual');
   var manualToggle = document.getElementById('calc-manual-toggle');
   var ratioMinInput = document.getElementById('calc-ratio-min');
@@ -130,12 +141,19 @@
     shop.appendChild(shopAnchor(amazonUrl(q), 'Amazon'));
     shop.appendChild(document.createTextNode(' | '));
     shop.appendChild(shopAnchor(ebayUrl(q), 'eBay'));
+    var ju = jmgoUrl();
+    if (ju) {
+      shop.appendChild(document.createTextNode(' | '));
+      shop.appendChild(shopAnchor(ju, 'JMGO Direct'));
+    }
     selectedLine.appendChild(shop);
     if (shopNote) shopNote.hidden = false;
+    if (jmgoNote) jmgoNote.hidden = !isJmgoFeatured();
   }
 
   function hideShopDisclosure() {
     if (shopNote) shopNote.hidden = true;
+    if (jmgoNote) jmgoNote.hidden = true;
   }
 
   function syncLensPicker() {
