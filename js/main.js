@@ -35,7 +35,7 @@
     ebayCampid: '5339116943', /* Brandon's EPN campaign, confirmed 2026-09-20 */
     ebayMkrid: '711-53200-19255-0',
     jmgoIrisUltra: '', /* Brandon to supply: JMGO direct affiliate URL for IRIS ULTRA */
-    jmgoIrisUltraMax: '' /* Brandon to supply: JMGO direct affiliate URL for IRIS ULTRA MAX */
+    jmgoIrisUltraMax: 'https://www.affiliate.jmgo.com/JkvXAN', /* Brandon's JMGO affiliate link, supplied 2026-09-21 */
   };
   function isJmgoFeatured() {
     return selectedModel && selectedModel.b === 'JMGO' &&
