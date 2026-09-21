@@ -45,6 +45,31 @@
     if (!isJmgoFeatured()) return '';
     return selectedModel.m === 'IRIS ULTRA MAX' ? AFF.jmgoIrisUltraMax : AFF.jmgoIrisUltra;
   }
+  /* XGIMI direct-store links, for models still sold on us.xgimi.com.
+     Brandon's Impact affiliate links, generated and redirect-verified 2026-09-21. */
+  var XGIMI_LINKS = {
+    'TITAN': 'https://xgimi.sjv.io/DWd3en',
+    'TITAN Noir': 'https://xgimi.sjv.io/gRXG69',
+    'TITAN Noir Pro': 'https://xgimi.sjv.io/n46yoX',
+    'TITAN Noir Max': 'https://xgimi.sjv.io/6kMEoG',
+    'Horizon 20': 'https://xgimi.sjv.io/R0dbmb',
+    'HORIZON 20 Pro': 'https://xgimi.sjv.io/MKdbyo',
+    'HORIZON 20 Max': 'https://xgimi.sjv.io/qW6yZL',
+    'HORIZON Ultra': 'https://xgimi.sjv.io/QYdb43',
+    'Horizon Ultra': 'https://xgimi.sjv.io/QYdb43', /* duplicate calculator record, same product */
+    'MoGo 4': 'https://xgimi.sjv.io/5k0nYN',
+    'MoGo 4 Laser': 'https://xgimi.sjv.io/1Gd7Rm',
+    'Elfin Flip Plus': 'https://xgimi.sjv.io/X49NOg',
+    'Elfin Flip 4K': 'https://xgimi.sjv.io/0GKPyJ',
+    'Elfin Flip Laser': 'https://xgimi.sjv.io/2R0dyQ',
+    'Vibe One Battery Powered': 'https://xgimi.sjv.io/vD6VQj',
+    'MoGo 2 Pro': 'https://xgimi.sjv.io/YVmNbj', /* links to the current MoGo 2 Pro (New) product page */
+    'Aura 2': 'https://xgimi.sjv.io/DWd3Od', /* links to the current AURA 2 (New) product page */
+  };
+  function xgimiUrl() {
+    if (!selectedModel || selectedModel.b !== 'XGIMI') return '';
+    return XGIMI_LINKS[selectedModel.m] || '';
+  }
   function amazonUrl(q) {
     var u = AFF.amazonSearch + encodeURIComponent(q);
     if (AFF.amazonTag) u += '&tag=' + encodeURIComponent(AFF.amazonTag);
@@ -71,6 +96,7 @@
   var selectedLine = document.getElementById('calc-selected');
   var shopNote = document.getElementById('calc-shop-note');
   var jmgoNote = document.getElementById('calc-jmgo-note');
+  var xgimiNote = document.getElementById('calc-xgimi-note');
   var manualBox = document.getElementById('calc-manual');
   var manualToggle = document.getElementById('calc-manual-toggle');
   var ratioMinInput = document.getElementById('calc-ratio-min');
@@ -146,14 +172,21 @@
       shop.appendChild(document.createTextNode(' | '));
       shop.appendChild(shopAnchor(ju, 'JMGO Direct'));
     }
+    var xu = xgimiUrl();
+    if (xu) {
+      shop.appendChild(document.createTextNode(' | '));
+      shop.appendChild(shopAnchor(xu, 'XGIMI Direct'));
+    }
     selectedLine.appendChild(shop);
     if (shopNote) shopNote.hidden = false;
     if (jmgoNote) jmgoNote.hidden = !isJmgoFeatured();
+    if (xgimiNote) xgimiNote.hidden = !xgimiUrl();
   }
 
   function hideShopDisclosure() {
     if (shopNote) shopNote.hidden = true;
     if (jmgoNote) jmgoNote.hidden = true;
+    if (xgimiNote) xgimiNote.hidden = true;
   }
 
   function syncLensPicker() {
