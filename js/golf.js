@@ -35,6 +35,9 @@
   if (!modelInput) return; // golf section not on this page
   var suggest = $('golf-suggest');
   var selectedLine = $('golf-selected');
+  var shopNote = $('golf-shop-note');
+  var jmgoNote = $('golf-jmgo-note');
+  var xgimiNote = $('golf-xgimi-note');
   var lensWrap = $('golf-lens-wrap');
   var lensSelect = $('golf-lens');
   var lumensDisplay = $('golf-lumens-display');
@@ -105,15 +108,104 @@
     return effectiveRatio(selectedModel, selectedLens);
   }
 
+  /* ---------- Affiliate shop links for the selected model ----------
+     Same tagged links as the main calculator (main.js). */
+  var AFF = {
+    amazonTag: 'brandonkinney-20', /* Brandon's Associates tag, from his SiteStripe link 2026-09-20 */
+    amazonSearch: 'https://www.amazon.com/s?k=',
+    ebayCampid: '5339116943', /* Brandon's EPN campaign, confirmed 2026-09-20 */
+    ebayMkrid: '711-53200-19255-0',
+    jmgoIrisUltra: 'https://affiliate.jmgo.com/OYv0dG', /* Brandon's JMGO affiliate link, generated via Impact 2026-09-21 */
+    jmgoIrisUltraMax: 'https://affiliate.jmgo.com/JkvXAN', /* Brandon's JMGO affiliate link, generated via Impact 2026-09-21 */
+  };
+  function isJmgoFeatured() {
+    return selectedModel && selectedModel.b === 'JMGO' &&
+      (selectedModel.m === 'IRIS ULTRA' || selectedModel.m === 'IRIS ULTRA MAX');
+  }
+  function jmgoUrl() {
+    if (!isJmgoFeatured()) return '';
+    return selectedModel.m === 'IRIS ULTRA MAX' ? AFF.jmgoIrisUltraMax : AFF.jmgoIrisUltra;
+  }
+  /* XGIMI direct-store links, for models still sold on us.xgimi.com.
+     Brandon's Impact affiliate links, generated and redirect-verified 2026-09-21. */
+  var XGIMI_LINKS = {
+    'TITAN': 'https://xgimi.sjv.io/DWd3en',
+    'TITAN Noir': 'https://xgimi.sjv.io/gRXG69',
+    'TITAN Noir Pro': 'https://xgimi.sjv.io/n46yoX',
+    'TITAN Noir Max': 'https://xgimi.sjv.io/6kMEoG',
+    'Horizon 20': 'https://xgimi.sjv.io/R0dbmb',
+    'HORIZON 20 Pro': 'https://xgimi.sjv.io/MKdbyo',
+    'HORIZON 20 Max': 'https://xgimi.sjv.io/qW6yZL',
+    'HORIZON Ultra': 'https://xgimi.sjv.io/QYdb43',
+    'Horizon Ultra': 'https://xgimi.sjv.io/QYdb43', /* duplicate calculator record, same product */
+    'MoGo 4': 'https://xgimi.sjv.io/5k0nYN',
+    'MoGo 4 Laser': 'https://xgimi.sjv.io/1Gd7Rm',
+    'Elfin Flip Plus': 'https://xgimi.sjv.io/X49NOg',
+    'Elfin Flip 4K': 'https://xgimi.sjv.io/0GKPyJ',
+    'Elfin Flip Laser': 'https://xgimi.sjv.io/2R0dyQ',
+    'Vibe One Battery Powered': 'https://xgimi.sjv.io/vD6VQj',
+    'MoGo 2 Pro': 'https://xgimi.sjv.io/YVmNbj', /* links to the current MoGo 2 Pro (New) product page */
+    'Aura 2': 'https://xgimi.sjv.io/DWd3Od', /* links to the current AURA 2 (New) product page */
+  };
+  function xgimiUrl() {
+    if (!selectedModel || selectedModel.b !== 'XGIMI') return '';
+    return XGIMI_LINKS[selectedModel.m] || '';
+  }
+  function amazonUrl(q) {
+    var u = AFF.amazonSearch + encodeURIComponent(q);
+    if (AFF.amazonTag) u += '&tag=' + encodeURIComponent(AFF.amazonTag);
+    return u;
+  }
+  function ebayUrl(q) {
+    return 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(q) +
+      '&mkcid=1&mkrid=' + AFF.ebayMkrid + '&siteid=0&campid=' + AFF.ebayCampid + '&toolid=80005&mkevt=1';
+  }
+  function shopAnchor(href, label) {
+    var a = document.createElement('a');
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'nofollow sponsored noopener';
+    a.className = 'calc-shop-link';
+    a.textContent = label;
+    return a;
+  }
+
   function refreshSelectedLine() {
-    if (!selectedModel) { selectedLine.hidden = true; return; }
+    if (!selectedModel) { selectedLine.hidden = true; hideShopDisclosure(); return; }
     var txt = 'Using ' + selectedModel.b + ' ' + selectedModel.m;
     var L = modelLenses(selectedModel);
     if (L && L[selectedLens]) txt += ' - lens ' + L[selectedLens][0];
     var r = currentRatio();
     if (r) txt += ' - throw ' + ratioLabel(r);
     selectedLine.textContent = txt;
+    var q = selectedModel.b + ' ' + selectedModel.m;
+    var shop = document.createElement('span');
+    shop.className = 'calc-shop';
+    shop.appendChild(document.createTextNode(' - '));
+    shop.appendChild(shopAnchor(amazonUrl(q), 'Amazon'));
+    shop.appendChild(document.createTextNode(' | '));
+    shop.appendChild(shopAnchor(ebayUrl(q), 'eBay'));
+    var ju = jmgoUrl();
+    if (ju) {
+      shop.appendChild(document.createTextNode(' | '));
+      shop.appendChild(shopAnchor(ju, 'JMGO Direct'));
+    }
+    var xu = xgimiUrl();
+    if (xu) {
+      shop.appendChild(document.createTextNode(' | '));
+      shop.appendChild(shopAnchor(xu, 'XGIMI Direct'));
+    }
+    selectedLine.appendChild(shop);
     selectedLine.hidden = false;
+    if (shopNote) shopNote.hidden = false;
+    if (jmgoNote) jmgoNote.hidden = !isJmgoFeatured();
+    if (xgimiNote) xgimiNote.hidden = !xgimiUrl();
+  }
+
+  function hideShopDisclosure() {
+    if (shopNote) shopNote.hidden = true;
+    if (jmgoNote) jmgoNote.hidden = true;
+    if (xgimiNote) xgimiNote.hidden = true;
   }
 
   function syncLensPicker() {
@@ -223,6 +315,7 @@
     selectedLens = 0;
     syncLensPicker();
     selectedLine.hidden = true;
+    hideShopDisclosure();
     refreshLumensDisplay();
     renderSuggest(modelInput.value.trim().toLowerCase());
     recalc();
