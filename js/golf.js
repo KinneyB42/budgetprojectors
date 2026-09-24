@@ -1091,16 +1091,6 @@
       y += 24;
     }
 
-    text('Recommended accessories', M, y + 34, '700 32px Arial,sans-serif', '#0c2244');
-    y += 66;
-    [['Projector mounts', MOUNT_LIST], ['HDMI cables', CABLE_LIST],
-     ['HDMI extenders and switches', HDMI_LIST], ['More home theater accessories', ACCESSORY_LIST]
-    ].forEach(function (a) {
-      text(a[0] + ':', M, y + 8, '600 22px Arial,sans-serif', '#0c2244');
-      y = wrapped(a[1], M, y + 42, CW, '400 20px Arial,sans-serif', '#1a56db', 28) + 20;
-    });
-    y += 34;
-
     if (!L.measure) { L.cx.fillStyle = '#0c2244'; L.cx.fillRect(0, y, W, 128); }
     text('BudgetProjectors.org', M, y + 54, '600 22px Arial,sans-serif', '#ffffff');
     text('Generated ' + P.date, W - M, y + 54, '400 18px Arial,sans-serif', '#8fa3c8', 'right');
