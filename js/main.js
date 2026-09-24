@@ -178,9 +178,7 @@
       shop.appendChild(shopAnchor(xu, 'XGIMI Direct'));
     }
     selectedLine.appendChild(shop);
-    if (shopNote) shopNote.hidden = false;
-    if (jmgoNote) jmgoNote.hidden = !isJmgoFeatured();
-    if (xgimiNote) xgimiNote.hidden = !xgimiUrl();
+    syncShopNotes();
   }
 
   function hideShopDisclosure() {
@@ -1505,6 +1503,53 @@
     var ln = compareLensName(which);
     return e.b + ' ' + e.m + (ln ? ' · ' + ln : '');
   }
+  /* Shop links for the comparison (B) model: Amazon / eBay always, plus
+     JMGO Direct / XGIMI Direct when the picked model qualifies. */
+  function cmpJmgoUrl() {
+    if (!compareB || compareB.b !== 'JMGO') return '';
+    return compareB.m === 'IRIS ULTRA MAX' ? AFF.jmgoIrisUltraMax :
+           (compareB.m === 'IRIS ULTRA' ? AFF.jmgoIrisUltra : '');
+  }
+  function cmpXgimiUrl() {
+    if (!compareB || compareB.b !== 'XGIMI') return '';
+    return XGIMI_LINKS[compareB.m] || '';
+  }
+  function syncShopNotes() {
+    if (shopNote) shopNote.hidden = !(selectedModel || (compareOn && advMode && compareB));
+    if (jmgoNote) jmgoNote.hidden = !(isJmgoFeatured() || cmpJmgoUrl());
+    if (xgimiNote) xgimiNote.hidden = !(xgimiUrl() || cmpXgimiUrl());
+  }
+  var compareShopLine = document.getElementById('calc-selected-b');
+  function refreshCompareShop() {
+    if (!compareShopLine) return;
+    if (!(compareOn && advMode && compareB)) {
+      compareShopLine.hidden = true;
+      compareShopLine.innerHTML = '';
+      syncShopNotes();
+      return;
+    }
+    compareShopLine.textContent = 'B: ' + compareB.b + ' ' + compareB.m;
+    var q = compareB.b + ' ' + compareB.m;
+    var shop = document.createElement('span');
+    shop.className = 'calc-shop';
+    shop.appendChild(document.createTextNode(' · '));
+    shop.appendChild(shopAnchor(amazonUrl(q), 'Amazon'));
+    shop.appendChild(document.createTextNode(' | '));
+    shop.appendChild(shopAnchor(ebayUrl(q), 'eBay'));
+    var ju = cmpJmgoUrl();
+    if (ju) {
+      shop.appendChild(document.createTextNode(' | '));
+      shop.appendChild(shopAnchor(ju, 'JMGO Direct'));
+    }
+    var xu = cmpXgimiUrl();
+    if (xu) {
+      shop.appendChild(document.createTextNode(' | '));
+      shop.appendChild(shopAnchor(xu, 'XGIMI Direct'));
+    }
+    compareShopLine.appendChild(shop);
+    compareShopLine.hidden = false;
+    syncShopNotes();
+  }
   function syncCompareLens(which) {
     var sel = document.getElementById('calc-lens-b');
     if (!sel) return;
@@ -1947,6 +1992,7 @@
     }
     planSummary.cmp = cmpRows;
     planSummary.fitA = (!outdoor && dimsKnown) ? (fitsRoom ? 'Fit' : 'No Fit') : '';
+    refreshCompareShop();
     // The file-name box shows the auto name it will use when left blank.
     if (exportNameInput) exportNameInput.placeholder = defaultExportBase();
 
