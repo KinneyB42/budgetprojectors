@@ -455,6 +455,69 @@
   var gainInput = document.getElementById('calc-gain');
   var planResult = document.getElementById('calc-plan-result');
   var svg = document.getElementById('calc-svg');
+  var vizGeom = null; // projection geometry of the 3D view: { s, ox, oy }, for drag math
+
+  // Draggable projector in the 3D view (event delegation; the SVG is rebuilt on every recalc).
+  var dragState = null;
+  var dragHint = document.getElementById('calc-drag-hint');
+  var dragHintTimer = null;
+  function syncDragHint() {
+    if (!dragHint) return;
+    var r = currentRatio();
+    if (lockMode === 'projector') dragHint.textContent = 'Projector position is locked. Turn off the lock to drag it.';
+    else if (reverseMode && r) dragHint.textContent = 'Drag the projector to change the throw distance.';
+    else if (r && r[1] > r[0]) dragHint.textContent = 'Drag the projector to move it along the throw.';
+    else dragHint.textContent = 'Pick a projector model with a zoom lens to drag it in the 3D view.';
+  }
+  function flashDragHint(msg) {
+    if (!dragHint) return;
+    dragHint.textContent = msg;
+    if (dragHintTimer) clearTimeout(dragHintTimer);
+    dragHintTimer = setTimeout(syncDragHint, 2500);
+  }
+  if (svg) {
+    svg.addEventListener('pointerdown', function (e) {
+      var t = (e.target && e.target.closest) ? e.target.closest('[data-proj-drag]') : null;
+      if (!t || !vizGeom) return;
+      if (lockMode === 'projector') { flashDragHint('Projector position is locked. Turn off the lock to drag it.'); return; }
+      var r = currentRatio();
+      if (reverseMode) {
+        var td = throwDistInput ? toFt(parseFloat(throwDistInput.value, 10)) : NaN;
+        if (!(td > 0) || !r) return;
+        dragState = { mode: 'dist', startX: e.clientX, startY: e.clientY, startD: td };
+      } else {
+        if (!r || r[1] <= r[0]) return;
+        var dg = sizeInput ? parseFloat(sizeInput.value, 10) : NaN;
+        if (!(dg > 0)) return;
+        var imgWIn = dg * widthFactor();
+        var near = imgWIn * r[0] / 12, far = imgWIn * r[1] / 12;
+        dragState = { mode: 'zoom', startX: e.clientX, startY: e.clientY,
+                      startD: near + zoomFrac() * (far - near), near: near, far: far };
+      }
+      if (e.cancelable) e.preventDefault();
+      try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    svg.addEventListener('pointermove', function (e) {
+      if (!dragState || !vizGeom) return;
+      // Screen-space vector for +1 ft along the throw (x) axis: dx maps to (-0.866*s, +0.5*s).
+      var ax = -0.8660254 * vizGeom.s, ay = 0.5 * vizGeom.s;
+      var len2 = ax * ax + ay * ay;
+      if (!(len2 > 0)) return;
+      var dFt = ((e.clientX - dragState.startX) * ax + (e.clientY - dragState.startY) * ay) / len2;
+      var nd;
+      if (dragState.mode === 'zoom') {
+        nd = Math.min(dragState.far, Math.max(dragState.near, dragState.startD + dFt));
+        setZoomPercent((nd - dragState.near) / (dragState.far - dragState.near) * 100);
+        lastMoved = 'zoom';
+      } else {
+        nd = Math.min(100, Math.max(1, dragState.startD + dFt));
+        if (throwDistInput) throwDistInput.value = unit === 'm' ? (nd * M_PER_FT).toFixed(2) : nd.toFixed(1);
+      }
+      recalc();
+    });
+    svg.addEventListener('pointerup', function () { dragState = null; });
+    svg.addEventListener('pointercancel', function () { dragState = null; });
+  }
   var planSummary = null; // plain-text snapshot of the current plan, used by the image exporter
 
   function setRoom(type) {
@@ -2051,6 +2114,7 @@
     planSummary.cmp = cmpRows;
     planSummary.fitA = (!outdoor && dimsKnown) ? (fitsRoom ? 'Fit' : 'No Fit') : '';
     refreshCompareShop();
+    syncDragHint();
     // The file-name box shows the auto name it will use when left blank.
     if (exportNameInput) exportNameInput.placeholder = defaultExportBase();
 
@@ -2151,6 +2215,7 @@
   }
   function drawViz(o) {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
+    vizGeom = null;
     var VW = 660, VH = 440, pad = 34;
     var L = o.L, W = o.W, H = o.H;
 
@@ -2208,6 +2273,7 @@
     var ox = pad + (VW - 2 * pad - (maxX - minX) * s) / 2 - minX * s;
     var oy = pad + (VH - 2 * pad - (maxY - minY) * s) / 2 - minY * s;
     function P(x, y, z) { var q = raw(x, y, z); return [ox + q[0] * s, oy + q[1] * s]; }
+    vizGeom = { s: s, ox: ox, oy: oy }; // stored for the drag projector math
     function el(name, attrs) {
       var e = document.createElementNS(NS, name);
       for (var k in attrs) e.setAttribute(k, attrs[k]);
@@ -2399,6 +2465,14 @@
         projLabel = 'A ' + fmtDist(imgWIn * o.r[0]) + (o.r[1] !== o.r[0] ? '–' + fmtDist(imgWIn * o.r[1]) : '');
       }
       txt(pxx, pyy, pzz + 0.9, projLabel, 11);
+      // Draggable projector: invisible hit plate over the main projector body.
+      // Only when dragging is meaningful: not rear projection, not projector-locked,
+      // and either a zoom model (screen-size mode) or reverse throw-distance mode.
+      if (!isRear && lockMode !== 'projector' && o.r && (o.r[1] > o.r[0] || reverseMode)) {
+        poly([[pxx - 1.4, pyy - 1.2, 0], [pxx + 1.4, pyy - 1.2, 0],
+              [pxx + 1.4, pyy + 1.2, pzz + 1.6], [pxx - 1.4, pyy + 1.2, pzz + 1.6]],
+             '#ffffff', { opacity: 0, 'data-proj-drag': '1', style: 'cursor:grab;touch-action:none' });
+      }
       if (isRear && H > 0) {
         // cutaway booth behind the screen wall
         var bx0 = pxx - 1.5;
