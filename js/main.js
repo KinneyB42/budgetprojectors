@@ -931,6 +931,7 @@
     if (lockMode !== 'off') enc('lk', lockMode === 'projector' ? '1' : '2');
     enc('li', lightsOn ? '1' : '0');
     enc('sun', sunOn ? '1' : '0');
+    if (intentChoice === 'space') enc('intent', 'space');
     return window.location.href.split('#')[0] + '#calc=' + parts.join(';');
   }
 
@@ -1078,6 +1079,7 @@
     if (p.li === '1' && !lightsOn && lightsToggle) lightsToggle.click();
     if (p.sun === '1' && !sunOn && sunToggle) sunToggle.click();
     if (p.sun === '0' && sunOn && sunToggle) sunToggle.click();
+    if (p.intent === 'space') setIntent('space', { noScroll: true });
     gateOutdoorOptions(); // a shared link can carry ceiling/acoustic/floor with outdoors
     recalc();
   }
@@ -1454,6 +1456,25 @@
       fl < 30 ? 'good with the lights off' :
       fl < 60 ? 'holds up with some ambient light' : 'bright enough for lights-on viewing';
   }
+  // Inline verdict chip text for the results header: [label, css class].
+  function brightChip(fl, mode) {
+    if (mode === 'sun') {
+      if (fl < 8)  return ['Too dim for daylight. Close the blinds or pick a brighter projector.', 'v-bad'];
+      if (fl < 20) return ['Washed out in daylight. It needs a darker room.', 'v-bad'];
+      if (fl < 40) return ['Watchable in daylight, but contrast takes a hit.', 'v-warn'];
+      return ['Bright enough for daytime viewing.', 'v-ok'];
+    }
+    if (mode === 'lights') {
+      if (fl < 8)  return ['Washed out with the lights on. Watch in the dark.', 'v-bad'];
+      if (fl < 20) return ['Dim with the lights on. Better with them off.', 'v-warn'];
+      if (fl < 40) return ['Fine with lights on, best with them off.', 'v-ok'];
+      return ['Bright enough for lights-on viewing.', 'v-ok'];
+    }
+    if (fl < 12) return ['Dim. This one wants a fully dark room.', 'v-warn'];
+    if (fl < 30) return ['Great for movie night with the lights off.', 'v-ok'];
+    if (fl < 60) return ['Holds up with some ambient light.', 'v-ok'];
+    return ['Bright enough for lights-on viewing.', 'v-ok'];
+  }
   document.querySelectorAll('#calc-aspect-std .calc__chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
       stdAspect = chip.getAttribute('data-ar');
@@ -1674,12 +1695,49 @@
     }
     if (!on) {
       if (reverseMode) setDirection('screen');
+      // Basic mode is always model-first; never strand the user in reverse mode.
+      setIntent('model', { noScroll: true });
     }
     try { localStorage.setItem('calc-mode', on ? 'advanced' : 'basic'); } catch (e) {}
     recalc();
   }
   document.querySelectorAll('#calc-mode-chips .calc__chip').forEach(function (chip) {
     chip.addEventListener('click', function () { setAdvMode(chip.getAttribute('data-mode') === 'advanced'); });
+  });
+
+  /* ---------- Intent-first entry cards ---------- */
+  var intentChoice = 'model';
+  try {
+    var storedIntent = localStorage.getItem('calc-intent');
+    if (storedIntent === 'space' || storedIntent === 'model') intentChoice = storedIntent;
+  } catch (e) {}
+  function setIntent(which, opts) {
+    opts = opts || {};
+    intentChoice = (which === 'space') ? 'space' : 'model';
+    try { localStorage.setItem('calc-intent', intentChoice); } catch (e) {}
+    document.querySelectorAll('#calc-intent .calc__intent-card').forEach(function (card) {
+      card.classList.toggle('chosen', card.getAttribute('data-intent') === intentChoice);
+    });
+    if (intentChoice === 'space') {
+      setAdvMode(true);
+      setDirection('throw');
+      if (!opts.noScroll) {
+        var dims = document.getElementById('calc-dims');
+        var len = document.getElementById('calc-room-len');
+        if (dims && dims.scrollIntoView) dims.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (len) len.focus({ preventScroll: true });
+      }
+    } else {
+      setDirection('screen');
+      if (!opts.noScroll) {
+        var model = document.getElementById('calc-model');
+        if (model) model.focus({ preventScroll: true });
+      }
+    }
+    recalc();
+  }
+  document.querySelectorAll('#calc-intent .calc__intent-card').forEach(function (card) {
+    card.addEventListener('click', function () { setIntent(card.getAttribute('data-intent')); });
   });
 
   function fmtDist(inches) {
@@ -1855,7 +1913,7 @@
     }
     // Brightness: lumens over the lit image area, in foot-lamberts,
     // minus the ambient light the room throws back onto the screen.
-    var fl = NaN, flNote = '', flAmb = 0;
+    var fl = NaN, flNote = '', flAmb = 0, flMode = null;
     var lumens = effLumens;
     if (lumens > 0) {
       var gain = effGain();
@@ -1863,7 +1921,7 @@
       var areaSqFt = imgWIn * imgHIn / 144;
       if (areaSqFt > 0) {
         var f = effectiveFL(lumens, gain, areaSqFt);
-        fl = f.eff; flAmb = f.amb;
+        fl = f.eff; flAmb = f.amb; flMode = f.mode;
         flNote = flVerdict(fl, f.mode);
         bits.push('Brightness: about ' + fmt(fl, 0) + ' foot-lamberts on this screen' +
           (f.mode ? ' after ambient washout (about ' + fmt(flAmb, 0) + ' fL of ' +
@@ -2022,7 +2080,21 @@
       cmpHtml += '</tbody></table>';
     }
 
-    planResult.innerHTML =
+    // Inline verdict chips: a glanceable read of the plan. The `bits` text below is untouched.
+    var chips = '';
+    if (!outdoor && dimsKnown) {
+      chips += '<span class="calc__verdict ' + (fitsRoom ? 'v-ok' : 'v-bad') + '">' +
+        (fitsRoom ? 'Fits your room' : 'Too big for this room') + '</span>';
+    }
+    if (fl > 0 && flMode) {
+      var bc = brightChip(fl, flMode);
+      chips += '<span class="calc__verdict ' + bc[1] + '">' + bc[0] + '</span>';
+    } else if (fl > 0) {
+      var bc2 = brightChip(fl, null);
+      chips += '<span class="calc__verdict ' + bc2[1] + '">' + bc2[0] + '</span>';
+    }
+    if (chips) chips = '<div class="calc__verdicts">' + chips + '</div>';
+    planResult.innerHTML = chips +
       '<strong>' + headStr + '</strong>' +
       '<span>' + placeStr + bits.join(' ') + '</span>' + cmpHtml;
   }
@@ -3580,5 +3652,6 @@
   setUnit(unit, false);
   setRoom('indoors');
   setAdvMode(savedMode === 'advanced');
+  setIntent(intentChoice, { noScroll: true }); // restored intent; share hash overrides below
   applyShareHash();
 })();

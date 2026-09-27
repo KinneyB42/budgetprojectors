@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260920g">
+  <link rel="stylesheet" href="css/style.css?v=20260927a">
 </head>
 <body>
 
@@ -50,6 +50,16 @@
         <button type="button" class="calc__chip" data-mode="advanced">Advanced</button>
       </div>
       <p class="calc__hint">Basic covers the essentials. Advanced unlocks planning from a throw distance, side-by-side projector comparisons, and brightness math.</p>
+    </div>
+    <div class="calc__intent" id="calc-intent">
+      <button type="button" class="calc__intent-card chosen" data-intent="model">
+        <span class="calc__intent-title">I have a projector</span>
+        <span class="calc__intent-sub">Pick your model, then plan the throw, screen, and seating.</span>
+      </button>
+      <button type="button" class="calc__intent-card" data-intent="space">
+        <span class="calc__intent-title">I have a space</span>
+        <span class="calc__intent-sub">Start from your room: enter the size and see what screen fits.</span>
+      </button>
     </div>
 
     <div class="calc calc--basic">
@@ -158,7 +168,7 @@
           <div class="calc__slider-row">
             <input type="range" id="calc-shift" min="-60" max="60" step="5" value="0">
           </div>
-          <p class="calc__hint" id="calc-shift-hint">Stay within your model's shift range (often &plusmn;60% of image height or less) — check its spec.</p>
+          <p class="calc__hint" id="calc-shift-hint">Lens shift moves the image with glass, not software, so the picture stays sharp. Stay inside your model's published shift range.</p>
           <div id="calc-shift-h-row" hidden>
             <label for="calc-shift-h">Move image left/right (lens shift): <span id="calc-shift-h-val">0%</span></label>
             <div class="calc__slider-row">
@@ -183,6 +193,7 @@
               <input type="number" class="calc__slider-num" id="calc-size-num" min="0" max="300" step="1" value="100" inputmode="numeric" aria-label="Screen size in inches">
             </div>
             <div class="calc__slider-ends"><span>0&Prime;</span><span>300&Prime;</span></div>
+            <p class="calc__hint">Pick the size that fits the wall, not the dream. The math below shows where the projector has to sit for it.</p>
             <div class="calc__lockrow" id="calc-image-lockrow" hidden>
               <button type="button" class="calc__chip" id="calc-image-lock" aria-pressed="false">&#x1F512; Lock image size</button>
             </div>
@@ -212,7 +223,7 @@
           <input type="number" id="calc-gain" min="0.1" max="3" step="0.1" value="1.0" inputmode="decimal">
         </div>
       </div>
-      <p class="calc__hint">Seating is measured from the screen.</p>
+      <p class="calc__hint">Seating is measured from the screen to your eyes. Closer feels like a theater. Too close and you will start seeing pixels.</p>
 
       <div class="calc__aspect" id="calc-aspect-std-wrap">
         <label>Aspect ratio</label>
@@ -541,7 +552,7 @@
 </footer>
 
 <script src="js/throw-data.js?v=20260921n"></script>
-<script src="js/main.js?v=20260924b"></script>
+<script src="js/main.js?v=20260927a"></script>
 <script src="js/golf.js?v=20260924b"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>
