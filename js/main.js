@@ -181,6 +181,29 @@
     syncShopNotes();
   }
 
+  function escHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function shopLinkHTML(href, label) {
+    return '<a class="calc__buybtn" href="' + href + '" target="_blank" rel="nofollow sponsored noopener">' + label + '</a>';
+  }
+  // Beginner payoff block: unmissable buy links once a model is picked.
+  function buyCtaHTML() {
+    if (!selectedModel) {
+      if (manualBox && !manualBox.hidden) return ''; // manual ratio: verdict only, nothing to buy
+      return '<p class="calc__hint">Pick your projector above to get buy links.</p>';
+    }
+    var q = selectedModel.b + ' ' + selectedModel.m;
+    var html = '<div class="calc__buy"><div class="calc__buy-label">Get the ' + escHtml(q) + ':</div><div class="calc__buy-btns">';
+    html += shopLinkHTML(amazonUrl(q), 'Amazon');
+    html += shopLinkHTML(ebayUrl(q), 'eBay');
+    var ju = jmgoUrl();
+    if (ju) html += shopLinkHTML(ju, 'JMGO Direct');
+    var xu = xgimiUrl();
+    if (xu) html += shopLinkHTML(xu, 'XGIMI Direct');
+    return html + '</div></div>';
+  }
+
   function hideShopDisclosure() {
     if (shopNote) shopNote.hidden = true;
     if (jmgoNote) jmgoNote.hidden = true;
@@ -223,7 +246,7 @@
   // zoom range the projector sits. 0 = wide (min throw), 100 = tele (max throw).
   var zoomWrap = document.getElementById('calc-zoom-wrap');
   var zoomInput = document.getElementById('calc-zoom');
-  var zoomNum = document.getElementById('calc-zoom-num');
+  var zoomVal = document.getElementById('calc-zoom-val');
 
   function zoomFrac() {
     if (!zoomInput) return 0;
@@ -241,12 +264,10 @@
   }
   function dispThrow(dFt) { return unit === 'm' ? fmt(dFt * M_PER_FT, 2) : fmt(dFt, 1); }
   function syncZoomNum(r, imgWIn) {
-    if (!zoomNum) return;
-    if (document.activeElement === zoomNum) return; // don't clobber typing
-    var near = imgWIn * r[0] / 12, far = imgWIn * r[1] / 12;
-    zoomNum.min = dispThrow(near);
-    zoomNum.max = dispThrow(far);
-    zoomNum.value = dispThrow(zoomThrowFt(r, imgWIn));
+    // Readout beside the zoom slider: the throw distance at this zoom setting.
+    if (!zoomVal) return;
+    if (!r || !(imgWIn > 0)) { zoomVal.textContent = ''; return; }
+    zoomVal.textContent = dispThrow(zoomThrowFt(r, imgWIn)) + (unit === 'm' ? ' m' : ' ft');
   }
   function syncZoom(r, imgWIn) {
     if (!zoomWrap || !zoomInput) return;
@@ -260,23 +281,6 @@
 
   if (zoomInput) {
     zoomInput.addEventListener('input', function () { lastMoved = 'zoom'; recalc(); });
-  }
-  if (zoomNum) {
-    // Manual throw distance: typing a number places the projector there directly.
-    zoomNum.addEventListener('input', function () {
-      var v = parseFloat(zoomNum.value, 10);
-      if (!(v > 0)) return;
-      var r = currentRatio();
-      var dg = sizeInput ? parseFloat(sizeInput.value, 10) : NaN;
-      if (!r || r[1] <= r[0] || !(dg > 0)) return;
-      var imgWIn = dg * widthFactor();
-      var near = imgWIn * r[0] / 12, far = imgWIn * r[1] / 12;
-      var c = Math.min(far, Math.max(near, toFt(v)));
-      setZoomPercent((c - near) / (far - near) * 100);
-      if (lockMode === 'projector') { lockedD = c; lastMoved = null; } // explicit placement moves the locked point
-      else lastMoved = 'zoom';
-      recalc();
-    });
   }
 
   /* ---------- Image size / zoom lock ---------- */
@@ -311,7 +315,6 @@
     }
     // Locking the image size freezes the screen-size controls.
     if (sizeInput) sizeInput.disabled = img;
-    if (sizeNum) sizeNum.disabled = img;
     if (proj) needLockCapture = true; // capture the current throw distance on next recalc
   }
   if (zoomLockBtn) {
@@ -593,25 +596,8 @@
   ];
   function syncUnitLabels() {
     var m = unit === 'm';
-    var u = m ? 'm' : 'ft';
-    var map = [
-      ['calc-room-len', 'Room length', m ? 'e.g. 5.5' : 'e.g. 18'],
-      ['calc-room-wid', 'Room width', m ? 'e.g. 4.3' : 'e.g. 14'],
-      ['calc-room-ceil', 'Ceiling height', m ? 'e.g. 2.7' : 'e.g. 9'],
-      ['calc-seat', 'Seating distance', m ? 'e.g. 3' : 'e.g. 10'],
-      ['calc-screen-w', 'Screen width', m ? 'e.g. 3' : 'e.g. 10'],
-      ['calc-screen-h', 'Screen height', m ? 'e.g. 2.3' : 'e.g. 7.5'],
-      ['calc-throwdist', 'Throw distance', m ? 'e.g. 3.7' : 'e.g. 12'],
-      ['calc-zoom', 'Lens zoom', null]
-    ];
-    map.forEach(function (row) {
-      var lab = document.querySelector('label[for="' + row[0] + '"]');
-      if (lab) lab.textContent = row[1] + ' (' + u + ')';
-      if (row[2]) {
-        var inp = document.getElementById(row[0]);
-        if (inp) inp.placeholder = row[2];
-      }
-    });
+    // Labels are plain-words questions with live value readouts now; units only
+    // drive the slider ranges here (ft values are converted to m).
     DIM_INPUTS.forEach(function (d) {
       var inp = document.getElementById(d[0]);      if (!inp) return;
       if (m) {
@@ -1143,6 +1129,14 @@
     if (p.sun === '1' && !sunOn && sunToggle) sunToggle.click();
     if (p.sun === '0' && sunOn && sunToggle) sunToggle.click();
     if (p.intent === 'space') setIntent('space', { noScroll: true });
+    // Old share links could carry values beyond the slider ranges; extend the
+    // slider instead of silently clamping the shared plan.
+    [lenInput, widInput, ceilInput, seatInput, throwDistInput, sizeInput].forEach(function (el) {
+      if (!el) return;
+      var v = parseFloat(el.value, 10), mx = parseFloat(el.max, 10);
+      if (v > mx) el.max = String(Math.ceil(v));
+    });
+    matchRoomPreset(); // highlight the preset the shared dims match, if any
     gateOutdoorOptions(); // a shared link can carry ceiling/acoustic/floor with outdoors
     recalc();
   }
@@ -1440,10 +1434,9 @@
     if (savedDocTitle !== null) { document.title = savedDocTitle; savedDocTitle = null; }
   });
 
-  var sizeNum = document.getElementById('calc-size-num');
   function syncSizeVal() {
-    // Don't clobber the field while the user is typing in it.
-    if (sizeInput && sizeNum && document.activeElement !== sizeNum) sizeNum.value = sizeInput.value;
+    var sv = document.getElementById('calc-size-val');
+    if (sizeInput && sv) sv.textContent = sizeInput.value + '″';
   }
   [lenInput, widInput, ceilInput, seatInput].forEach(function (el) {
     if (el) el.addEventListener('input', recalc);
@@ -1452,17 +1445,78 @@
     sizeInput.addEventListener('input', function () { lastMoved = 'size'; syncSizeVal(); recalc(); });
     syncSizeVal();
   }
-  if (sizeNum) {
-    // Manual screen size: typing a number moves the slider there directly.
-    sizeNum.addEventListener('input', function () {
-      var v = parseFloat(sizeNum.value, 10);
-      if (!(v > 0) || !sizeInput) return;
-      sizeInput.value = Math.max(0, Math.min(300, Math.round(v)));
-      lastMoved = 'size';
-      recalc();
+  if (gainInput) gainInput.addEventListener('input', recalc);
+
+  /* ---------- Beginner-friendly readouts + room presets ----------
+     Every slider shows its live value next to its plain-words question, so no
+     typed numbers are needed anywhere in the main calculator. Presets give
+     first-timers a one-tap room; sliders fine-tune from there. */
+  function setValText(id, txt) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  }
+  function rangeValText(id, suffix) {
+    var el = document.getElementById(id);
+    setValText(id + '-val', el ? el.value + suffix : '');
+  }
+  function syncSliderVals() {
+    var u = unit === 'm' ? ' m' : ' ft';
+    rangeValText('calc-room-len', u);
+    rangeValText('calc-room-wid', u);
+    rangeValText('calc-room-ceil', u);
+    rangeValText('calc-seat', u);
+    rangeValText('calc-throwdist', u);
+    rangeValText('calc-gain', '');
+    rangeValText('calc-eye-height', '');
+    rangeValText('calc-pipe-drop', '');
+    rangeValText('calc-pole-len', '');
+    syncSizeVal();
+    var fs = document.getElementById('calc-fitlist-screen');
+    setValText('calc-fitlist-screen-val', fs ? fs.value + '″' : '');
+  }
+  var ROOM_PRESETS = { // room length, width, ceiling in feet
+    bedroom: [12, 10, 8],
+    living: [18, 14, 9],
+    theater: [22, 15, 10],
+    garage: [20, 20, 12]
+  };
+  function setDimSlider(el, ft) {
+    if (!el) return;
+    el.value = unit === 'm' ? fmt(ft * M_PER_FT, 2) : String(ft);
+  }
+  function markRoomPreset(key) {
+    document.querySelectorAll('#calc-roompresets .calc__chip').forEach(function (c) {
+      c.classList.toggle('chosen', c.getAttribute('data-preset') === key);
     });
   }
-  if (gainInput) gainInput.addEventListener('input', recalc);
+  function applyRoomPreset(key) {
+    var p = ROOM_PRESETS[key];
+    if (!p) return;
+    setDimSlider(lenInput, p[0]);
+    setDimSlider(widInput, p[1]);
+    setDimSlider(ceilInput, p[2]);
+    markRoomPreset(key);
+    recalc();
+  }
+  function matchRoomPreset() {
+    // After a share link sets the dims, highlight the preset they match (if any).
+    var L = lenInput ? toFt(parseFloat(lenInput.value, 10)) : NaN;
+    var W = widInput ? toFt(parseFloat(widInput.value, 10)) : NaN;
+    var H = ceilInput ? toFt(parseFloat(ceilInput.value, 10)) : NaN;
+    var hit = null;
+    Object.keys(ROOM_PRESETS).forEach(function (k) {
+      var p = ROOM_PRESETS[k];
+      if (Math.abs(L - p[0]) < 0.011 && Math.abs(W - p[1]) < 0.011 && Math.abs(H - p[2]) < 0.011) hit = k;
+    });
+    markRoomPreset(hit);
+  }
+  document.querySelectorAll('#calc-roompresets .calc__chip').forEach(function (chip) {
+    chip.addEventListener('click', function () { applyRoomPreset(chip.getAttribute('data-preset')); });
+  });
+  [lenInput, widInput, ceilInput].forEach(function (el) {
+    // Fine-tuning a slider clears the preset highlight: the room is now custom.
+    if (el) el.addEventListener('input', function () { markRoomPreset(null); });
+  });
 
   /* ---------- Screen material: standard matte white vs ALR ---------- */
   var screenType = 'standard';
@@ -1758,8 +1812,8 @@
     }
     if (!on) {
       if (reverseMode) setDirection('screen');
-      // Basic mode is always model-first; never strand the user in reverse mode.
-      setIntent('model', { noScroll: true });
+      // Reverse/throw mode is Advanced-only; never strand a Basic user without its controls.
+      // The intent choice is left alone so "I have a space" survives a mode toggle.
     }
     try { localStorage.setItem('calc-mode', on ? 'advanced' : 'basic'); } catch (e) {}
     recalc();
@@ -1782,13 +1836,12 @@
       card.classList.toggle('chosen', card.getAttribute('data-intent') === intentChoice);
     });
     if (intentChoice === 'space') {
-      setAdvMode(true);
-      setDirection('throw');
+      // Beginner path: room first, picture second, then the fit list below.
+      // No forced Advanced mode and no reverse/throw mode — those stay expert tools.
+      setDirection('screen');
       if (!opts.noScroll) {
-        var dims = document.getElementById('calc-dims');
-        var len = document.getElementById('calc-room-len');
-        if (dims && dims.scrollIntoView) dims.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        if (len) len.focus({ preventScroll: true });
+        var roomSec = document.querySelector('.calc__room');
+        if (roomSec && roomSec.scrollIntoView) roomSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     } else {
       setDirection('screen');
@@ -1871,7 +1924,8 @@
     var L = outdoor ? 30 : (lenInput ? toFt(parseFloat(lenInput.value, 10)) : NaN);
     var W = outdoor ? 24 : (widInput ? toFt(parseFloat(widInput.value, 10)) : NaN);
     var H = outdoor ? 0 : (ceilInput ? toFt(parseFloat(ceilInput.value, 10)) : NaN);
-    // No hidden preset: without user-entered dims the fit simply cannot be judged.
+    // The room sliders always carry a value (a preset is selected by default),
+    // so the fit can always be judged.
     var dimsKnown = outdoor || (L > 0 && W > 0);
 
     // Zoom lock: hold the projector's throw distance fixed by driving the other slider.
@@ -1904,9 +1958,21 @@
 
     if (!r) {
       drawAll({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: null, seat: seat, room: roomType });
-      planResult.innerHTML = '<strong>Pick your projector model</strong>' +
-        '<span>Choose your model from the list above (or enter its throw ratio manually) and your room plan will appear here.</span>';
+      if (!advMode) {
+        planResult.innerHTML = '<div class="calc__payoff"><div class="calc__payoff-verdict v-idle">' +
+          (intentChoice === 'space' ? 'What fits your room?' : 'Which projector do you have?') + '</div>' +
+          '<p class="calc__hint">' +
+          (intentChoice === 'space'
+            ? 'Your top matches are listed below &mdash; each one links straight to a store.'
+            : 'Pick your model above and your yes-or-no verdict will appear here.') +
+          '</p></div>';
+      } else {
+        planResult.innerHTML = '<strong>Pick your projector model</strong>' +
+          '<span>Choose your model from the list above (or enter its throw ratio manually) and your room plan will appear here.</span>';
+      }
+      renderFitList();
       syncZoom(null, 0);
+      syncSliderVals();
       return;
     }
 
@@ -1918,9 +1984,11 @@
       tdFt = throwDistInput ? toFt(parseFloat(throwDistInput.value, 10)) : NaN;
       if (!(tdFt > 0)) {
         drawAll({ L: L, W: W, H: H, outdoor: outdoor, swFt: 0, shFt: 0, scrLabel: '', r: r, seat: seat, room: roomType });
-        planResult.innerHTML = '<strong>Enter a throw distance</strong>' +
-          '<span>Type how far back the projector will sit and the planner will show the screen sizes it can fill.</span>';
+        planResult.innerHTML = '<strong>Set how far back the projector sits</strong>' +
+          '<span>Drag the throw-distance slider and the planner will show the screen sizes it can fill.</span>';
+        renderFitList();
         syncZoom(null, 0);
+        syncSliderVals();
         return;
       }
       var ra = ASPECTS[stdAspect] || ASPECTS['16:9'];
@@ -1937,6 +2005,7 @@
         planResult.innerHTML = '<strong>Enter a screen size</strong>' +
           '<span>Type the screen diagonal you want and the planner will show throw distance, seating, and whether it fits your room.</span>';
         syncZoom(null, 0);
+        syncSliderVals();
         return;
       }
       var a = ASPECTS[stdAspect] || ASPECTS['16:9'];
@@ -2208,9 +2277,26 @@
       chips += '<span class="calc__verdict ' + bc2[1] + '">' + bc2[0] + '</span>';
     }
     if (chips) chips = '<div class="calc__verdicts">' + chips + '</div>';
-    planResult.innerHTML = chips +
-      '<strong>' + headStr + '</strong>' +
-      '<span>' + placeStr + bits.join(' ') + '</span>' + cmpHtml;
+    if (!advMode) {
+      // Beginner payoff: the verdict and the buy links lead. No spec soup.
+      var bigCls = fitsRoom ? 'v-ok' : 'v-bad';
+      var bigTxt = outdoor ? 'Outdoor setup: keep the throw path clear.' :
+        (fitsRoom ? 'Yes, it fits your room.' : 'No &mdash; too big for this room.');
+      var brightLine = '';
+      if (fl > 0) {
+        var bbc = brightChip(fl, flMode);
+        brightLine = '<div class="calc__verdicts"><span class="calc__verdict ' + bbc[1] + '">' + bbc[0] + '</span></div>';
+      }
+      var nextStep = (!outdoor && !fitsRoom) ?
+        '<p class="calc__hint">Try a smaller picture size, or a short-throw projector that fills it from closer.</p>' : '';
+      planResult.innerHTML = '<div class="calc__payoff"><div class="calc__payoff-verdict ' + bigCls + '">' + bigTxt + '</div>' +
+        nextStep + brightLine + buyCtaHTML() + '</div>';
+    } else {
+      planResult.innerHTML = chips +
+        '<strong>' + headStr + '</strong>' +
+        '<span>' + placeStr + bits.join(' ') + '</span>' + cmpHtml;
+    }
+    syncSliderVals();
   }
 
   /* ---------- Isometric 3D room visualization (SVG) ---------- */
@@ -3775,6 +3861,7 @@
   try { savedMode = localStorage.getItem('calc-mode') || 'basic'; } catch (e) {}
   setUnit(unit, false);
   setRoom('indoors');
+  applyRoomPreset('living'); // default room: first-timers get a verdict immediately
   setAdvMode(savedMode === 'advanced');
   setIntent(intentChoice, { noScroll: true }); // restored intent; share hash overrides below
   applyShareHash();

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260927b">
+  <link rel="stylesheet" href="css/style.css?v=20260927c">
 </head>
 <body>
 
@@ -49,22 +49,86 @@
         <button type="button" class="calc__chip chosen" data-mode="basic">Basic</button>
         <button type="button" class="calc__chip" data-mode="advanced">Advanced</button>
       </div>
-      <p class="calc__hint">Basic covers the essentials. Advanced unlocks planning from a throw distance, side-by-side projector comparisons, and brightness math.</p>
+      <p class="calc__hint">Basic asks three questions &mdash; your room, your picture, your projector &mdash; and gives you a yes-or-no verdict with buy links. Advanced unlocks every dial: throw-distance planning, comparisons, and brightness math.</p>
     </div>
     <div class="calc__intent" id="calc-intent">
       <button type="button" class="calc__intent-card chosen" data-intent="model">
         <span class="calc__intent-title">I have a projector</span>
-        <span class="calc__intent-sub">Pick your model, then plan the throw, screen, and seating.</span>
+        <span class="calc__intent-sub">You know your projector. Answer three questions and get your plan.</span>
       </button>
       <button type="button" class="calc__intent-card" data-intent="space">
         <span class="calc__intent-title">I have a space</span>
-        <span class="calc__intent-sub">Start from your room: enter the size and see what screen fits.</span>
+        <span class="calc__intent-sub">Start with your room and picture size. We will show you what fits.</span>
       </button>
     </div>
 
     <div class="calc calc--basic">
+      <div class="calc__room">
+        <div class="calc__step">1 &middot; Your room</div>
+        <div class="calc__label">Units</div>
+        <div class="calc__chips" id="calc-units">
+          <button type="button" class="calc__chip chosen" data-unit="ft">Feet</button>
+          <button type="button" class="calc__chip" data-unit="m">Meters</button>
+        </div>
+        <div id="calc-dims">
+          <div class="calc__label">Pick the closest room</div>
+          <div class="calc__chips" id="calc-roompresets">
+            <button type="button" class="calc__chip" data-preset="bedroom">Small bedroom</button>
+            <button type="button" class="calc__chip chosen" data-preset="living">Living room</button>
+            <button type="button" class="calc__chip" data-preset="theater">Dedicated theater</button>
+            <button type="button" class="calc__chip" data-preset="garage">Garage</button>
+          </div>
+          <div>
+            <label for="calc-room-len"><span class="calc__q">How long is your room, wall to wall?</span> <span class="calc__val" id="calc-room-len-val"></span></label>
+            <div class="calc__slider-row">
+              <input type="range" id="calc-room-len" min="6" max="100" step="0.5" value="18">
+            </div>
+          </div>
+          <div class="adv-only">
+            <label for="calc-room-wid"><span class="calc__q">How wide is your room?</span> <span class="calc__val" id="calc-room-wid-val"></span></label>
+            <div class="calc__slider-row">
+              <input type="range" id="calc-room-wid" min="6" max="100" step="0.5" value="14">
+            </div>
+          </div>
+          <div class="adv-only">
+            <label for="calc-room-ceil"><span class="calc__q">How high is the ceiling?</span> <span class="calc__val" id="calc-room-ceil-val"></span></label>
+            <div class="calc__slider-row">
+              <input type="range" id="calc-room-ceil" min="7" max="30" step="0.5" value="9">
+            </div>
+          </div>
+        </div>
+        <div class="adv-only">
+          <div class="calc__label">Room type</div>
+          <div class="calc__chips" id="calc-roomtype">
+            <button type="button" class="calc__chip chosen" data-room="indoors">Indoors</button>
+            <button type="button" class="calc__chip" data-room="outdoors">Outdoors</button>
+          </div>
+        </div>
+        <p class="calc__hint adv-only" id="calc-room-tip"></p>
+      </div>
+
+      <div class="calc__picture">
+        <div class="calc__step">2 &middot; Your picture</div>
+        <div id="calc-screenmode-wrap">
+          <label for="calc-size"><span class="calc__q">How big do you want the picture?</span> <span class="calc__val" id="calc-size-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="calc-size" min="20" max="300" step="1" value="100">
+          </div>
+          <div class="calc__slider-ends"><span>20&Prime;</span><span>300&Prime;</span></div>
+          <p class="calc__hint">Pick the size that fits the wall, not the dream. We will show you where the projector needs to sit for it.</p>
+        </div>
+        <div>
+          <label for="calc-seat"><span class="calc__q">Where will you sit?</span> <span class="calc__val" id="calc-seat-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="calc-seat" min="2" max="60" step="0.5" value="10">
+          </div>
+        </div>
+        <p class="calc__hint">Seating is measured from the screen to your eyes. Closer feels like a theater. Too close and you will start seeing pixels.</p>
+      </div>
+
       <div class="calc__model">
-        <label for="calc-model">Projector model</label>
+        <div class="calc__step">3 &middot; Your projector</div>
+        <label for="calc-model"><span class="calc__q">Which projector do you have?</span></label>
         <input type="text" id="calc-model" placeholder="Start typing your model&hellip;" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="calc-suggest">
         <div class="calc__suggest" id="calc-suggest" role="listbox" hidden></div>
         <div class="calc__featured">
@@ -79,12 +143,12 @@
 <p class="calc__disclosure"><strong>Disclaimer: As an Amazon Associate and eBay Partner affiliate, I earn from qualifying purchases made through the shopping links at no additional cost to you.</strong></p>
 <p class="calc__newtab"><strong>The calculator stays open. Links open in a new tab.</strong></p>
 </div>
-        <div class="calc__lens" id="calc-lens-wrap" hidden>
+        <div class="calc__lens adv-only" id="calc-lens-wrap" hidden>
           <label for="calc-lens">Lens</label>
           <select id="calc-lens"></select>
           <p class="calc__hint">This projector takes interchangeable lenses. Pick the one installed to plan with its exact throw ratio.</p>
         </div>
-        <p class="calc__hint" id="calc-model-hint">Search <span id="calc-model-count"></span> recommended models. Can&rsquo;t find yours? <button type="button" class="calc__linkbtn" id="calc-manual-toggle">Enter the throw ratio manually</button>.</p>
+        <p class="calc__hint" id="calc-model-hint">Search <span id="calc-model-count"></span> recommended models. <button type="button" class="calc__linkbtn" id="calc-manual-toggle">Model not listed? Enter the throw ratio by hand</button>.</p>
         <div class="calc__manual" id="calc-manual" hidden>
           <div class="calc__manual-row">
             <div>
@@ -110,35 +174,7 @@
         </div>
       </div>
 
-      <div class="calc__room">
-        <label>Units</label>
-        <div class="calc__chips" id="calc-units">
-          <button type="button" class="calc__chip chosen" data-unit="ft">Feet</button>
-          <button type="button" class="calc__chip" data-unit="m">Meters</button>
-        </div>
-        <label>Room type</label>
-        <div class="calc__chips" id="calc-roomtype">
-          <button type="button" class="calc__chip chosen" data-room="indoors">Indoors</button>
-          <button type="button" class="calc__chip" data-room="outdoors">Outdoors</button>
-        </div>
-        <div class="calc__dims" id="calc-dims">
-          <div>
-            <label for="calc-room-len">Room length (ft)</label>
-            <input type="number" id="calc-room-len" min="6" max="100" step="0.5" inputmode="decimal">
-          </div>
-          <div>
-            <label for="calc-room-wid">Room width (ft)</label>
-            <input type="number" id="calc-room-wid" min="6" max="100" step="0.5" inputmode="decimal">
-          </div>
-          <div>
-            <label for="calc-room-ceil">Ceiling height (ft)</label>
-            <input type="number" id="calc-room-ceil" min="7" max="30" step="0.5" inputmode="decimal">
-          </div>
-        </div>
-        <p class="calc__hint" id="calc-room-tip"></p>
-      </div>
-
-      <div id="calc-projpos-wrap">
+      <div id="calc-projpos-wrap" class="adv-only">
         <div class="calc__label">Projector position</div>
         <div class="calc__chips" id="calc-projpos">
           <button type="button" class="calc__chip chosen" data-pos="behind">Behind Seating</button>
@@ -153,9 +189,9 @@
             <button type="button" class="calc__chip" data-mt="pole">Pole mount</button>
           </div>
           <div id="calc-polelen-wrap" hidden style="margin-top:8px">
-            <label for="calc-pole-len">Pole length (<span id="calc-polelen-unit">in</span>)</label>
+            <label for="calc-pole-len">Pole length (<span id="calc-polelen-unit">in</span>) <span class="calc__val" id="calc-pole-len-val"></span></label>
             <div class="calc__slider-row">
-              <input type="number" id="calc-pole-len" min="2" max="48" step="1" value="6" inputmode="decimal">
+              <input type="range" id="calc-pole-len" min="2" max="48" step="1" value="6">
             </div>
             <p class="calc__hint">Most ceiling mounts use 1.5 in NPT pipe — this is the length you need.</p>
           </div>
@@ -179,54 +215,47 @@
         </div>
       </div>
 
-      <div class="calc__plan">
+      <div class="calc__plan adv-only">
         <div id="calc-diag-wrap">
-          <label class="adv-only">Plan by</label>
-          <div class="calc__chips adv-only" id="calc-dir-chips">
+          <div class="calc__label">Plan by</div>
+          <div class="calc__chips" id="calc-dir-chips">
             <button type="button" class="calc__chip chosen" data-dir="screen">Screen size</button>
             <button type="button" class="calc__chip" data-dir="throw">Throw distance</button>
           </div>
-          <div id="calc-screenmode-wrap">
-            <label for="calc-size">Screen size (diagonal, inches)</label>
+          <div class="calc__lockrow" id="calc-image-lockrow" hidden>
+            <button type="button" class="calc__chip" id="calc-image-lock" aria-pressed="false">&#x1F512; Lock image size</button>
+            <span class="calc__locknote">Freeze the picture size so the zoom slider only moves the projector.</span>
+          </div>
+          <div class="calc__zoom" id="calc-zoom-wrap" hidden>
+            <label for="calc-zoom">Lens zoom <span class="calc__val" id="calc-zoom-val"></span></label>
             <div class="calc__slider-row">
-              <input type="range" id="calc-size" min="0" max="300" step="1" value="100">
-              <input type="number" class="calc__slider-num" id="calc-size-num" min="0" max="300" step="1" value="100" inputmode="numeric" aria-label="Screen size in inches">
+              <input type="range" id="calc-zoom" min="0" max="100" step="1" value="0">
             </div>
-            <div class="calc__slider-ends"><span>0&Prime;</span><span>300&Prime;</span></div>
-            <p class="calc__hint">Pick the size that fits the wall, not the dream. The math below shows where the projector has to sit for it.</p>
-            <div class="calc__lockrow" id="calc-image-lockrow" hidden>
-              <button type="button" class="calc__chip" id="calc-image-lock" aria-pressed="false">&#x1F512; Lock image size</button>
-            </div>
-            <div class="calc__zoom" id="calc-zoom-wrap" hidden>
-              <label for="calc-zoom">Lens zoom</label>
-              <div class="calc__slider-row">
-                <input type="range" id="calc-zoom" min="0" max="100" step="1" value="0">
-                <input type="number" class="calc__slider-num" id="calc-zoom-num" step="0.1" inputmode="decimal" aria-label="Throw distance at this zoom">
-              </div>
-              <div class="calc__slider-ends"><span>Wide</span><span>Tele</span></div>
-            </div>
-            <div class="calc__lockrow" id="calc-zoom-lockrow" hidden>
-              <button type="button" class="calc__chip" id="calc-zoom-lock" aria-pressed="false">&#x1F512; Lock projector position</button>
-            </div>
+            <div class="calc__slider-ends"><span>Wide</span><span>Tele</span></div>
+          </div>
+          <div class="calc__lockrow" id="calc-zoom-lockrow" hidden>
+            <button type="button" class="calc__chip" id="calc-zoom-lock" aria-pressed="false">&#x1F512; Lock projector position</button>
+            <span class="calc__locknote">The projector stays put &mdash; drag it or slide the zoom and the picture adjusts to what the lens can fill from that spot.</span>
           </div>
           <div id="calc-throwmode-wrap" hidden>
-            <label for="calc-throwdist" id="calc-throwdist-label">Throw distance (ft)</label>
-            <input type="number" id="calc-throwdist" min="1" max="100" step="0.5" placeholder="e.g. 12" inputmode="decimal">
+            <label for="calc-throwdist"><span class="calc__q">How far will the projector sit from the screen?</span> <span class="calc__val" id="calc-throwdist-val"></span></label>
+            <div class="calc__slider-row">
+              <input type="range" id="calc-throwdist" min="1" max="100" step="0.5" value="12">
+            </div>
+            <p class="calc__hint">Measure from the projector&rsquo;s lens to the screen or wall.</p>
           </div>
         </div>
         <div>
-          <label for="calc-seat" id="calc-seat-label">Seating distance (ft)</label>
-          <input type="number" id="calc-seat" min="2" max="60" step="0.5" placeholder="e.g. 10" inputmode="decimal">
-        </div>
-        <div class="adv-only">
-          <label for="calc-gain">Screen gain</label>
-          <input type="number" id="calc-gain" min="0.1" max="3" step="0.1" value="1.0" inputmode="decimal">
+          <label for="calc-gain">Screen gain <span class="calc__val" id="calc-gain-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="calc-gain" min="0.1" max="3" step="0.1" value="1.0">
+          </div>
+          <p class="calc__hint">Most matte white screens are 1.0. Grey or ALR screens run lower.</p>
         </div>
       </div>
-      <p class="calc__hint">Seating is measured from the screen to your eyes. Closer feels like a theater. Too close and you will start seeing pixels.</p>
 
-      <div class="calc__aspect" id="calc-aspect-std-wrap">
-        <label>Aspect ratio</label>
+      <div class="calc__aspect adv-only" id="calc-aspect-std-wrap">
+        <div class="calc__label">Aspect ratio</div>
         <div class="calc__chips" id="calc-aspect-std">
           <button type="button" class="calc__chip chosen" data-ar="16:9">16:9</button>
           <button type="button" class="calc__chip" data-ar="16:10">16:10</button>
@@ -236,26 +265,26 @@
       </div>
 
       <div class="calc__viz-head">
-        <span class="calc__viz-title" id="calc-viz-title">Room preview</span>
-        <div class="calc__viz-toggles">
+        <div class="calc__step">4 &middot; Your plan</div>
+        <div class="calc__viz-toggles adv-only">
           <button type="button" class="calc__chip" id="calc-lights-toggle" aria-pressed="false">Lights: Off</button>
           <button type="button" class="calc__chip" id="calc-sun-toggle" aria-pressed="false">Sunlight: Off</button>
           <button type="button" class="calc__chip" id="calc-fan-toggle" aria-pressed="false">Ceiling fan: Off</button>
         </div>
       </div>
-      <div class="calc__viz-note">room lighting simulation</div>
-      <div class="calc__viz-opts">
+      <div class="calc__viz-note adv-only">room lighting simulation</div>
+      <div class="calc__viz-opts adv-only">
         <div class="calc__viz-opt">
           <span class="calc__viz-opts-label">Screen material</span>
           <div class="calc__chips" id="calc-screentype">
             <button type="button" class="calc__chip chosen" data-st="standard">Standard white</button>
             <button type="button" class="calc__chip" data-st="alr">ALR</button>
           </div>
-          <p class="calc__viz-note" id="calc-alr-note" style="display:none;max-width:46rem">ALR holds contrast with the lights on, but the image dims beyond about 30° off center. 30° is a typical ALR viewing cone; check your screen manufacturer for your model's exact viewing angle.</p>
+          <p class="calc__viz-note" id="calc-alr-note" style="display:none;max-width:46rem">ALR holds contrast with the lights on, but the image dims beyond about 30&deg; off center. 30&deg; is a typical ALR viewing cone; check your screen manufacturer for your model's exact viewing angle.</p>
         </div>
       </div>
       <div class="calc__viz">
-        <div class="calc__viz-head">
+        <div class="calc__viz-head adv-only">
           <span class="calc__viz-title">Views</span>
           <div class="calc__viz-toggles" id="calc-view-toggles">
             <button type="button" class="calc__chip chosen" data-view="3d" aria-pressed="true">3D</button>
@@ -271,11 +300,11 @@
           <figcaption>3D view</figcaption>
           <p class="calc__hint" id="calc-drag-hint" style="margin-top:2px">Drag the projector to move it along the throw.</p>
         </figure>
-        <figure class="calc__fig" data-viewfig="side">
+        <figure class="calc__fig adv-only" data-viewfig="side">
           <svg id="calc-svg-side" viewBox="0 0 660 380" role="img" aria-label="Side view of the room"></svg>
           <figcaption>Side view</figcaption>
         </figure>
-        <figure class="calc__fig" data-viewfig="viewer">
+        <figure class="calc__fig adv-only" data-viewfig="viewer">
           <svg id="calc-svg-viewer" viewBox="0 0 660 360" role="img" aria-label="Seating view from the seating position"></svg>
           <div class="calc__chips adv-only" id="calc-viewerproj" style="display:none">
             <button type="button" class="calc__chip chosen" data-vp="all">All projectors</button>
@@ -284,7 +313,7 @@
           </div>
           <figcaption>Seating view</figcaption>
         </figure>
-        <figure class="calc__fig" data-viewfig="ceiling">
+        <figure class="calc__fig adv-only" data-viewfig="ceiling">
           <svg id="calc-svg-ceiling" viewBox="0 0 660 360" role="img" aria-label="Ceiling view: projector mounting spots seen from below"></svg>
           <figcaption>Ceiling view</figcaption>
         </figure>
@@ -293,23 +322,17 @@
           <svg id="calc-svg-drop" viewBox="0 0 660 300" role="img" aria-label="Ceiling mount drop simulator"></svg>
           <figcaption>Mounting view
             <label class="calc__eye">seated eye height
-              <input id="calc-eye-height" type="number" min="20" max="80" step="1" value="42" inputmode="numeric">
+              <input id="calc-eye-height" type="range" min="20" max="80" step="1" value="42">
               <span id="calc-eye-unit">in</span>
+              <span class="calc__val" id="calc-eye-height-val"></span>
             </label>
             <label class="calc__eye" title="Most ceiling mounts use 1.5 in NPT pipe — this is the length you need">mount pipe
-              <input id="calc-pipe-drop" type="number" min="2" max="48" step="1" value="6" inputmode="numeric">
+              <input id="calc-pipe-drop" type="range" min="2" max="48" step="1" value="6">
               <span id="calc-pipe-unit">in</span>
+              <span class="calc__val" id="calc-pipe-drop-val"></span>
             </label>
           </figcaption>
         </figure>
-      </div>
-      <div class="calc__export-row">
-        <span class="calc__export-label">Export</span>
-        <button type="button" class="calc__chip" id="calc-share">Share link</button>
-        <button type="button" class="calc__chip" id="calc-export-png">Export PNG</button>
-        <label class="calc__export-name adv-only">File name
-          <input id="calc-export-name" type="text" maxlength="80" placeholder="budgetprojectors-room-plan" autocomplete="off" spellcheck="false">
-        </label>
       </div>
 
       <div class="calc__result show" id="calc-plan-result" aria-live="polite"></div>
@@ -317,10 +340,20 @@
         <h3 class="calc__fitlist-title">What fits my room</h3>
         <p class="calc__hint">Top matches from the model database for your room depth and target screen. Ranked by placement flexibility: a wider usable throw range gives you more mounting options.</p>
         <div class="calc__fitlist-row">
-          <label for="calc-fitlist-screen">Target screen size (diagonal, inches)</label>
-          <input type="number" id="calc-fitlist-screen" min="40" max="300" step="1" value="100" inputmode="numeric">
+          <label for="calc-fitlist-screen"><span class="calc__q">How big do you want the picture?</span> <span class="calc__val" id="calc-fitlist-screen-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="calc-fitlist-screen" min="40" max="300" step="1" value="100">
+          </div>
         </div>
         <div id="calc-fitlist-results" aria-live="polite"></div>
+      </div>
+      <div class="calc__export-row adv-only">
+        <span class="calc__export-label">Export</span>
+        <button type="button" class="calc__chip" id="calc-share">Share link</button>
+        <button type="button" class="calc__chip" id="calc-export-png">Export PNG</button>
+        <label class="calc__export-name adv-only">File name
+          <input id="calc-export-name" type="text" maxlength="80" placeholder="budgetprojectors-room-plan" autocomplete="off" spellcheck="false">
+        </label>
       </div>
     </div>
     <p class="calc__disclaimer">This calculator is an estimation tool. Throw distances are based on published manufacturer specifications and standard screen math for the selected aspect ratio, and actual placement can vary with zoom position, lens shift, and mounting. Measure your room before buying or mounting, and refer to the manufacturer&rsquo;s specifications for further information.</p>
@@ -562,7 +595,7 @@
 </footer>
 
 <script src="js/throw-data.js?v=20260921n"></script>
-<script src="js/main.js?v=20260927c"></script>
+<script src="js/main.js?v=20260927d"></script>
 <script src="js/golf.js?v=20260924b"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>
