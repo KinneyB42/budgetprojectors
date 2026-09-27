@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260927a">
+  <link rel="stylesheet" href="css/style.css?v=20260927b">
 </head>
 <body>
 
@@ -313,6 +313,15 @@
       </div>
 
       <div class="calc__result show" id="calc-plan-result" aria-live="polite"></div>
+      <div class="calc__fitlist" id="calc-fitlist" hidden>
+        <h3 class="calc__fitlist-title">What fits my room</h3>
+        <p class="calc__hint">Top matches from the model database for your room depth and target screen. Ranked by placement flexibility: a wider usable throw range gives you more mounting options.</p>
+        <div class="calc__fitlist-row">
+          <label for="calc-fitlist-screen">Target screen size (diagonal, inches)</label>
+          <input type="number" id="calc-fitlist-screen" min="40" max="300" step="1" value="100" inputmode="numeric">
+        </div>
+        <div id="calc-fitlist-results" aria-live="polite"></div>
+      </div>
     </div>
     <p class="calc__disclaimer">This calculator is an estimation tool. Throw distances are based on published manufacturer specifications and standard screen math for the selected aspect ratio, and actual placement can vary with zoom position, lens shift, and mounting. Measure your room before buying or mounting, and refer to the manufacturer&rsquo;s specifications for further information.</p>
 
@@ -553,7 +562,7 @@
 </footer>
 
 <script src="js/throw-data.js?v=20260921n"></script>
-<script src="js/main.js?v=20260927b"></script>
+<script src="js/main.js?v=20260927c"></script>
 <script src="js/golf.js?v=20260924b"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>

@@ -482,3 +482,14 @@ h3 { font-size: 22px; margin-bottom: 12px; }
 .calc__verdict.v-ok { background: #2e7d5b; }
 .calc__verdict.v-warn { background: #b8860b; }
 .calc__verdict.v-bad { background: #c0392b; }
+
+/* Phase 3: "What fits my room" reverse lookup */
+.calc__fitlist { margin-top: 26px; border-top: 1px solid var(--line); padding-top: 20px; }
+.calc__fitlist-title { font-family: var(--serif); color: var(--navy); font-size: 22px; margin: 0 0 6px; }
+.calc__fitlist-row { display: flex; align-items: center; gap: 12px; margin: 12px 0 8px; flex-wrap: wrap; }
+.calc__fitlist-row label { font-size: 14px; font-weight: 600; color: var(--navy); }
+.calc__fitlist-row input { width: 96px; padding: 8px 10px; font-size: 16px; border: 1px solid var(--line); border-radius: 8px; font-family: inherit; }
+.calc__fititem { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.calc__fititem-name { font-weight: 600; color: var(--navy); }
+.calc__fititem-throw { color: var(--muted); font-size: 14px; }
+.calc__fititem-links { font-size: 14px; }

@@ -1599,7 +1599,7 @@
     return XGIMI_LINKS[compareB.m] || '';
   }
   function syncShopNotes() {
-    if (shopNote) shopNote.hidden = !(selectedModel || (compareOn && advMode && compareB));
+    if (shopNote) shopNote.hidden = !(selectedModel || (compareOn && advMode && compareB) || fitListHasLinks);
     if (jmgoNote) jmgoNote.hidden = !(isJmgoFeatured() || cmpJmgoUrl());
     if (xgimiNote) xgimiNote.hidden = !(xgimiUrl() || cmpXgimiUrl());
   }
@@ -1802,6 +1802,55 @@
   document.querySelectorAll('#calc-intent .calc__intent-card').forEach(function (card) {
     card.addEventListener('click', function () { setIntent(card.getAttribute('data-intent')); });
   });
+
+  /* ---------- Phase 3: "What fits my room" reverse lookup ---------- */
+  var fitlistWrap = document.getElementById('calc-fitlist');
+  var fitlistScreen = document.getElementById('calc-fitlist-screen');
+  var fitlistResults = document.getElementById('calc-fitlist-results');
+  var fitListHasLinks = false;
+  if (fitlistScreen) fitlistScreen.addEventListener('input', recalc);
+  function renderFitList() {
+    fitListHasLinks = false;
+    if (!fitlistWrap) return;
+    if (intentChoice !== 'space') { fitlistWrap.hidden = true; if (fitlistResults) fitlistResults.innerHTML = ''; return; }
+    fitlistWrap.hidden = false;
+    var L = roomType === 'outdoors' ? 30 : (lenInput ? toFt(parseFloat(lenInput.value, 10)) : NaN);
+    var target = fitlistScreen ? parseFloat(fitlistScreen.value, 10) : NaN;
+    if (!(L > 0)) { fitlistResults.innerHTML = '<p class="calc__hint">Enter your room depth above to see which models fit.</p>'; return; }
+    if (!(target > 0)) { fitlistResults.innerHTML = '<p class="calc__hint">Enter a target screen size to see which models fit.</p>'; return; }
+    var wIn = target * widthFactor();
+    var rows = [];
+    THROW.forEach(function (x) {
+      var t = modelLenses(x) ? effectiveRatio(x, 0) : x.t;
+      if (!t || !(t[0] > 0) || !(t[1] >= t[0])) return;
+      var near = wIn * t[0] / 12, far = wIn * t[1] / 12;
+      if (!(far <= L) || !(near < L)) return;
+      rows.push({ x: x, t: t, near: near, far: far, flex: Math.min(far, L) - near });
+    });
+    rows.sort(function (a, b) {
+      if (b.flex !== a.flex) return b.flex - a.flex;
+      var blm = b.x.lm || 0, alm = a.x.lm || 0;
+      if (blm !== alm) return blm - alm;
+      return (a.x.b + ' ' + a.x.m).localeCompare(b.x.b + ' ' + b.x.m);
+    });
+    rows = rows.slice(0, 10);
+    if (!rows.length) {
+      fitlistResults.innerHTML = '<p class="calc__hint">No models in the database cover a ' + Math.round(target) + '&Prime; screen within ' + dispDist(L) + ' of throw.</p>';
+      return;
+    }
+    fitListHasLinks = true;
+    fitlistResults.innerHTML = rows.map(function (r, i) {
+      var q = r.x.b + ' ' + r.x.m;
+      var throwTxt = fmtDist(r.near * 12) + (r.t[1] !== r.t[0] ? ' &ndash; ' + fmtDist(r.far * 12) : '') + ' throw';
+      return '<div class="calc__fititem">' +
+        '<span class="calc__fititem-name">' + (i + 1) + '. ' + q + '</span>' +
+        '<span class="calc__fititem-throw">' + throwTxt + '</span>' +
+        '<span class="calc__verdict v-ok">Fits</span>' +
+        '<span class="calc__fititem-links"><a class="calc-shop-link" href="' + amazonUrl(q) + '" target="_blank" rel="nofollow sponsored noopener">Amazon</a> | ' +
+        '<a class="calc-shop-link" href="' + ebayUrl(q) + '" target="_blank" rel="nofollow sponsored noopener">eBay</a></span>' +
+        '</div>';
+    }).join('');
+  }
 
   function fmtDist(inches) {
     if (unit === 'm') {
@@ -2113,6 +2162,7 @@
     }
     planSummary.cmp = cmpRows;
     planSummary.fitA = (!outdoor && dimsKnown) ? (fitsRoom ? 'Fit' : 'No Fit') : '';
+    renderFitList();
     refreshCompareShop();
     syncDragHint();
     // The file-name box shows the auto name it will use when left blank.
