@@ -502,6 +502,8 @@ a.calc__buybtn:hover, a.calc__buybtn:active { background: var(--navy-deep); colo
 .calc__verdict.v-ok { background: #2e7d5b; }
 .calc__verdict.v-warn { background: #b8860b; }
 .calc__verdict.v-bad { background: #c0392b; }
+.calc__verdict.v-pin { background: #8a6a2a; }
+#calc-fitlist-more { margin-top: 12px; }
 
 /* Phase 3: "What fits my room" reverse lookup */
 .calc__fitlist { margin-top: 26px; border-top: 1px solid var(--line); padding-top: 20px; }

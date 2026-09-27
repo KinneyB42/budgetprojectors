@@ -22,6 +22,12 @@
   }
   var THROW = window.THROW_DATA || [];
 
+  /* Pinned "Top picks for your room" models: "Brand Model" strings, e.g. "BenQ HT2060",
+     matched against the database (b + ' ' + m, case-insensitive). A pinned model that
+     fits the room always appears first in the suggestions, labeled "Brandon's pick";
+     the algorithmic ranking follows. Empty for now — add model names here to pin them. */
+  var PINNED_PICKS = [];
+
   function fmt(n, digits) {
     return Number(n).toLocaleString('en-US', {
       minimumFractionDigits: digits, maximumFractionDigits: digits
@@ -1813,7 +1819,7 @@
     if (!on) {
       if (reverseMode) setDirection('screen');
       // Reverse/throw mode is Advanced-only; never strand a Basic user without its controls.
-      // The intent choice is left alone so "I have a space" survives a mode toggle.
+      // The intent choice is left alone so the "no projector yet" intent survives a mode toggle.
     }
     try { localStorage.setItem('calc-mode', on ? 'advanced' : 'basic'); } catch (e) {}
     recalc();
@@ -1856,11 +1862,20 @@
     card.addEventListener('click', function () { setIntent(card.getAttribute('data-intent')); });
   });
 
-  /* ---------- Phase 3: "What fits my room" reverse lookup ---------- */
+  /* ---------- "Top picks for your room" reverse lookup ---------- */
   var fitlistWrap = document.getElementById('calc-fitlist');
   var fitlistScreen = document.getElementById('calc-fitlist-screen');
   var fitlistResults = document.getElementById('calc-fitlist-results');
   var fitListHasLinks = false;
+  var fitExpanded = false, lastFitKey = '';
+  function pinIndex(x) {
+    var key = (x.b + ' ' + x.m).toLowerCase();
+    for (var i = 0; i < PINNED_PICKS.length; i++) {
+      if (String(PINNED_PICKS[i]).toLowerCase() === key) return i;
+    }
+    return -1;
+  }
+  function isPinnedPick(x) { return pinIndex(x) >= 0; }
   if (fitlistScreen) fitlistScreen.addEventListener('input', recalc);
   function renderFitList() {
     fitListHasLinks = false;
@@ -1886,23 +1901,37 @@
       if (blm !== alm) return blm - alm;
       return (a.x.b + ' ' + a.x.m).localeCompare(b.x.b + ' ' + b.x.m);
     });
-    rows = rows.slice(0, 10);
+    // Pinned picks first (only when they fit), in PINNED_PICKS order;
+    // the algorithmic ranking follows.
+    var pinned = [], rest = [];
+    rows.forEach(function (r) { (isPinnedPick(r.x) ? pinned : rest).push(r); });
+    pinned.sort(function (a, b) { return pinIndex(a.x) - pinIndex(b.x); });
+    rows = pinned.concat(rest).slice(0, 10);
     if (!rows.length) {
       fitlistResults.innerHTML = '<p class="calc__hint">No models in the database cover a ' + Math.round(target) + '&Prime; screen within ' + dispDist(L) + ' of throw.</p>';
       return;
     }
     fitListHasLinks = true;
-    fitlistResults.innerHTML = rows.map(function (r, i) {
+    // Keep the list beginner-clean: 5 shown, the rest behind "Show more".
+    var fitKey = L.toFixed(2) + '|' + target;
+    if (fitKey !== lastFitKey) { lastFitKey = fitKey; fitExpanded = false; }
+    var shown = fitExpanded ? rows : rows.slice(0, 5);
+    fitlistResults.innerHTML = shown.map(function (r, i) {
       var q = r.x.b + ' ' + r.x.m;
       var throwTxt = fmtDist(r.near * 12) + (r.t[1] !== r.t[0] ? ' &ndash; ' + fmtDist(r.far * 12) : '') + ' throw';
+      var pinBadge = isPinnedPick(r.x) ? '<span class="calc__verdict v-pin">Brandon&rsquo;s pick</span>' : '';
       return '<div class="calc__fititem">' +
-        '<span class="calc__fititem-name">' + (i + 1) + '. ' + q + '</span>' +
+        '<span class="calc__fititem-name">' + (i + 1) + '. ' + q + '</span>' + pinBadge +
         '<span class="calc__fititem-throw">' + throwTxt + '</span>' +
         '<span class="calc__verdict v-ok">Fits</span>' +
         '<span class="calc__fititem-links"><a class="calc-shop-link" href="' + amazonUrl(q) + '" target="_blank" rel="nofollow sponsored noopener">Amazon</a> | ' +
         '<a class="calc-shop-link" href="' + ebayUrl(q) + '" target="_blank" rel="nofollow sponsored noopener">eBay</a></span>' +
         '</div>';
-    }).join('');
+    }).join('') + ((rows.length > 5 && !fitExpanded)
+      ? '<button type="button" class="calc__chip" id="calc-fitlist-more">Show ' + (rows.length - 5) + ' more</button>'
+      : '');
+    var moreBtn = document.getElementById('calc-fitlist-more');
+    if (moreBtn) moreBtn.addEventListener('click', function () { fitExpanded = true; renderFitList(); });
   }
 
   function fmtDist(inches) {
@@ -2916,8 +2945,11 @@
     if (ppos === 'ceiling' && hKnown) { poleTop = H; }
     else if (ppos === 'table') { onTable = true; }
     else if (o.pmount && hKnown) { poleTop = H; }
-    // plot scaling (rear projection extends left of the screen wall)
-    var xMin = isRear ? pxx - 1.5 : 0;
+    // plot scaling (rear projection extends left of the screen wall;
+    // comparison projectors behind the wall extend it too)
+    var bMinX = 0;
+    (o.extraProj || []).forEach(function (xp) { if (xp.pos === 'rear') bMinX = Math.min(bMinX, -xp.px); });
+    var xMin = (isRear || bMinX < 0) ? Math.min(isRear ? pxx : 0, bMinX) - 1.5 : 0;
     var xMax = Math.max(L || 10, pxx > 0 ? pxx : 0);
     var zTop = hKnown ? H : Math.max(z0 + sh + 1, pzz + 1.5, 6);
     var padL = 66, padR = 26, padT = 28, padB = 88;
@@ -2985,6 +3017,25 @@
     el2('rect', { x: (lx - 17).toFixed(1), y: (lz - 8).toFixed(1), width: 34, height: 16, rx: 3,
       fill: night ? '#3b5a94' : NAVY });
     tx(lx, lz - 14, isRear ? 'rear projector' : (ppos === 'ceiling' ? 'ceiling mount' : (onTable ? 'on table' : 'projector')), 11, 'middle', mut);
+    // Head-to-head: each comparison projector gets its own body, throw beam and
+    // label in green, matching the 3D view's color key.
+    (o.extraProj || []).forEach(function (xp) {
+      var bCol = night ? '#57b586' : '#2e7d5b';
+      var bRear = xp.pos === 'rear';
+      var bx = bRear ? -xp.px : xp.px;
+      var bz = xp.ust ? 1 : (xp.pos === 'ceiling' && hKnown ? H - ceilingDropFt() : (xp.pz != null ? xp.pz : zc));
+      var blx = X(bx), blz = Z(bz);
+      el2('line', { x1: blx.toFixed(1), y1: blz.toFixed(1), x2: X(0).toFixed(1), y2: Z(z0).toFixed(1),
+        stroke: bCol, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0.55 });
+      el2('line', { x1: blx.toFixed(1), y1: blz.toFixed(1), x2: X(0).toFixed(1), y2: Z(z0 + sh).toFixed(1),
+        stroke: bCol, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0.55 });
+      if (xp.pos === 'ceiling' && hKnown && blz - 8 > Z(H)) {
+        el2('line', { x1: blx.toFixed(1), y1: (blz - 8).toFixed(1), x2: blx.toFixed(1), y2: Z(H).toFixed(1),
+          stroke: bCol, 'stroke-width': 4 });
+      }
+      el2('rect', { x: (blx - 17).toFixed(1), y: (blz - 8).toFixed(1), width: 34, height: 16, rx: 3, fill: bCol });
+      tx(blx, blz - 14, xp.tag + ' · ' + xp.dist + ' throw', 11, 'middle', bCol);
+    });
     if (fanOn && hKnown && !o.outdoor) {
       // ceiling fan at room center; amber when it fouls the mount or the throw beam
       var fxx = X(L / 2), fzz = Z(H - 1.2);
@@ -3012,8 +3063,8 @@
     dim(X(0), oy + 20, X(pxx), oy + 20, dispDist(Math.abs(pxx)) + ' throw' + (isRear ? ' (behind screen)' : ''));
     dim(X(0), oy + 40, X(L), oy + 40, dispShort(L) + (o.outdoor ? '' : ' long'));
     if (hKnown) dimV(X(0) - 26, Z(H), oy, dispShort(H) + ' ceiling');
-    // legend at the bottom: color key for the projector
-    drawLegend(el2, compareLegendItems(o, { a: night ? '#3b5a94' : NAVY, b: '#2e7d5b' }, true), 16, VH - 14, 470, mut, false);
+    // legend at the bottom: color key for the projectors (A, and B when comparing)
+    drawLegend(el2, compareLegendItems(o, { a: night ? '#3b5a94' : NAVY, b: '#2e7d5b' }, false), 16, VH - 14, 470, mut, false);
     var wmt = tx(VW - 12, VH - 10, 'BudgetProjectors.org', 13, 'end', mut);
     wmt.setAttribute('opacity', 0.55);
   }
@@ -3264,13 +3315,56 @@
     } else if (sunOn) {
       washOp = 0.3; washFill = '#fff6d8';
     }
-    if (washOp > 0) {
-      el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
-        fill: washFill, opacity: washOp });
+    // Head-to-head image comparison: with a comparison projector selected, the
+    // screen shows each projector's image. "All projectors" splits the screen
+    // into A/B halves with labels and per-projector brightness; "B" alone renders
+    // B's image full-screen. Without a comparison the screen renders exactly as before.
+    var cmpActive = compareOn && advMode && o.extraProj && o.extraProj.length > 0;
+    var splitImg = cmpActive && viewerProj === 'all';
+    var soloB = cmpActive && viewerProj === 'b';
+    var scrArea = (sw > 0 && sh > 0) ? sw * sh : 0; // sq ft
+    function projFL(lm) {
+      if (!(lm > 0) || !(scrArea > 0)) return 0;
+      return effectiveFL(lm, effGain(), scrArea).eff;
     }
-    if (night) {
-      el3('rect', { x: sx.toFixed(1), y: sy.toFixed(1), width: scrW.toFixed(1), height: scrH.toFixed(1),
-        fill: '#ffffff', opacity: 0.18 });
+    var flA = projFL(o.lumens);
+    var flB = (cmpActive && o.extraProj[0].lm) ? projFL(o.extraProj[0].lm) : 0;
+    // The dimmer projector's image renders dimmer: scale the night glow by each
+    // projector's foot-lamberts relative to the brighter of the two.
+    function glowScale(fl, other) {
+      if (!(fl > 0) || !(other > 0)) return 1;
+      return Math.max(0.3, Math.min(1, fl / Math.max(fl, other)));
+    }
+    function imgTag(x, y, str, anchor) {
+      var t = tx3(x, y, str, 12, anchor, night ? '#dbe2f0' : NAVY);
+      t.setAttribute('font-weight', '700');
+    }
+    function imageOverlays(x0, wdt, glowOp) {
+      if (washOp > 0) {
+        el3('rect', { x: x0.toFixed(1), y: sy.toFixed(1), width: wdt.toFixed(1), height: scrH.toFixed(1),
+          fill: washFill, opacity: washOp });
+      }
+      if (night) {
+        el3('rect', { x: x0.toFixed(1), y: sy.toFixed(1), width: wdt.toFixed(1), height: scrH.toFixed(1),
+          fill: '#ffffff', opacity: glowOp });
+      }
+    }
+    if (splitImg) {
+      var half = scrW / 2;
+      imageOverlays(sx, half, 0.18 * glowScale(flA, flB));
+      imageOverlays(sx + half, half, 0.18 * glowScale(flB, flA));
+      el3('line', { x1: (sx + half).toFixed(1), y1: sy.toFixed(1), x2: (sx + half).toFixed(1), y2: (sy + scrH).toFixed(1),
+        stroke: '#ffffff', 'stroke-width': 2, opacity: 0.8 });
+      imgTag(sx + 10, sy + 20, 'A', 'start');
+      imgTag(sx + scrW - 10, sy + 20, 'B', 'end');
+      if (flA > 0) tx3(sx + 10, sy + 36, '~' + fmt(flA, 0) + ' fL', 11, 'start', mut);
+      if (flB > 0) tx3(sx + scrW - 10, sy + 36, '~' + fmt(flB, 0) + ' fL', 11, 'end', mut);
+    } else {
+      imageOverlays(sx, scrW, 0.18 * (soloB ? glowScale(flB, flA) : 1));
+      if (soloB) {
+        imgTag(sx + 10, sy + 20, 'B', 'start');
+        if (flB > 0) tx3(sx + 10, sy + 36, '~' + fmt(flB, 0) + ' fL', 11, 'start', mut);
+      }
     }
     // 30° / 36° reference frames, drawn over the screen
     [{ deg: 36, lab: 'top' }, { deg: 30, lab: 'bottom' }].forEach(function (ref) {
@@ -3428,8 +3522,8 @@
     capY -= 18;
     if (sunOn) tx3(VW / 2, capY, 'Simulated sunlight — actual brightness varies by room', 11, 'middle',
       night ? '#dbe2f0' : '#8a6a2a');
-    // legend at the top-left: color key for the projector
-    drawLegend(el3, compareLegendItems(o, { a: projBodyC, b: '#2e7d5b' }, true), 16, 26, 400, mut, false);
+    // legend at the top-left: color key for the projectors (A, and B when comparing)
+    drawLegend(el3, compareLegendItems(o, { a: projBodyC, b: '#2e7d5b' }, false), 16, 26, 400, mut, false);
     watermark3();
   }
 
