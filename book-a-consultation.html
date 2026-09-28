@@ -49,7 +49,7 @@
       <div class="step">
         <p class="step__num">Step One</p>
         <h3>Tell Us About Your Room</h3>
-        <p>Fill out the form below with your room dimensions, lighting, budget, and what you'll watch most. Photos of the room help a lot.</p>
+        <p>Fill out the form below with your room dimensions, lighting, budget, and what you'll watch most. Photos of the room help a lot — you'll have a chance to share them once Brandon replies.</p>
       </div>
       <div class="step">
         <p class="step__num">Step Two</p>
@@ -215,12 +215,6 @@
           <label for="cf-details">Anything else Brandon should know?</label>
           <textarea id="cf-details" name="details" rows="4" placeholder="Mounting limits, ceiling height, kids or pets, rental restrictions, timeline..."></textarea>
         </div>
-        <div class="cf-field">
-          <label for="cf-photos">Room photos (optional)</label>
-          <input type="file" id="cf-photos" name="attachment" accept="image/*" multiple>
-          <p class="cf-hint">Up to 3 photos, 5 MB each. They arrive attached to your request. Before submitting, please remove or cover any sensitive or personal information visible in your photos.</p>
-          <p class="cf-error" id="cf-photos-error" hidden>Please keep it to 3 photos max, 5 MB each.</p>
-        </div>
       </fieldset>
 
       <!-- Honeypot for bots -->
@@ -235,7 +229,7 @@
     <div class="cf-success" id="cf-success" hidden>
       <p class="label">Request Received</p>
       <h2>Thanks — you are on the list.</h2>
-      <p>Brandon will review your consult request and reply by email. If you have more photos of the room, reply to his email with them attached. Payment info will be provided after form submission.</p>
+      <p>Brandon will review your consult request and reply by email. When he replies, you'll have the opportunity to share photos of your room. Payment info will be provided after form submission.</p>
     </div>
   </div>
 </section>
@@ -374,18 +368,6 @@ const WEB3FORMS_ACCESS_KEY = "d1c9ad5b-e1ba-4baa-a590-8c96024cd8a0";
     data.append("screen_situation", document.getElementById("cf-screen").value);
     data.append("projector_shortlist", document.getElementById("cf-shortlist").value.trim());
     data.append("details", document.getElementById("cf-details").value.trim());
-
-    // Optional room photos (max 3, 5 MB each)
-    const photos = document.getElementById("cf-photos").files;
-    if (photos.length > 3 || Array.from(photos).some(function (f) { return f.size > 5 * 1024 * 1024 || !f.type.startsWith("image/"); })) {
-      setError("cf-photos", true);
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Send Request";
-      document.getElementById("cf-photos").focus();
-      return;
-    }
-    setError("cf-photos", false);
-    Array.from(photos).forEach(function (f) { data.append("attachment", f); });
 
     if (form.querySelector('input[name="botcheck"]').checked) data.append("botcheck", "true");
 
