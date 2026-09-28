@@ -176,7 +176,12 @@
           <label for="cf-details">Anything else Brandon should know?</label>
           <textarea id="cf-details" name="details" rows="4" placeholder="Mounting limits, ceiling height, kids or pets, rental restrictions, timeline..."></textarea>
         </div>
-        <p class="cf-hint">Have photos of the room? You can send them by replying to Brandon's confirmation email after you submit.</p>
+        <div class="cf-field">
+          <label for="cf-photos">Room photos (optional)</label>
+          <input type="file" id="cf-photos" name="attachment" accept="image/*" multiple>
+          <p class="cf-hint">Up to 3 photos, 5 MB each. They arrive attached to your request.</p>
+          <p class="cf-error" id="cf-photos-error" hidden>Please keep it to 3 photos max, 5 MB each.</p>
+        </div>
       </fieldset>
 
       <!-- Honeypot for bots -->
@@ -191,7 +196,7 @@
     <div class="cf-success" id="cf-success" hidden>
       <p class="label">Request Received</p>
       <h2>Thanks — you are on the list.</h2>
-      <p>Brandon will review your consult request and reply by email. If you have photos of your room, reply to his email with them attached. Payment info will be provided after form submission.</p>
+      <p>Brandon will review your consult request and reply by email. If you have more photos of the room, reply to his email with them attached. Payment info will be provided after form submission.</p>
     </div>
   </div>
 </section>
@@ -301,28 +306,40 @@ const WEB3FORMS_ACCESS_KEY = "PASTE-YOUR-KEY-HERE";
     submitBtn.disabled = true;
     submitBtn.textContent = "Sending...";
 
-    const data = {
-      access_key: WEB3FORMS_ACCESS_KEY,
-      subject: "New consult request: " + document.getElementById("cf-name").value.trim(),
-      name: document.getElementById("cf-name").value.trim(),
-      email: document.getElementById("cf-email").value.trim(),
-      project_type: document.getElementById("cf-project").value,
-      use_case: document.getElementById("cf-use").value.trim(),
-      budget: document.getElementById("cf-budget").value,
-      room_size: document.getElementById("cf-room").value.trim(),
-      viewing_distance: document.getElementById("cf-distance").value.trim(),
-      lighting: document.getElementById("cf-lighting").value,
-      screen_situation: document.getElementById("cf-screen").value,
-      projector_shortlist: document.getElementById("cf-shortlist").value.trim(),
-      details: document.getElementById("cf-details").value.trim(),
-      botcheck: form.querySelector('input[name="botcheck"]').checked
-    };
+    const data = new FormData();
+    data.append("access_key", WEB3FORMS_ACCESS_KEY);
+    data.append("subject", "New consult request: " + document.getElementById("cf-name").value.trim());
+    data.append("name", document.getElementById("cf-name").value.trim());
+    data.append("email", document.getElementById("cf-email").value.trim());
+    data.append("project_type", document.getElementById("cf-project").value);
+    data.append("use_case", document.getElementById("cf-use").value.trim());
+    data.append("budget", document.getElementById("cf-budget").value);
+    data.append("room_size", document.getElementById("cf-room").value.trim());
+    data.append("viewing_distance", document.getElementById("cf-distance").value.trim());
+    data.append("lighting", document.getElementById("cf-lighting").value);
+    data.append("screen_situation", document.getElementById("cf-screen").value);
+    data.append("projector_shortlist", document.getElementById("cf-shortlist").value.trim());
+    data.append("details", document.getElementById("cf-details").value.trim());
+
+    // Optional room photos (max 3, 5 MB each)
+    const photos = document.getElementById("cf-photos").files;
+    if (photos.length > 3 || Array.from(photos).some(function (f) { return f.size > 5 * 1024 * 1024 || !f.type.startsWith("image/"); })) {
+      setError("cf-photos", true);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send Request";
+      document.getElementById("cf-photos").focus();
+      return;
+    }
+    setError("cf-photos", false);
+    Array.from(photos).forEach(function (f) { data.append("attachment", f); });
+
+    if (form.querySelector('input[name="botcheck"]').checked) data.append("botcheck", "true");
 
     try {
       const res = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify(data)
+        headers: { "Accept": "application/json" },
+        body: data
       });
       const json = await res.json();
       if (json.success) {
