@@ -95,6 +95,22 @@
           <p class="cf-hint">Brandon replies to this address, so double check it.</p>
           <p class="cf-error" id="cf-email-error" hidden>Please enter a valid email address.</p>
         </div>
+        <div class="cf-field">
+          <label for="cf-region">What region of the world are you located in? *</label>
+          <select id="cf-region" name="region" required>
+            <option value="">Choose one</option>
+            <option>North America</option>
+            <option>Central &amp; South America</option>
+            <option>Europe</option>
+            <option>United Kingdom &amp; Ireland</option>
+            <option>Middle East</option>
+            <option>Africa</option>
+            <option>Asia</option>
+            <option>Australia, New Zealand &amp; Pacific</option>
+          </select>
+          <p class="cf-hint">Pricing and availability differ by region.</p>
+          <p class="cf-error" id="cf-region-error" hidden>Please choose your region.</p>
+        </div>
       </fieldset>
 
       <fieldset class="cf-group">
@@ -285,6 +301,7 @@ const WEB3FORMS_ACCESS_KEY = "d1c9ad5b-e1ba-4baa-a590-8c96024cd8a0";
     let ok = true;
     const name = document.getElementById("cf-name");
     const email = document.getElementById("cf-email");
+    const region = document.getElementById("cf-region");
     const project = document.getElementById("cf-project");
     const budget = document.getElementById("cf-budget");
 
@@ -293,6 +310,9 @@ const WEB3FORMS_ACCESS_KEY = "d1c9ad5b-e1ba-4baa-a590-8c96024cd8a0";
 
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
     setError("cf-email", !emailOk); ok = ok && emailOk;
+
+    const regionOk = region.value !== "";
+    setError("cf-region", !regionOk); ok = ok && regionOk;
 
     const projectOk = project.value !== "";
     setError("cf-project", !projectOk); ok = ok && projectOk;
@@ -304,7 +324,7 @@ const WEB3FORMS_ACCESS_KEY = "d1c9ad5b-e1ba-4baa-a590-8c96024cd8a0";
   }
 
   // Clear an error as soon as the visitor fixes the field
-  ["cf-name", "cf-email", "cf-project", "cf-budget"].forEach(function (id) {
+  ["cf-name", "cf-email", "cf-region", "cf-project", "cf-budget"].forEach(function (id) {
     const el = document.getElementById(id);
     el.addEventListener("input", function () { setError(id, false); });
     el.addEventListener("change", function () { setError(id, false); });
@@ -335,6 +355,7 @@ const WEB3FORMS_ACCESS_KEY = "d1c9ad5b-e1ba-4baa-a590-8c96024cd8a0";
     data.append("subject", "New consult request: " + document.getElementById("cf-name").value.trim());
     data.append("name", document.getElementById("cf-name").value.trim());
     data.append("email", document.getElementById("cf-email").value.trim());
+    data.append("region", document.getElementById("cf-region").value);
     data.append("project_type", document.getElementById("cf-project").value);
     data.append("use_case", document.getElementById("cf-use").value.trim());
     data.append("budget", document.getElementById("cf-budget").value);
