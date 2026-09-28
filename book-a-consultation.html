@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book a Consultation — Budget Projectors</title>
   <meta name="description" content="Get a personalized projector recommendation for your room and budget. Consultations start at $25.">
-  <link rel="stylesheet" href="css/style.css?v=20260928b">
+  <link rel="stylesheet" href="css/style.css?v=20260928e">
 </head>
 <body>
 
@@ -34,7 +34,7 @@
         <h1>Talk to an Expert</h1>
         <p>Get a personalized projector recommendation for your room, budget, and setup — from someone who has answered thousands of these questions, not a chatbot.</p>
         <p><strong>Consultations start at $25</strong> — final price depends on complexity.</p>
-        <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLScwwyWRcuT1HTcXes1khAzneuBurzBqDiuNcVaYikEwMRwETA/viewform" target="_blank" rel="noopener">Book Now</a>
+        <a class="btn" href="#consult-form">Start Your Request</a>
       </div>
     </div>
   </div>
@@ -48,7 +48,7 @@
       <div class="step">
         <p class="step__num">Step One</p>
         <h3>Tell Us About Your Room</h3>
-        <p>Fill out the booking form with your room dimensions, lighting, budget, and what you'll watch most. Photos of the room help a lot.</p>
+        <p>Fill out the form below with your room dimensions, lighting, budget, and what you'll watch most. Photos of the room help a lot.</p>
       </div>
       <div class="step">
         <p class="step__num">Step Two</p>
@@ -62,7 +62,136 @@
       </div>
     </div>
     <div class="center" style="margin-top: 48px;">
-      <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLScwwyWRcuT1HTcXes1khAzneuBurzBqDiuNcVaYikEwMRwETA/viewform" target="_blank" rel="noopener">Start Booking</a>
+      <a class="btn" href="#consult-form">Start Your Request</a>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="consult-form">
+  <div class="wrap">
+    <p class="label">Consult Request Form</p>
+    <h2>Tell Brandon About Your Setup</h2>
+    <p class="cf-intro">Fill this out and Brandon will review your request and reply by email. The more detail you give, the better the recommendation. Nothing on this page sends your info anywhere until you hit Send Request.</p>
+
+    <div class="consult-steps" aria-hidden="true">
+      <span class="consult-step">1. About you</span>
+      <span class="consult-step">2. Your project</span>
+      <span class="consult-step">3. Your room</span>
+      <span class="consult-step">4. The details</span>
+    </div>
+
+    <form id="consultForm" class="cf-form" novalidate>
+      <fieldset class="cf-group">
+        <legend class="cf-group__title">1. About you</legend>
+        <div class="cf-field">
+          <label for="cf-name">Your name *</label>
+          <input type="text" id="cf-name" name="name" autocomplete="name" required>
+          <p class="cf-error" id="cf-name-error" hidden>Please enter your name.</p>
+        </div>
+        <div class="cf-field">
+          <label for="cf-email">Email address *</label>
+          <input type="email" id="cf-email" name="email" autocomplete="email" required>
+          <p class="cf-hint">Brandon replies to this address, so double check it.</p>
+          <p class="cf-error" id="cf-email-error" hidden>Please enter a valid email address.</p>
+        </div>
+      </fieldset>
+
+      <fieldset class="cf-group">
+        <legend class="cf-group__title">2. Your project</legend>
+        <div class="cf-field">
+          <label for="cf-project">What do you need help with? *</label>
+          <select id="cf-project" name="project_type" required>
+            <option value="">Choose one</option>
+            <option>Projector recommendation</option>
+            <option>Home theater design</option>
+            <option>Golf simulator</option>
+            <option>Audio solution</option>
+            <option>Screen recommendation</option>
+            <option>Commercial or outdoor venue</option>
+            <option>Something else</option>
+          </select>
+          <p class="cf-error" id="cf-project-error" hidden>Please pick the closest match.</p>
+        </div>
+        <div class="cf-field">
+          <label for="cf-use">What will you use it for?</label>
+          <input type="text" id="cf-use" name="use_case" placeholder="Movies, sports, gaming, golf sim, business, backyard nights...">
+          <p class="cf-hint">Tell us what you will watch or do most.</p>
+        </div>
+        <div class="cf-field">
+          <label for="cf-budget">Your budget *</label>
+          <select id="cf-budget" name="budget" required>
+            <option value="">Choose a range</option>
+            <option>Under $500</option>
+            <option>$500 to $1,000</option>
+            <option>$1,000 to $2,000</option>
+            <option>$2,000 to $5,000</option>
+            <option>$5,000+</option>
+          </select>
+          <p class="cf-error" id="cf-budget-error" hidden>Please choose a budget range.</p>
+        </div>
+      </fieldset>
+
+      <fieldset class="cf-group">
+        <legend class="cf-group__title">3. Your room</legend>
+        <div class="cf-field">
+          <label for="cf-room">Room size and dimensions</label>
+          <input type="text" id="cf-room" name="room_size" placeholder="e.g. 12 ft wide x 18 ft deep, 9 ft ceiling">
+          <p class="cf-hint">Rough measurements are fine.</p>
+        </div>
+        <div class="cf-grid">
+          <div class="cf-field">
+            <label for="cf-distance">Viewing distance</label>
+            <input type="text" id="cf-distance" name="viewing_distance" placeholder="e.g. about 10 ft">
+          </div>
+          <div class="cf-field">
+            <label for="cf-lighting">Lighting</label>
+            <select id="cf-lighting" name="lighting">
+              <option value="">Choose one</option>
+              <option>Dark dedicated room</option>
+              <option>Mostly dark, some light control</option>
+              <option>Some ambient light during the day</option>
+              <option>Bright room or lots of daylight</option>
+            </select>
+          </div>
+        </div>
+        <div class="cf-field">
+          <label for="cf-screen">Screen situation</label>
+          <select id="cf-screen" name="screen_situation">
+            <option value="">Choose one</option>
+            <option>I already have a screen</option>
+            <option>I need a screen too</option>
+            <option>I plan to use a wall</option>
+            <option>Not sure yet</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <fieldset class="cf-group">
+        <legend class="cf-group__title">4. The details</legend>
+        <div class="cf-field">
+          <label for="cf-shortlist">Projectors you are already considering</label>
+          <textarea id="cf-shortlist" name="projector_shortlist" rows="3" placeholder="Model names, if you have any in mind. Blank is fine."></textarea>
+        </div>
+        <div class="cf-field">
+          <label for="cf-details">Anything else Brandon should know?</label>
+          <textarea id="cf-details" name="details" rows="4" placeholder="Mounting limits, ceiling height, kids or pets, rental restrictions, timeline..."></textarea>
+        </div>
+        <p class="cf-hint">Have photos of the room? You can send them by replying to Brandon's confirmation email after you submit.</p>
+      </fieldset>
+
+      <!-- Honeypot for bots -->
+      <input type="checkbox" name="botcheck" class="cf-botcheck" tabindex="-1" autocomplete="off">
+
+      <p class="cf-error cf-error--form" id="cf-form-error" hidden>Something did not go through. Please try again, or email Brandon directly.</p>
+
+      <button type="submit" class="btn cf-submit" id="cf-submit">Send Request</button>
+      <p class="cf-note">By sending this request you agree to be contacted by email about your consultation.</p>
+    </form>
+
+    <div class="cf-success" id="cf-success" hidden>
+      <p class="label">Request Received</p>
+      <h2>Thanks — you are on the list.</h2>
+      <p>Brandon will review your consult request and reply by email. If you have photos of your room, reply to his email with them attached.</p>
     </div>
   </div>
 </section>
@@ -96,5 +225,121 @@
 </footer>
 
 <script src="js/main.js"></script>
+<script>
+/* =====================================================================
+   BRANDON'S SETUP STEPS (do this once, then delete this comment):
+   1. Go to https://web3forms.com and sign up with the email address that
+      should receive consult requests.
+   2. Verify that email by clicking the link Web3Forms sends you.
+   3. Copy your Web3Forms access key and paste it into the
+      WEB3FORMS_ACCESS_KEY constant below (replacing PASTE-YOUR-KEY-HERE).
+   4. In the Web3Forms dashboard, turn on the auto-reply option so the
+      person submitting the form gets a confirmation copy by email.
+   That's it. The form will start working as soon as the key is pasted in.
+   ===================================================================== */
+const WEB3FORMS_ACCESS_KEY = "PASTE-YOUR-KEY-HERE";
+
+(function () {
+  const form = document.getElementById("consultForm");
+  const success = document.getElementById("cf-success");
+  const submitBtn = document.getElementById("cf-submit");
+  const formError = document.getElementById("cf-form-error");
+
+  function setError(fieldId, show) {
+    const err = document.getElementById(fieldId + "-error");
+    const field = document.getElementById(fieldId);
+    if (err) err.hidden = !show;
+    if (field) field.setAttribute("aria-invalid", show ? "true" : "false");
+  }
+
+  function validate() {
+    let ok = true;
+    const name = document.getElementById("cf-name");
+    const email = document.getElementById("cf-email");
+    const project = document.getElementById("cf-project");
+    const budget = document.getElementById("cf-budget");
+
+    const nameOk = name.value.trim().length > 0;
+    setError("cf-name", !nameOk); ok = ok && nameOk;
+
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
+    setError("cf-email", !emailOk); ok = ok && emailOk;
+
+    const projectOk = project.value !== "";
+    setError("cf-project", !projectOk); ok = ok && projectOk;
+
+    const budgetOk = budget.value !== "";
+    setError("cf-budget", !budgetOk); ok = ok && budgetOk;
+
+    return ok;
+  }
+
+  // Clear an error as soon as the visitor fixes the field
+  ["cf-name", "cf-email", "cf-project", "cf-budget"].forEach(function (id) {
+    const el = document.getElementById(id);
+    el.addEventListener("input", function () { setError(id, false); });
+    el.addEventListener("change", function () { setError(id, false); });
+  });
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    formError.hidden = true;
+
+    if (!validate()) {
+      const firstBad = form.querySelector('[aria-invalid="true"]');
+      if (firstBad) firstBad.focus();
+      return;
+    }
+
+    // Brandon has not pasted his Web3Forms key yet. Do not try to submit.
+    if (WEB3FORMS_ACCESS_KEY === "PASTE-YOUR-KEY-HERE") {
+      formError.textContent = "This form is not live yet. Brandon: paste your Web3Forms access key into the page script (see the SETUP STEPS comment above the constant).";
+      formError.hidden = false;
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending...";
+
+    const data = {
+      access_key: WEB3FORMS_ACCESS_KEY,
+      subject: "New consult request: " + document.getElementById("cf-name").value.trim(),
+      name: document.getElementById("cf-name").value.trim(),
+      email: document.getElementById("cf-email").value.trim(),
+      project_type: document.getElementById("cf-project").value,
+      use_case: document.getElementById("cf-use").value.trim(),
+      budget: document.getElementById("cf-budget").value,
+      room_size: document.getElementById("cf-room").value.trim(),
+      viewing_distance: document.getElementById("cf-distance").value.trim(),
+      lighting: document.getElementById("cf-lighting").value,
+      screen_situation: document.getElementById("cf-screen").value,
+      projector_shortlist: document.getElementById("cf-shortlist").value.trim(),
+      details: document.getElementById("cf-details").value.trim(),
+      botcheck: form.querySelector('input[name="botcheck"]').checked
+    };
+
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (json.success) {
+        form.hidden = true;
+        success.hidden = false;
+        success.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        throw new Error(json.message || "Submit failed");
+      }
+    } catch (err) {
+      formError.textContent = "Something did not go through. Please try again, or email Brandon directly.";
+      formError.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send Request";
+    }
+  });
+})();
+</script>
 </body>
 </html>
