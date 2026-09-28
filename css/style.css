@@ -18,6 +18,34 @@
   --serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
   --maxw: 1200px;
+
+  /* ---------- Design tokens (elevation pass 2026-09-28) ---------- */
+  /* Spacing scale */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px;
+  --sp-6: 24px; --sp-8: 32px; --sp-10: 40px; --sp-12: 48px; --sp-16: 64px;
+  --sp-20: 80px; --sp-24: 96px;
+  /* Fluid type scale */
+  --fs-h1: clamp(34px, 5vw, 54px);
+  --fs-h2: clamp(26px, 3.4vw, 38px);
+  --fs-h3: 22px;
+  --fs-lede: 19px;
+  --fs-body: 17px;
+  --fs-sm: 15.5px;
+  --fs-xs: 13px;
+  --fs-label: 12.5px;
+  /* Radii */
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-pill: 999px;
+  /* Soft layered shadows (navy-tinted) */
+  --sh-1: 0 1px 2px rgba(7, 22, 48, .06), 0 2px 8px rgba(7, 22, 48, .05);
+  --sh-2: 0 2px 6px rgba(7, 22, 48, .07), 0 12px 28px rgba(7, 22, 48, .10);
+  --sh-3: 0 4px 10px rgba(7, 22, 48, .08), 0 20px 44px rgba(7, 22, 48, .14);
+  /* Hairlines + semantic accents (existing hexes, tokenized) */
+  --line-soft: #efe9db;
+  --green: #2e7d5b; --amber: #b8860b; --red: #c0392b; --gold: #8a6a2a;
+  /* Motion */
+  --t-fast: 150ms ease;
+  --t-med: 220ms ease;
+  --t-slow: 600ms ease;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -518,3 +546,114 @@ a.calc__buybtn:hover, a.calc__buybtn:active { background: var(--navy-deep); colo
 .calc__fititem-name { font-weight: 600; color: var(--navy); }
 .calc__fititem-throw { color: var(--muted); font-size: 14px; }
 .calc__fititem-links { font-size: 14px; }
+
+/* ============================================================
+   Design elevation pass (2026-09-28) — premium editorial polish.
+   Navy identity, system sans, existing colors only. Polish, not rebuild.
+   ============================================================ */
+
+/* ---------- Type hierarchy ---------- */
+h1 { font-size: var(--fs-h1); letter-spacing: -0.015em; line-height: 1.18; margin-bottom: var(--sp-5); }
+h2 { font-size: var(--fs-h2); letter-spacing: -0.01em; line-height: 1.22; margin-bottom: var(--sp-4); }
+h3 { font-size: var(--fs-h3); letter-spacing: -0.005em; line-height: 1.3; margin-bottom: var(--sp-3); }
+.label { margin-bottom: var(--sp-4); }
+.label + h1, .label + h2 { margin-top: 0; }
+.lede { font-size: var(--fs-lede); line-height: 1.65; }
+
+/* ---------- Hero: gentle blend into the page ---------- */
+.hero { position: relative; }
+.hero::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 96px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.92));
+  pointer-events: none;
+}
+
+/* ---------- Sections: crisper alternation ---------- */
+.section--panel { border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
+
+/* ---------- Cards: unified, soft, lift on hover ---------- */
+.card {
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-1);
+  overflow: hidden;
+  transition: transform var(--t-med), box-shadow var(--t-med), border-color var(--t-fast);
+}
+@media (hover: hover) {
+  .card:hover { transform: translateY(-4px); box-shadow: var(--sh-2); border-color: var(--line-soft); }
+}
+.card img, .card__icon { overflow: hidden; }
+.card > img, .card__icon { transition: transform var(--t-slow); }
+@media (hover: hover) {
+  .card:hover > img { transform: scale(1.035); }
+}
+.card__body { padding: var(--sp-8) var(--sp-6) var(--sp-8); }
+.card__body p { font-size: var(--fs-sm); line-height: 1.65; }
+.card__link { transition: opacity var(--t-fast), border-color var(--t-fast); }
+
+/* ---------- Buttons: one primary, one ghost, 48px targets ---------- */
+.btn {
+  min-height: 48px;
+  padding: 15px 36px;
+  border-radius: var(--r-sm);
+  line-height: 1.2;
+  transition: background var(--t-fast), color var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+}
+.btn:hover { transform: translateY(-1px); box-shadow: var(--sh-1); }
+.btn:active { transform: translateY(0); box-shadow: none; }
+.btn:focus-visible, .card__link:focus-visible, .site-nav a:focus-visible,
+.calc__chip:focus-visible, .calc__intent-card:focus-visible, a.calc__buybtn:focus-visible {
+  outline: 2px solid var(--navy); outline-offset: 3px;
+}
+
+/* ---------- Nav: calmer, 44px mobile targets ---------- */
+.site-nav a { transition: color var(--t-fast), box-shadow var(--t-fast); border-radius: 2px; }
+@media (max-width: 640px) {
+  .site-nav a { padding: 14px 12px; }
+}
+
+/* ---------- Split / community / stats polish ---------- */
+.split img.portrait { border-radius: var(--r-md); box-shadow: var(--sh-1); }
+.community__card { border-radius: var(--r-md); box-shadow: var(--sh-2); }
+.step { border-radius: 2px; }
+
+/* ---------- Footer: a touch more presence, still clean ---------- */
+.site-footer { border-top: 1px solid rgba(255,255,255,.14); padding: 72px 0 52px; }
+.site-footer .footer-nav { margin-bottom: var(--sp-8); }
+
+/* ---------- Badges & chips: crisp and consistent ---------- */
+.calc__verdict {
+  padding: 7px 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  box-shadow: 0 1px 3px rgba(7, 22, 48, .18);
+  transition: transform var(--t-fast);
+}
+.calc__verdict.v-ok { background: var(--green); }
+.calc__verdict.v-warn { background: var(--amber); }
+.calc__verdict.v-bad { background: var(--red); }
+.calc__verdict.v-pin { background: var(--gold); }
+.calc__chip { border-radius: var(--r-pill); transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast); }
+
+/* ---------- Calculator surfaces: softer, consistent ---------- */
+.calc__intent-card { transition: border-color var(--t-fast), box-shadow var(--t-med), transform var(--t-fast); }
+@media (hover: hover) {
+  .calc__intent-card:hover { border-color: var(--navy); transform: translateY(-1px); }
+}
+.calc__payoff { box-shadow: var(--sh-1); }
+a.calc__buybtn {
+  border-radius: var(--r-sm);
+  transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+}
+a.calc__buybtn:hover, a.calc__buybtn:active { transform: translateY(-1px); box-shadow: var(--sh-2); }
+.calc__viz { border-radius: var(--r-md); box-shadow: var(--sh-1); overflow: hidden; }
+.calc__result { border-radius: 0 var(--r-sm) var(--r-sm) 0; box-shadow: var(--sh-1); }
+
+/* ---------- Tables ---------- */
+.ref-table th { border-bottom: 2px solid var(--navy); }
+
+/* ---------- Reduced motion: keep it calm ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
