@@ -836,6 +836,12 @@ html { scroll-behavior: smooth; }
   max-width: 860px;
 }
 .guide-disclosure p { margin: 0 0 6px; }
+.guide-pick__disclosure {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 10px 0 0;
+}
 .guide-note {
   background: #eef2f9;
   border-left: 3px solid var(--navy);
