@@ -842,6 +842,21 @@ html { scroll-behavior: smooth; }
   line-height: 1.6;
   margin: 10px 0 0;
 }
+.disclosure-block {
+  background: #eef2f9;
+  border: 1px solid var(--navy);
+  border-radius: var(--r-sm);
+  padding: 14px 18px;
+  margin: 16px 0 32px;
+  max-width: 860px;
+}
+.disclosure-block .guide-pick__disclosure {
+  font-weight: 700;
+  color: var(--ink);
+  margin: 6px 0;
+}
+.disclosure-block .guide-pick__disclosure:first-child { margin-top: 0; }
+.disclosure-block .guide-pick__disclosure:last-child { margin-bottom: 0; }
 .guide-note {
   background: #eef2f9;
   border-left: 3px solid var(--navy);
