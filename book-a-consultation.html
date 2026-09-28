@@ -135,8 +135,30 @@
       <fieldset class="cf-group">
         <legend class="cf-group__title">3. Your room</legend>
         <div class="cf-field">
-          <label for="cf-room">Room size and dimensions</label>
-          <input type="text" id="cf-room" name="room_size" placeholder="e.g. 12 ft wide x 18 ft deep, 9 ft ceiling">
+          <label>Room size and dimensions</label>
+          <div class="cf-grid">
+            <div class="cf-field">
+              <label for="cf-room-w">Width</label>
+              <input type="number" id="cf-room-w" name="room_width" min="0" step="any" inputmode="decimal" placeholder="e.g. 12">
+            </div>
+            <div class="cf-field">
+              <label for="cf-room-d">Depth</label>
+              <input type="number" id="cf-room-d" name="room_depth" min="0" step="any" inputmode="decimal" placeholder="e.g. 18">
+            </div>
+          </div>
+          <div class="cf-grid">
+            <div class="cf-field">
+              <label for="cf-room-h">Ceiling height</label>
+              <input type="number" id="cf-room-h" name="room_height" min="0" step="any" inputmode="decimal" placeholder="e.g. 9">
+            </div>
+            <div class="cf-field">
+              <label for="cf-room-unit">Units</label>
+              <select id="cf-room-unit" name="room_unit">
+                <option value="ft" selected>Feet</option>
+                <option value="m">Meters</option>
+              </select>
+            </div>
+          </div>
           <p class="cf-hint">Rough measurements are fine.</p>
         </div>
         <div class="cf-grid">
@@ -316,7 +338,16 @@ const WEB3FORMS_ACCESS_KEY = "d1c9ad5b-e1ba-4baa-a590-8c96024cd8a0";
     data.append("project_type", document.getElementById("cf-project").value);
     data.append("use_case", document.getElementById("cf-use").value.trim());
     data.append("budget", document.getElementById("cf-budget").value);
-    data.append("room_size", document.getElementById("cf-room").value.trim());
+    // Room dimensions: combine the numeric inputs + unit into one readable value
+    const roomUnit = document.getElementById("cf-room-unit").value;
+    const roomW = document.getElementById("cf-room-w").value.trim();
+    const roomD = document.getElementById("cf-room-d").value.trim();
+    const roomH = document.getElementById("cf-room-h").value.trim();
+    const roomParts = [];
+    if (roomW) roomParts.push(roomW + " " + roomUnit + " wide");
+    if (roomD) roomParts.push(roomD + " " + roomUnit + " deep");
+    if (roomH) roomParts.push(roomH + " " + roomUnit + " ceiling");
+    data.append("room_size", roomParts.join(", "));
     data.append("viewing_distance", document.getElementById("cf-distance").value.trim());
     data.append("lighting", document.getElementById("cf-lighting").value);
     data.append("screen_situation", document.getElementById("cf-screen").value);
