@@ -784,3 +784,94 @@ html { scroll-behavior: smooth; }
   max-width: 46rem;
 }
 .calc__qtip[hidden] { display: none; }
+
+/* ===== WORKSTREAM B: buying guides ===== */
+/* Model picks, shop buttons, disclosure notes, and spec tables for the
+   buying-guide pages. Beginner-minimal: plain language, mobile-first. */
+.guide-picks { display: grid; gap: var(--sp-5); margin: var(--sp-8) 0; max-width: 860px; }
+.guide-pick {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: var(--sp-6);
+  background: var(--paper);
+  box-shadow: var(--sh-1);
+}
+.guide-pick__name { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+.guide-pick__role {
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.guide-pick p { font-size: var(--fs-sm); color: var(--ink); margin-bottom: 14px; line-height: 1.65; }
+.shop-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.shop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  color: var(--navy);
+  background: var(--white);
+  border: 1.5px solid var(--navy);
+  border-radius: var(--r-sm);
+  padding: 10px 18px;
+  min-height: 44px;
+  line-height: 1.2;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.shop-btn:hover { background: var(--navy); color: var(--white); }
+.shop-btn--primary { background: var(--navy); color: var(--white); }
+.shop-btn--primary:hover { background: var(--navy-deep); color: var(--white); }
+.guide-disclosure {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.65;
+  border-top: 1px solid var(--line);
+  margin-top: var(--sp-8);
+  padding-top: var(--sp-4);
+  max-width: 860px;
+}
+.guide-disclosure p { margin: 0 0 6px; }
+.guide-note {
+  background: #eef2f9;
+  border-left: 3px solid var(--navy);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: 14px 18px;
+  margin: var(--sp-6) 0;
+  font-size: var(--fs-sm);
+  line-height: 1.65;
+  max-width: 860px;
+}
+.guide-note strong { color: var(--navy); }
+.spec-table {
+  width: 100%;
+  max-width: 860px;
+  border-collapse: collapse;
+  margin: var(--sp-6) 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+.spec-table th, .spec-table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.spec-table th {
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--navy);
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .spec-table th { display: block; border-bottom: 0; padding-bottom: 0; }
+  .spec-table td { display: block; padding-top: 4px; }
+  .spec-table tr { display: block; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  .spec-table th, .spec-table td { border-bottom: 0; padding-left: 0; padding-right: 0; }
+}
+/* ===== END WORKSTREAM B ===== */
