@@ -1033,21 +1033,52 @@
       return yy;
     }
     var y = L.y;
-    if (!L.measure) { L.cx.fillStyle = '#0c2244'; L.cx.fillRect(0, y, W, 200); }
-    text('BUDGETPROJECTORS.ORG', M, y + 66, '600 20px Arial,sans-serif', '#8fa3c8');
-    text('Golf Simulator Plan', M, y + 132, '700 52px Arial,sans-serif', '#ffffff');
-    text(P.date, W - M, y + 66, '400 20px Arial,sans-serif', '#8fa3c8', 'right');
-    y += 200;
+    // branded header: wordmark + site, date on the right
+    if (!L.measure) { L.cx.fillStyle = '#0c2244'; L.cx.fillRect(0, y, W, 210); }
+    text('BudgetProjectors', M, y + 84, '700 54px Arial,sans-serif', '#ffffff');
+    text('Your golf simulator plan', M, y + 132, '400 24px Arial,sans-serif', '#8fa3c8');
+    text('budgetprojectors.org', W - M, y + 66, '600 22px Arial,sans-serif', '#8fa3c8', 'right');
+    text(P.date, W - M, y + 104, '400 18px Arial,sans-serif', '#8fa3c8', 'right');
+    y += 210;
     y = wrapped(TAGLINE, M, y + 52, CW, 'italic 400 22px Arial,sans-serif', '#5c5c5c', 32) + 30;
 
-    var rows = golfSpecRows(P), colW = CW / 2, perCol = Math.ceil(rows.length / 2), rh = 84;
-    rows.forEach(function (r, i) {
-      var x = M + (i < perCol ? 0 : colW), ry = y + 24 + (i % perCol) * rh;
-      text(r[0].toUpperCase(), x, ry, '600 15px Arial,sans-serif', '#8fa3c8');
-      text(String(r[1]).substring(0, 46), x, ry + 36, '400 26px Arial,sans-serif', '#0c2244');
+    // organized sections: your projector / your room / key measurements
+    function sectionHead(t, yy) {
+      text(t.toUpperCase(), M, yy + 40, '700 18px Arial,sans-serif', '#8fa3c8');
+      return yy + 66;
+    }
+    var secs = [
+      { head: 'Your projector', rows: [
+        ['Projector', P.model + (P.lens ? ' - ' + P.lens : '')],
+        ['Throw ratio', P.ratio + (P.zoom ? ' - zoom ' + P.zoom : '')],
+        ['Placement from screen', P.throwDist],
+        ['Placement method', P.placement]
+      ] },
+      { head: 'Your room', rows: [
+        ['Screen', P.screen],
+        ['Room', P.room],
+        ['Hitting distance', P.hit],
+        ['Your height', P.height],
+        ['Garage door opener', P.opener ? (P.opener + (P.openerIssue ? ' - ' + P.openerIssue : '')) : '']
+      ] },
+      { head: 'Key measurements', rows: [
+        ['Brightness', P.brightness]
+      ] }
+    ];
+    secs.forEach(function (sec) {
+      var rows = sec.rows.filter(function (r) { return r[1]; });
+      if (!rows.length) return;
+      y = sectionHead(sec.head, y);
+      var colW = CW / 2, perCol = Math.ceil(rows.length / 2), rh = 92;
+      rows.forEach(function (r, i) {
+        var x = M + (i < perCol ? 0 : colW), ry = y + 26 + (i % perCol) * rh;
+        text(r[0].toUpperCase(), x, ry, '600 16px Arial,sans-serif', '#8fa3c8');
+        text(String(r[1]).substring(0, 44), x, ry + 40, '400 28px Arial,sans-serif', '#0c2244');
+      });
+      y += 26 + perCol * rh + 24;
     });
-    y += 24 + perCol * rh + 20;
 
+    y = sectionHead('The verdict', y);
     var fitColor = P.fit ? '#2e7d5b' : '#c0392b';
     if (!L.measure) { L.cx.fillStyle = fitColor; roundRectPath(L.cx, M, y, CW, 104, 14); L.cx.fill(); }
     text('WILL IT FIT: ' + (P.fit ? 'YES' : 'NO'), M + 32, y + 66, '700 36px Arial,sans-serif', '#ffffff');
@@ -1091,11 +1122,16 @@
       y += 24;
     }
 
-    if (!L.measure) { L.cx.fillStyle = '#0c2244'; L.cx.fillRect(0, y, W, 128); }
-    text('BudgetProjectors.org', M, y + 54, '600 22px Arial,sans-serif', '#ffffff');
-    text('Generated ' + P.date, W - M, y + 54, '400 18px Arial,sans-serif', '#8fa3c8', 'right');
-    text(TAGLINE, M, y + 92, 'italic 400 15px Arial,sans-serif', '#8fa3c8');
-    y += 128;
+    // subtle footer; no affiliate links appear in the export, so no disclosure line
+    if (!L.measure) {
+      L.cx.fillStyle = '#ffffff'; L.cx.fillRect(0, y, W, 130);
+      L.cx.strokeStyle = '#e7e2d6'; L.cx.lineWidth = 1;
+      L.cx.beginPath(); L.cx.moveTo(0, y + 0.5); L.cx.lineTo(W, y + 0.5); L.cx.stroke();
+    }
+    text('BudgetProjectors.org', M, y + 56, '700 22px Arial,sans-serif', '#0c2244');
+    text('Golf simulator plan', M, y + 92, '400 16px Arial,sans-serif', '#5c5c5c');
+    text('Generated ' + P.date, W - M, y + 56, '400 18px Arial,sans-serif', '#8fa3c8', 'right');
+    y += 130;
     L.y = y;
   }
 

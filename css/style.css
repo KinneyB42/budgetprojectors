@@ -715,3 +715,72 @@ html { scroll-behavior: smooth; }
 @media (max-width: 400px) {
   .wordmark { letter-spacing: 0.08em; font-size: 24px; }
 }
+
+
+/* ===== WORKSTREAM A: calculator tips + export ===== */
+/* In-context tips: first-visit hint chip + tiny "?" explainers.
+   Quiet by design: small, dismissible, never blocking, Basic-mode-safe. */
+.calc__tipchip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #eef2f9;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 10px 12px 10px 16px;
+  margin: 16px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--navy);
+}
+.calc__tipchip[hidden] { display: none; }
+.calc__tipchip-x {
+  flex: none;
+  background: var(--navy);
+  color: var(--white);
+  border: 0;
+  border-radius: var(--r-pill);
+  padding: 10px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  min-height: 44px;
+}
+.calc__tipchip-x:hover { background: var(--navy-deep); }
+.calc__qbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  border-radius: 50%;
+  border: 1px solid #b9c3d6;
+  background: var(--white);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  cursor: pointer;
+  vertical-align: 3px;
+  margin-left: 8px;
+  padding: 0;
+}
+.calc__qbtn:hover { background: var(--navy); border-color: var(--navy); color: var(--white); }
+.calc__qtip {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  background: #f4f6fa;
+  border-left: 3px solid var(--navy);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: 8px 12px;
+  margin: 6px 0 14px;
+  max-width: 46rem;
+}
+.calc__qtip[hidden] { display: none; }

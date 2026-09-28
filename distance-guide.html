@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Distance Guide — Budget Projectors</title>
   <meta name="description" content="Throw-distance calculator: find the right projector placement for your screen size, or the right screen size for your room.">
-  <link rel="stylesheet" href="css/style.css?v=20260928b">
+  <link rel="stylesheet" href="css/style.css?v=20260928c">
 </head>
 <body>
 
@@ -59,6 +59,11 @@
       </button>
     </div>
 
+    <div class="calc__tipchip" id="calc-tipchip" hidden>
+      <span><strong>New here?</strong> Answer the three steps below and get a yes-or-no verdict for your room.</span>
+      <button type="button" class="calc__tipchip-x" id="calc-tipchip-x">Got it</button>
+    </div>
+
     <div class="calc calc--basic">
       <div class="calc__room">
         <div class="calc__step">1 &middot; Your room</div>
@@ -68,7 +73,8 @@
           <button type="button" class="calc__chip" data-unit="m">Meters</button>
         </div>
         <div id="calc-dims">
-          <div class="calc__label">Pick the closest room</div>
+          <div class="calc__label">Pick the closest room <button type="button" class="calc__qbtn" data-tip="roompresets" aria-label="Explain room presets">?</button></div>
+          <div class="calc__qtip" data-qtip="roompresets" hidden>Presets just fill in common room sizes. Nudge the slider if yours is different.</div>
           <div class="calc__chips" id="calc-roompresets">
             <button type="button" class="calc__chip" data-preset="bedroom">Small bedroom</button>
             <button type="button" class="calc__chip chosen" data-preset="living">Living room</button>
@@ -107,7 +113,8 @@
       <div class="calc__picture">
         <div class="calc__step">2 &middot; Your picture</div>
         <div id="calc-screenmode-wrap">
-          <label for="calc-size"><span class="calc__q">How big do you want the picture?</span> <span class="calc__val" id="calc-size-val"></span></label>
+          <label for="calc-size"><span class="calc__q">How big do you want the picture?</span> <span class="calc__val" id="calc-size-val"></span> <button type="button" class="calc__qbtn" data-tip="picturesize" aria-label="Explain picture size">?</button></label>
+          <div class="calc__qtip" data-qtip="picturesize" hidden>Measured corner to corner, like a TV. Most living rooms land happy around 100 to 120 inches.</div>
           <div class="calc__slider-row">
             <input type="range" id="calc-size" min="20" max="300" step="1" value="100">
           </div>
@@ -115,7 +122,8 @@
           <p class="calc__hint">Pick the size that fits the wall, not the dream. We will show you where the projector needs to sit for it.</p>
         </div>
         <div>
-          <label for="calc-seat"><span class="calc__q">Where will you sit?</span> <span class="calc__val" id="calc-seat-val"></span></label>
+          <label for="calc-seat"><span class="calc__q">Where will you sit?</span> <span class="calc__val" id="calc-seat-val"></span> <button type="button" class="calc__qbtn" data-tip="seatdist" aria-label="Explain seating distance">?</button></label>
+          <div class="calc__qtip" data-qtip="seatdist" hidden>Measure from the screen to your eyes. A good rule of thumb: sit 1.5 to 2.5 times the screen width away.</div>
           <div class="calc__slider-row">
             <input type="range" id="calc-seat" min="2" max="60" step="0.5" value="10">
           </div>
@@ -262,7 +270,8 @@
       </div>
 
       <div class="calc__viz-head">
-        <div class="calc__step">4 &middot; Your plan</div>
+        <div class="calc__step">4 &middot; Your plan <button type="button" class="calc__qbtn" data-tip="verdict" aria-label="Explain the verdict">?</button></div>
+        <div class="calc__qtip" data-qtip="verdict" hidden>The verdict compares your projector's throw distance with your room. Yes means it fits. No means the picture would be too big for that spot.</div>
         <div class="calc__viz-toggles adv-only">
           <button type="button" class="calc__chip" id="calc-lights-toggle" aria-pressed="false">Lights: Off</button>
           <button type="button" class="calc__chip" id="calc-sun-toggle" aria-pressed="false">Sunlight: Off</button>
@@ -592,8 +601,8 @@
 </footer>
 
 <script src="js/throw-data.js?v=20260921n"></script>
-<script src="js/main.js?v=20260927g"></script>
-<script src="js/golf.js?v=20260924b"></script>
+<script src="js/main.js?v=20260927h"></script>
+<script src="js/golf.js?v=20260924c"></script>
 <div id="golf-print" aria-hidden="true"></div>
 <div id="calc-print" aria-hidden="true"></div>
 </body>

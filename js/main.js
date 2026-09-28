@@ -1280,33 +1280,52 @@
           function step4(img4, url4) {
         function compose(img5, url5) {
         try {
-          var views = [[img1, 660, 440], [img2, 660, 380], [img3, 660, 360], [img4, 660, 380], [img5, 660, 300]]
+          var views = [[img1, 660, 440, '3D view'], [img2, 660, 380, 'Side view'], [img3, 660, 360, 'Seating view'], [img4, 660, 380, 'Mounting view'], [img5, 660, 300, 'Mount drop']]
             .filter(function (v) { return !!v[0]; });
-          var CW = 1600, PW = 540, PITCH = 500;
-          var CH = 60 + views.length * PITCH;
-          var cv = document.createElement('canvas');
-          cv.width = CW; cv.height = CH;
-          var cx = cv.getContext('2d');
-          // left measurements panel
-          cx.fillStyle = '#0c2244';
-          cx.fillRect(0, 0, PW, CH);
-          // right side backdrop matches the scene
-          var night = !sunOn && !lightsOn;
-          cx.fillStyle = night ? '#0e1320' : '#ffffff';
-          cx.fillRect(PW, 0, CW - PW, CH);
-          var RW = CW - PW;
-          function place(img, vw, vh, slotY) {
-            if (!img) return;
-            var s = Math.min((RW - 40) / vw, 480 / vh);
-            var dw = vw * s, dh = vh * s;
-            cx.drawImage(img, PW + (RW - dw) / 2, slotY + (480 - dh) / 2, dw, dh);
-          }
-          var slotY = 30;
-          views.forEach(function (v) { place(v[0], v[1], v[2], slotY); slotY += PITCH; });
-          // measurements text
+          var CW = 1600, PW = 560, M = 48;
+          var HDR = 170, FOOT = 120, PITCH = 560, CAPH = 44;
           var S = planSummary;
-          var VALW = PW - 48 - 24; // value text must end 24px before the panel edge
-          function wrapVal(text) {
+          function roundRectC(cx, x, y, w, h, r) {
+            cx.beginPath();
+            cx.moveTo(x + r, y);
+            cx.arcTo(x + w, y, x + w, y + h, r);
+            cx.arcTo(x + w, y + h, x, y + h, r);
+            cx.arcTo(x, y + h, x, y, r);
+            cx.arcTo(x, y, x + w, y, r);
+            cx.closePath();
+          }
+          // The text plan, organized in sections. Empty values are skipped.
+          var items = [];
+          function head(t) { items.push({ t: 'h', text: t }); }
+          function itemRow(label, value, color) {
+            if (value == null || value === '') return;
+            items.push({ t: 'r', label: label, value: String(value), color: color || '#ffffff' });
+          }
+          function fitColor(txt) {
+            return txt === 'Fit' ? '#7fd6a4' : (txt === 'No Fit' ? '#ff9d8a' : '#ffffff');
+          }
+          head('Your projector');
+          itemRow('Projector', S.model);
+          itemRow('Throw distance', S.throw);
+          if (S.fitA) itemRow('Fit', S.fitA, fitColor(S.fitA));
+          (S.cmp || []).forEach(function (c) {
+            itemRow('Projector ' + c.tag, c.name);
+            itemRow('Throw distance ' + c.tag, c.throw);
+            itemRow('Brightness ' + c.tag, c.bright);
+            if (c.fitTxt) itemRow('Fit ' + c.tag, c.fitTxt, fitColor(c.fitTxt));
+          });
+          head('Your room');
+          itemRow('Room', S.room);
+          itemRow('Screen', S.screen);
+          itemRow('Seating', S.seat);
+          head('Key measurements');
+          itemRow('Brightness', S.bright);
+          itemRow('Mounting', S.mount);
+          itemRow('Mount drop', S.drop);
+          head('The verdict');
+          var VALW = PW - M - 24; // value text must end 24px before the panel edge
+          function wrapVal(cx, text) {
+            cx.font = '400 26px Arial,sans-serif';
             var words = String(text).split(/\s+/).filter(Boolean), lines = [], line = '';
             function pushWord(w) {
               // hard-break a single word that is wider than the column
@@ -1323,55 +1342,110 @@
             if (line) lines.push(line);
             return lines;
           }
-          function row(label, value, y, valColor) {
-            cx.fillStyle = '#8fa3c8';
-            cx.font = '600 13px Arial,sans-serif';
-            cx.fillText(label.toUpperCase(), 48, y);
-            cx.fillStyle = valColor || '#ffffff';
-            cx.font = '400 23px Arial,sans-serif';
-            var lines = wrapVal(value);
-            if (lines.length > 3) {
-              lines = lines.slice(0, 3);
-              var last = lines[2];
-              while (last.length > 1 && cx.measureText(last + '…').width > VALW) last = last.slice(0, -1);
-              lines[2] = last + '…';
+          function itemHeight(cx, it) {
+            if (it.t === 'h') return 58;
+            return 52 + Math.min(wrapVal(cx, it.value).length, 3) * 32;
+          }
+          function drawItem(cx, it, y) {
+            if (it.t === 'h') {
+              cx.fillStyle = '#8fa3c8';
+              cx.font = '700 15px Arial,sans-serif';
+              cx.fillText(it.text.toUpperCase(), M, y + 22);
+              cx.strokeStyle = 'rgba(255,255,255,0.14)';
+              cx.lineWidth = 1;
+              cx.beginPath(); cx.moveTo(M, y + 38); cx.lineTo(PW - M, y + 38); cx.stroke();
+              return;
             }
-            lines.forEach(function (ln, i) { cx.fillText(ln, 48, y + 30 + i * 30); });
-            return lines.length;
+            cx.fillStyle = '#8fa3c8';
+            cx.font = '600 14px Arial,sans-serif';
+            cx.fillText(it.label.toUpperCase(), M, y + 20);
+            cx.fillStyle = it.color;
+            cx.font = '400 26px Arial,sans-serif';
+            wrapVal(cx, it.value).slice(0, 3).forEach(function (ln, i) {
+              cx.fillText(ln, M, y + 52 + i * 32);
+            });
           }
-          cx.fillStyle = '#8fa3c8';
-          cx.font = '600 15px Arial,sans-serif';
-          cx.fillText('BUDGETPROJECTORS.ORG', 48, 64);
+          // Verdict banner: color-coded, wraps to two lines.
+          var verdictGood = S.fitA === 'Fit', verdictBad = S.fitA === 'No Fit';
+          var verdictColor = verdictGood ? '#2e7d5b' : (verdictBad ? '#c0392b' : '#54627e');
+          function verdictLines(cx) {
+            cx.font = '700 26px Arial,sans-serif';
+            var maxW = PW - M * 2 - 48;
+            var words = String(S.verdict || '').split(/\s+/).filter(Boolean), lines = [], line = '';
+            words.forEach(function (w) {
+              var t = line ? line + ' ' + w : w;
+              if (cx.measureText(t).width <= maxW || !line) line = t;
+              else { lines.push(line); line = w; }
+            });
+            if (line) lines.push(line);
+            return lines.slice(0, 2);
+          }
+          var mctx = document.createElement('canvas').getContext('2d');
+          var textH = 0;
+          items.forEach(function (it) { textH += itemHeight(mctx, it); });
+          textH += 116 + 20; // verdict banner + breathing room
+          var viewsH = views.length * PITCH + 40;
+          var CH = HDR + Math.max(textH + 30, viewsH) + FOOT;
+          var cv = document.createElement('canvas');
+          cv.width = CW; cv.height = CH;
+          var cx = cv.getContext('2d');
+          // branded header: wordmark + site, date on the right
+          cx.fillStyle = '#0c2244';
+          cx.fillRect(0, 0, CW, HDR);
           cx.fillStyle = '#ffffff';
-          cx.font = '700 42px Arial,sans-serif';
-          cx.fillText('Room Plan', 48, 114);
-          cx.strokeStyle = 'rgba(255,255,255,0.18)';
-          cx.lineWidth = 1;
-          cx.beginPath(); cx.moveTo(48, 140); cx.lineTo(PW - 48, 140); cx.stroke();
-          var y = 184;
-          if (S.model) { y += 44 + row('Projector', S.model, y) * 30; }
-          if (S.throw) { y += 44 + row('Throw distance', S.throw, y) * 30; }
-          if (S.fitA) y += 44 + row('Fit', S.fitA, y, S.fitA === 'Fit' ? '#7fd6a4' : '#ff9d8a') * 30;
-          (S.cmp || []).forEach(function (c) {
-            y += 44 + row('Projector ' + c.tag, c.name, y) * 30;
-            y += 44 + row('Throw distance ' + c.tag, c.throw, y) * 30;
-            if (c.bright) y += 44 + row('Brightness ' + c.tag, c.bright, y) * 30;
-            if (c.fitTxt) y += 44 + row('Fit', c.fitTxt, y, c.fitTxt === 'Fit' ? '#7fd6a4' : '#ff9d8a') * 30;
-          });
-          if (S.screen) { y += 44 + row('Screen', S.screen, y) * 30; }
-          if (S.room) { y += 44 + row('Room', S.room, y) * 30; }
-          if (S.seat) { y += 44 + row('Seating', S.seat, y) * 30; }
-          if (S.bright) { y += 44 + row('Brightness', S.bright, y) * 30; }
-          if (S.mount) { y += 44 + row('Mounting', S.mount, y) * 30; }
-          if (S.drop) { y += 44 + row('Mount drop', S.drop, y) * 30; }
-          if (S.verdict) {
-            cx.fillStyle = '#ffd94d';
-            cx.font = '600 20px Arial,sans-serif';
-            cx.fillText(String(S.verdict).substring(0, 38), 48, CH - 58);
-          }
+          cx.font = '700 48px Arial,sans-serif';
+          cx.fillText('BudgetProjectors', M, 76);
           cx.fillStyle = '#8fa3c8';
-          cx.font = '400 13px Arial,sans-serif';
-          cx.fillText('Made with the BudgetProjectors throw-distance calculator', 48, CH - 28);
+          cx.font = '400 20px Arial,sans-serif';
+          cx.fillText('Throw-distance calculator', M, 118);
+          var dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          cx.textAlign = 'right';
+          cx.font = '600 22px Arial,sans-serif';
+          cx.fillText('budgetprojectors.org', CW - M, 76);
+          cx.font = '400 18px Arial,sans-serif';
+          cx.fillText(dateStr, CW - M, 118);
+          cx.textAlign = 'left';
+          // left panel: the sectioned text plan + verdict banner
+          cx.fillStyle = '#0c2244';
+          cx.fillRect(0, HDR, PW, CH - HDR - FOOT);
+          var py = HDR + 26;
+          items.forEach(function (it) { drawItem(cx, it, py); py += itemHeight(cx, it); });
+          py += 6;
+          cx.fillStyle = verdictColor;
+          roundRectC(cx, M, py, PW - M * 2, 116, 14);
+          cx.fill();
+          cx.fillStyle = '#ffffff';
+          cx.font = '700 26px Arial,sans-serif';
+          var vls = verdictLines(cx);
+          var vly = py + (116 - (vls.length - 1) * 32) / 2 + 9;
+          vls.forEach(function (ln, i) { cx.fillText(ln, M + 24, vly + i * 32); });
+          // right side: captioned views, backdrop matches the scene
+          var night = !sunOn && !lightsOn;
+          cx.fillStyle = night ? '#0e1320' : '#ffffff';
+          cx.fillRect(PW, HDR, CW - PW, CH - HDR - FOOT);
+          var RW = CW - PW;
+          views.forEach(function (v, i) {
+            var slotY = HDR + 40 + i * PITCH;
+            cx.fillStyle = night ? '#8fa3c8' : '#0c2244';
+            cx.font = '600 20px Arial,sans-serif';
+            cx.fillText(v[3], PW + 40, slotY + 26);
+            var s = Math.min((RW - 80) / v[1], (PITCH - CAPH - 60) / v[2]);
+            var dw = v[1] * s, dh = v[2] * s;
+            var iy = slotY + CAPH + ((PITCH - CAPH - 40) - dh) / 2;
+            cx.drawImage(v[0], PW + (RW - dw) / 2, iy, dw, dh);
+          });
+          // subtle footer; no affiliate links appear in the export, so no disclosure line
+          cx.fillStyle = '#ffffff';
+          cx.fillRect(0, CH - FOOT, CW, FOOT);
+          cx.strokeStyle = '#e7e2d6';
+          cx.lineWidth = 1;
+          cx.beginPath(); cx.moveTo(0, CH - FOOT + 0.5); cx.lineTo(CW, CH - FOOT + 0.5); cx.stroke();
+          cx.fillStyle = '#0c2244';
+          cx.font = '700 20px Arial,sans-serif';
+          cx.fillText('BudgetProjectors.org', M, CH - 58);
+          cx.fillStyle = '#5c5c5c';
+          cx.font = '400 15px Arial,sans-serif';
+          cx.fillText('Made with the BudgetProjectors throw-distance calculator', M, CH - 28);
           cv.toBlob(function (blob) {
             if (blob) downloadBlob(blob, exportBaseName() + '.' + kind);
             URL.revokeObjectURL(url1); URL.revokeObjectURL(url2); URL.revokeObjectURL(url3);
@@ -1535,6 +1609,36 @@
     document.body.classList.remove('printing-calc', 'printing-golf');
     if (savedDocTitle !== null) { document.title = savedDocTitle; savedDocTitle = null; }
   });
+
+  /* ---------- Workstream A: first-visit hint chip + "?" explainers ----------
+     The chip shows once and remembers dismissal under a new key. The "?"
+     buttons toggle small inline tips and never block the controls. */
+  (function calcTips() {
+    var chip = document.getElementById('calc-tipchip');
+    var chipKey = 'calc-hint-chip-dismissed';
+    var seen = false;
+    try { seen = localStorage.getItem(chipKey) === '1'; } catch (e) {}
+    if (chip && !seen) chip.hidden = false;
+    var chipX = document.getElementById('calc-tipchip-x');
+    if (chipX) chipX.addEventListener('click', function () {
+      if (chip) chip.hidden = true;
+      try { localStorage.setItem(chipKey, '1'); } catch (e) {}
+    });
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      var btn = (t && t.closest) ? t.closest('.calc__qbtn') : null;
+      var tips = document.querySelectorAll('.calc__qtip');
+      if (btn) {
+        var key = btn.getAttribute('data-tip');
+        tips.forEach(function (tip) {
+          if (tip.getAttribute('data-qtip') === key) tip.hidden = !tip.hidden;
+          else tip.hidden = true;
+        });
+        return;
+      }
+      tips.forEach(function (tip) { tip.hidden = true; });
+    });
+  })();
 
   function syncSizeVal() {
     var sv = document.getElementById('calc-size-val');
