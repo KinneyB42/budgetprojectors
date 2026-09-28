@@ -82,7 +82,6 @@
     </div>
 
     <form id="consultForm" class="cf-form" novalidate>
-      <p class="cf-warning">Please do not refresh this page while filling out the form. If the page refreshes, your information will be removed.</p>
       <fieldset class="cf-group">
         <legend class="cf-group__title">1. About you</legend>
         <div class="cf-field">
@@ -285,6 +284,43 @@ const WEB3FORMS_ACCESS_KEY = "d1c9ad5b-e1ba-4baa-a590-8c96024cd8a0";
   const submitBtn = document.getElementById("cf-submit");
   const formError = document.getElementById("cf-form-error");
 
+  // Auto-save progress so a refresh never loses what was typed
+  const DRAFT_KEY = "consult-form-draft";
+  const DRAFT_FIELDS = ["cf-name", "cf-email", "cf-region", "cf-project", "cf-use", "cf-budget",
+    "cf-room-w", "cf-room-d", "cf-room-h", "cf-room-unit", "cf-distance",
+    "cf-lighting", "cf-screen", "cf-shortlist", "cf-details"];
+
+  function saveDraft() {
+    try {
+      const draft = {};
+      DRAFT_FIELDS.forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) draft[id] = el.value;
+      });
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch (e) { /* storage unavailable — skip silently */ }
+  }
+
+  function restoreDraft() {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      DRAFT_FIELDS.forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el && typeof draft[id] === "string") el.value = draft[id];
+      });
+    } catch (e) { /* ignore bad or missing data */ }
+  }
+
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* ignore */ }
+  }
+
+  form.addEventListener("input", saveDraft);
+  form.addEventListener("change", saveDraft);
+  restoreDraft();
+
   function setError(fieldId, show) {
     const err = document.getElementById(fieldId + "-error");
     const field = document.getElementById(fieldId);
@@ -380,6 +416,7 @@ const WEB3FORMS_ACCESS_KEY = "d1c9ad5b-e1ba-4baa-a590-8c96024cd8a0";
       });
       const json = await res.json();
       if (json.success) {
+        clearDraft();
         form.hidden = true;
         success.hidden = false;
         success.scrollIntoView({ behavior: "smooth", block: "start" });
