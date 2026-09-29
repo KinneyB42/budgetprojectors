@@ -81,7 +81,9 @@
   function specRows(d) {
     return [
       ['Resolution', d.resolution],
-      ['Brightness', d.ansiLumens ? d.ansiLumens.toLocaleString('en-US') + ' ANSI lumens' + (d.lumensNote ? ' (' + d.lumensNote + ')' : '') : null],
+      ['Brightness', d.ansiLumens ? (d.lumensNote
+          ? d.ansiLumens.toLocaleString('en-US') + ' lumens (ISO, not ANSI)'
+          : d.ansiLumens.toLocaleString('en-US') + ' ANSI lumens') : null],
       ['Throw ratio', d.throwRatio],
       ['Light source', d.lightSource],
       ['Input lag', d.inputLagMs != null ? d.inputLagMs + ' ms' : null],
