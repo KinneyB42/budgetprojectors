@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brightness Calculator — Budget Projectors</title>
+  <meta name="description" content="How many lumens does your projector actually need? Enter your screen size and room lighting to get a real ANSI lumens target.">
+  <link rel="stylesheet" href="css/style.css?v=20260929b">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="wordmark" href="index.html">Budget Projectors</a>
+    <div><button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button></div>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="buying-guides.html">Buying Guides</a>
+      <a href="current-deals.html">Current Deals</a>
+      <a href="recommended-setups.html">Recommended Setups</a>
+      <a href="distance-guide.html">Calculator</a>
+      <a href="book-a-consultation.html">Book a Consultation</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+    <p class="label">Tools</p>
+    <h1>How Bright Does Your Projector Need to Be?</h1>
+    <p class="lede">Brightness is about your room, not the box. A dim projector in a dark theater looks great; a bright projector in a sunlit living room still washes out. Answer three questions and get your real target in ANSI lumens.</p>
+
+    <div class="bright-panel" id="bright-tool">
+      <div>
+        <div class="calc__step">1 &middot; Your screen</div>
+        <label for="bright-size"><span class="calc__q">How big is the picture, corner to corner?</span> <span class="calc__val" id="bright-size-val"></span></label>
+        <div class="calc__slider-row">
+          <input type="range" id="bright-size" min="40" max="200" step="1" value="100">
+        </div>
+        <div class="calc__slider-ends"><span>40&Prime;</span><span>200&Prime;</span></div>
+      </div>
+
+      <div style="margin-top: 28px;">
+        <div class="calc__step">2 &middot; Your light</div>
+        <div class="calc__label">How much light is in the room when you watch?</div>
+        <div class="calc__chips" id="bright-light">
+          <button type="button" class="calc__chip chosen" data-light="dark">Dark theater</button>
+          <button type="button" class="calc__chip" data-light="ambient">Some ambient light</button>
+          <button type="button" class="calc__chip" data-light="bright">Bright living room</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 28px;">
+        <div class="calc__step">3 &middot; Your screen</div>
+        <div class="calc__label">What screen material?</div>
+        <div class="calc__chips" id="bright-gain">
+          <button type="button" class="calc__chip" data-gain="0.8">Gray (0.8 gain)</button>
+          <button type="button" class="calc__chip chosen" data-gain="1.0">White (1.0 gain)</button>
+          <button type="button" class="calc__chip" data-gain="1.3">High gain (1.3)</button>
+        </div>
+      </div>
+
+      <div class="calc__payoff" style="margin-top: 32px;">
+        <div class="calc__step">Your target</div>
+        <p class="calc__big" id="bright-result">—</p>
+        <p class="calc__verdict-line" id="bright-verdict"></p>
+        <p class="calc__hint" id="bright-note"></p>
+      </div>
+    </div>
+
+    <div class="prose" style="margin-top: 48px;">
+      <h2>How this works</h2>
+      <p>Projector brightness only means something per square foot of screen. A 2,000-lumen projector on a 200-inch screen is dim; on an 80-inch screen it's blinding. This calculator multiplies your screen's area by a brightness target for your lighting, then adjusts for your screen's gain. Gray screens need more lumens; high-gain screens need fewer.</p>
+      <p>Two things the number doesn't tell you:</p>
+      <ul>
+        <li><strong>In a dark room, contrast beats brightness.</strong> Once you have enough lumens, deeper blacks matter far more than extra brightness. Don't overspend on lumens you'll never use.</li>
+        <li><strong>Only compare ANSI lumens.</strong> "LED lumens" and "light source lumens" are inflated marketing numbers. If a listing won't say ANSI lumens, treat its brightness claim as fiction. See the <a href="glossary.html#l">glossary</a>.</li>
+      </ul>
+      <h2>Now match a projector to your room</h2>
+      <p>Brightness is one half of the equation — the other half is whether the projector physically fits your space. Run your room through the <a href="distance-guide.html">throw distance calculator</a>, or <a href="book-a-consultation.html">book a consultation</a> and get the full recommendation done for you.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="index.html">Home</a>
+      <a href="buying-guides.html">Buying Guides</a>
+      <a href="current-deals.html">Current Deals</a>
+      <a href="recommended-setups.html">Recommended Setups</a>
+      <a href="distance-guide.html">Calculator</a>
+      <a href="book-a-consultation.html">Book a Consultation</a>
+      <a href="about.html">About</a>
+      <a href="glossary.html">Glossary</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+    <p><strong>Disclosure:</strong> As an Amazon Associate, I earn from qualifying purchases. I also earn affiliate commissions on qualifying purchases made through links to AliExpress, B&amp;H Photo Video, BenQ, eBay, JMGO, Nothing Projector, UGREEN, and XGIMI. Links open in a new tab.</p>
+    <p>&copy; 2026 BudgetProjectors</p>
+    <p>All trademarks are the property of their respective owners.</p>
+  </div>
+</footer>
+
+<script src="js/main.js?v=20260927h"></script>
+<script src="js/brightness.js?v=20260929a"></script>
+</body>
+</html>
