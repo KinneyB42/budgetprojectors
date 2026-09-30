@@ -31,7 +31,6 @@
      then the Epson Home Cinema UB line + 3500/3700/3800, then Hisense C2 Pro. */
   var PINNED_PICKS = [
     "JMGO N1S Ultimate",
-    "BenQ HT2060",
     "BenQ HT3560",
     "Epson Home Cinema 5050UB",
     "Epson Pro Cinema LS12000",

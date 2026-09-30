@@ -18,12 +18,6 @@ window.QUIZ_MODELS = [
     brandUrl: null
   },
   {
-    brand: "BenQ", model: "HT2060", band: 1,
-    light: ["dark"], uses: ["movies", "everything"], portable: false,
-    why: ["Excellent contrast and color for the money — a real theater image.", "Quiet, sharp 1080p; the dark-room value pick."],
-    brandUrl: null
-  },
-  {
     brand: "BenQ", model: "TK700STi", band: 2,
     light: ["dark", "ambient"], uses: ["gaming", "sports", "everything"], portable: false,
     why: ["4K short throw built for gaming — big image from close up.", "Low lag plus high refresh options for fast games."],

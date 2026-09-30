@@ -23,9 +23,6 @@ window.SPEC_DATA = [
   // Source: https://www.benq.com/en-us/projector/gaming/x3100i/spec.html
   // Input lag: 4.2ms at 1080p@240Hz (also 16.7ms at 1080p/4K@60Hz, 8.3ms at 1080p@120Hz)
   {brand:"BenQ", model:"X3100i", resolution:"4K UHD", ansiLumens:3300, throwRatio:"1.15-1.5:1", lightSource:"4LED", inputLagMs:4.2, lensShift:"Vertical 40%-60%", contrast:"600000:1 (FOFO)"},
-  // Source: https://www.benq.com/en-us/projector/cinema/ht2060/spec.html
-  // Input lag: 8.3ms at 1080p@120Hz (also 16.7ms at 1080p@60Hz)
-  {brand:"BenQ", model:"HT2060", resolution:"1080p", ansiLumens:2300, throwRatio:"1.15-1.5:1", lightSource:"4LED", inputLagMs:8.3, lensShift:"Vertical +10%", contrast:"500000:1 (FOFO)"},
   // Source: https://www.benq.com/en-us/projector/gaming/tk700sti/spec.html
   // Input lag: 4.2ms at 1080p@240Hz (also 16.7ms at 1080p/4K@60Hz, 8.3ms at 1080p@120Hz)
   {brand:"BenQ", model:"TK700STi", resolution:"4K UHD", ansiLumens:3000, throwRatio:"0.9-1.08:1", lightSource:"Lamp", inputLagMs:4.2, lensShift:"None", contrast:"10000:1 (FOFO)"},
