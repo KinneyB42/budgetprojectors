@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projector Unit Conversions — Budget Projectors</title>
+  <meta name="description" content="Quick projector math: foot-lamberts to nits, foot-candles to lux, lumens to screen brightness, throw ratio, viewing angle, and contrast conversions.">
+  <link rel="stylesheet" href="css/style.css?v=20261005a">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="wordmark" href="index.html">Budget Projectors</a>
+    <div><button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button></div>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="buying-guides.html">Buying Guides</a>
+      <a href="current-deals.html">Current Deals</a>
+      <a href="recommended-setups.html">Recommended Setups</a>
+      <a href="distance-guide.html">Calculator</a>
+      <a href="book-a-consultation.html">Book a Consultation</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+    <p class="label">Tools</p>
+    <h1>Projector Unit Conversions</h1>
+    <p class="lede">The quick math behind every projector spec sheet. Type in any box and the rest follow.</p>
+
+    <div class="bright-panel">
+      <div class="conv-block">
+        <div class="calc__step">Screen brightness</div>
+        <div class="conv-grid">
+          <div class="conv-field"><label for="cv-ftl">Foot-lamberts</label><input type="number" id="cv-ftl" inputmode="decimal" placeholder="16"></div>
+          <div class="conv-field"><label for="cv-nits">Nits</label><input type="number" id="cv-nits" inputmode="decimal" placeholder="55"></div>
+        </div>
+        <p class="conv-note">Reference: SDR in a dark room targets about 14&ndash;16 ftL (48&ndash;55 nits).</p>
+      </div>
+
+      <div class="conv-block">
+        <div class="calc__step">Room light</div>
+        <div class="conv-grid">
+          <div class="conv-field"><label for="cv-fc">Foot-candles</label><input type="number" id="cv-fc" inputmode="decimal" placeholder="5"></div>
+          <div class="conv-field"><label for="cv-lux">Lux</label><input type="number" id="cv-lux" inputmode="decimal" placeholder="54"></div>
+        </div>
+        <p class="conv-note">A dim living room is roughly 3&ndash;10 foot-candles on the screen. Daylight through windows can exceed 50.</p>
+      </div>
+
+      <div class="conv-block">
+        <div class="calc__step">Length</div>
+        <div class="conv-grid">
+          <div class="conv-field"><label for="cv-in">Inches</label><input type="number" id="cv-in" inputmode="decimal" placeholder="120"></div>
+          <div class="conv-field"><label for="cv-ft">Feet</label><input type="number" id="cv-ft" inputmode="decimal" placeholder="10"></div>
+          <div class="conv-field"><label for="cv-cm">Centimeters</label><input type="number" id="cv-cm" inputmode="decimal" placeholder="305"></div>
+          <div class="conv-field"><label for="cv-m">Meters</label><input type="number" id="cv-m" inputmode="decimal" placeholder="3.05"></div>
+        </div>
+      </div>
+
+      <div class="conv-block">
+        <div class="calc__step">Lumens &rarr; screen brightness</div>
+        <div class="conv-grid">
+          <div class="conv-field"><label for="cv-lumens">Projector lumens (ANSI)</label><input type="number" id="cv-lumens" inputmode="numeric" placeholder="2500"></div>
+          <div class="conv-field"><label for="cv-ldiag">Screen diagonal (in)</label><input type="number" id="cv-ldiag" inputmode="decimal" placeholder="120"></div>
+          <div class="conv-field"><label for="cv-lgain">Screen gain</label><input type="number" id="cv-lgain" inputmode="decimal" placeholder="1.0" step="0.1"></div>
+          <div class="conv-field"><label for="cv-lftl">Foot-lamberts</label><input type="number" id="cv-lftl" readonly tabindex="-1" aria-live="polite"></div>
+          <div class="conv-field"><label for="cv-lnits">Nits</label><input type="number" id="cv-lnits" readonly tabindex="-1" aria-live="polite"></div>
+        </div>
+        <div class="calc__chips" style="margin-top: 12px;">
+          <button type="button" class="calc__chip chosen" data-cv-ar="16:9">16:9</button>
+          <button type="button" class="calc__chip" data-cv-ar="2.39">2.39:1</button>
+        </div>
+        <p class="conv-note" id="cv-larea"></p>
+      </div>
+
+      <div class="conv-block">
+        <div class="calc__step">Throw ratio &rarr; distance</div>
+        <div class="conv-grid">
+          <div class="conv-field"><label for="cv-tratio">Throw ratio</label><input type="number" id="cv-tratio" inputmode="decimal" placeholder="1.5" step="0.01"></div>
+          <div class="conv-field"><label for="cv-twidth">Image width (in)</label><input type="number" id="cv-twidth" inputmode="decimal" placeholder="105"></div>
+          <div class="conv-field"><label for="cv-tdist">Throw distance (ft)</label><input type="number" id="cv-tdist" readonly tabindex="-1" aria-live="polite"></div>
+        </div>
+        <p class="conv-note">Lens to screen. For a zoom lens, run it twice: once with each end of the ratio range.</p>
+      </div>
+
+      <div class="conv-block">
+        <div class="calc__step">Viewing angle</div>
+        <div class="conv-grid">
+          <div class="conv-field"><label for="cv-vwidth">Image width (in)</label><input type="number" id="cv-vwidth" inputmode="decimal" placeholder="105"></div>
+          <div class="conv-field"><label for="cv-vdist">Seat distance (ft)</label><input type="number" id="cv-vdist" inputmode="decimal" placeholder="12"></div>
+          <div class="conv-field"><label for="cv-vang">Viewing angle (&deg;)</label><input type="number" id="cv-vang" readonly tabindex="-1" aria-live="polite"></div>
+        </div>
+        <div class="conv-grid" style="margin-top: 14px;">
+          <div class="conv-field"><label for="cv-awidth">Image width (in)</label><input type="number" id="cv-awidth" inputmode="decimal" placeholder="105"></div>
+          <div class="conv-field"><label for="cv-aang">Target angle (&deg;)</label><input type="number" id="cv-aang" inputmode="decimal" placeholder="36"></div>
+          <div class="conv-field"><label for="cv-adist">Seat distance (ft)</label><input type="number" id="cv-adist" readonly tabindex="-1" aria-live="polite"></div>
+        </div>
+        <p class="conv-note">SMPTE recommends at least 30&deg;; THX calls 36&ndash;40&deg; the sweet spot.</p>
+      </div>
+
+      <div class="conv-block">
+        <div class="calc__step">Contrast ratio</div>
+        <div class="conv-grid">
+          <div class="conv-field"><label for="cv-cratio">Contrast (e.g. 2000)</label><input type="number" id="cv-cratio" inputmode="numeric" placeholder="2000"></div>
+          <div class="conv-field"><label for="cv-cstops">Stops</label><input type="number" id="cv-cstops" readonly tabindex="-1" aria-live="polite"></div>
+          <div class="conv-field"><label for="cv-cblack">Black = % of white</label><input type="number" id="cv-cblack" readonly tabindex="-1" aria-live="polite"></div>
+        </div>
+        <p class="conv-note">Each stop doubles the ratio. A 2000:1 projector resolves about 11 stops.</p>
+      </div>
+    </div>
+
+    <div class="prose" style="margin-top: 48px;">
+      <h2>A note on lumen units</h2>
+      <p>ANSI and ISO lumens both use a 9-point measurement and are roughly comparable. "LED lumens" and "light source lumens" are not standards — treat them as marketing. When a calculator asks for lumens, it means ANSI unless it says otherwise.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="index.html">Home</a>
+      <a href="buying-guides.html">Buying Guides</a>
+      <a href="current-deals.html">Current Deals</a>
+      <a href="recommended-setups.html">Recommended Setups</a>
+      <a href="distance-guide.html">Calculator</a>
+      <a href="book-a-consultation.html">Book a Consultation</a>
+      <a href="about.html">About</a>
+      <a href="glossary.html">Glossary</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+    <p><strong>Disclosure:</strong> As an Amazon Associate, I earn from qualifying purchases. I also earn affiliate commissions on qualifying purchases made through links to AliExpress, B&amp;H Photo Video, BenQ, eBay, JMGO, Nothing Projector, UGREEN, and XGIMI. Links open in a new tab.</p>
+    <p>&copy; 2026 BudgetProjectors</p>
+    <p>All trademarks are the property of their respective owners.</p>
+  </div>
+</footer>
+
+<script src="js/main.js?v=20260927h"></script>
+<script src="js/conversions.js?v=20261005a"></script>
+</body>
+</html>

@@ -22,6 +22,8 @@
   var resultEl = document.getElementById('bright-result');
   var verdictEl = document.getElementById('bright-verdict');
   var noteEl = document.getElementById('bright-note');
+  var haveEl = document.getElementById('bright-have');
+  var haveResultEl = document.getElementById('bright-have-result');
   if (!sizeEl || !lightWrap || !gainWrap) return;
 
   function chosen(wrap, attr) {
@@ -50,8 +52,31 @@
     if (lo < 100) lo = 100;
 
     resultEl.textContent = fmt(lo) + '\u2013' + fmt(hi) + ' ANSI lumens';
-    verdictEl.textContent = t.verdict;
+    // The lm/sq-ft targets are foot-lamberts on a 1.0-gain screen; show both units.
+    var nitsLo = Math.round(t.lo * 3.426), nitsHi = Math.round(t.hi * 3.426);
+    verdictEl.textContent = t.verdict + ' That is about ' + t.lo + '\u2013' + t.hi +
+      ' foot-lamberts (' + nitsLo + '\u2013' + nitsHi + ' nits) on your screen.';
     noteEl.textContent = t.note;
+
+    updateHave(area, gain, t, lo, hi);
+  }
+
+  function updateHave(area, gain, t, lo, hi) {
+    if (!haveEl || !haveResultEl) return;
+    var lumens = parseFloat(haveEl.value, 10);
+    if (!(lumens > 0)) { haveResultEl.textContent = ''; return; }
+    // Foot-lamberts = lumens x gain / screen area.
+    var fl = (lumens * gain) / area;
+    var nits = Math.round(fl * 3.426);
+    var msg = 'About ' + Math.round(fl) + ' foot-lamberts (' + nits + ' nits) on your screen. ';
+    if (lumens < lo * 0.9) {
+      msg += 'Below target for this room \u2014 expect a dim image, especially with the lights on.';
+    } else if (lumens <= hi * 1.15) {
+      msg += 'Inside the target range \u2014 brightness is not your problem.';
+    } else {
+      msg += 'Well above target \u2014 plenty bright. In a dark room, extra lumens past this point buy nothing; contrast matters more.';
+    }
+    haveResultEl.textContent = msg;
   }
 
   function chipify(wrap) {
@@ -65,6 +90,7 @@
   }
 
   sizeEl.addEventListener('input', update);
+  if (haveEl) haveEl.addEventListener('input', update);
   chipify(lightWrap);
   chipify(gainWrap);
   update();

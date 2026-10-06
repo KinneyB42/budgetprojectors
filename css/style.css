@@ -1203,3 +1203,16 @@ html { scroll-behavior: smooth; }
   padding: var(--sp-7);
 }
 /* ===== END WORKSTREAM C ===== */
+
+/* ===== Conversions page ===== */
+.conv-block { margin-bottom: 36px; }
+.conv-block:last-child { margin-bottom: 0; }
+.conv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-top: 12px; }
+.conv-field label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.conv-field input {
+  width: 100%; font-family: var(--sans); font-size: 20px;
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: 0;
+  background: var(--white); color: var(--navy);
+}
+.conv-field input:focus { outline: 2px solid var(--navy); outline-offset: -2px; }
+.conv-note { font-size: 14px; color: var(--muted); margin-top: 10px; }

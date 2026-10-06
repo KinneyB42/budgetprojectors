@@ -129,6 +129,18 @@
     });
   }
 
+  /* Viewing-angle comfort bands (horizontal angle at the seat).
+     SMPTE 30 deg minimum, THX 36-40 deg sweet spot, IMAX 55 deg+ immersive. */
+  function viewingBand(deg) {
+    if (deg >= 55) return 'IMAX territory, extremely immersive';
+    if (deg >= 50) return 'very immersive, IMAX-like';
+    if (deg >= 40) return 'cinematic';
+    if (deg >= 36) return 'THX sweet spot';
+    if (deg >= 30) return 'SMPTE recommended range';
+    if (deg >= 26) return 'relaxed viewing';
+    return 'casual: the image may feel small from here';
+  }
+
   /* ---------- Affiliate shop links for the selected model ---------- */
   var AFF = {
     amazonTag: 'brandonkinney-20', /* Brandon's Associates tag, from his SiteStripe link 2026-09-20 */
@@ -2313,12 +2325,16 @@
       if (seat < dClose) bits.push('Your seating (' + dispDist(seat) + ') is closer than the reference range: extra immersive.');
       else if (seat > dFarV) bits.push('Your seating (' + dispDist(seat) + ') is farther than the reference range: the image may feel small.');
       else bits.push('Your seating (' + dispDist(seat) + ') lands inside the reference range.');
-      // Ideal screen size for this seating distance (inverse of the viewing-angle math above).
-      var wLo = 2 * seat * Math.tan(15 * Math.PI / 180) * 12; // inches, 30 deg
-      var wHi = 2 * seat * Math.tan(18 * Math.PI / 180) * 12; // inches, 36 deg
+      // Viewing angle from the seat, with comfort bands.
+      var angDeg = 2 * Math.atan((imgWIn / 2) / (seat * 12)) * 180 / Math.PI;
+      bits.push('Viewing angle: about ' + fmt(angDeg, 0) + '&deg; from your seat &mdash; ' + viewingBand(angDeg) + '.');
+      // Snap-to-standard screen sizes at this seating distance.
       var swf = stdWidthFactor();
-      bits.push('For your ' + dispDist(seat) + ' seating, the 30&ndash;36&deg; sweet spot is a ' +
-        fmt(wLo / swf, 0) + '&ndash;' + fmt(wHi / swf, 0) + '&Prime; ' + stdAspect + ' screen.');
+      var sSMPTE = 2 * seat * 12 * Math.tan(15 * Math.PI / 180) / swf; // 30 deg
+      var sTHX = 2 * seat * 12 * Math.tan(20 * Math.PI / 180) / swf; // 40 deg
+      var sIMAX = 2 * seat * 12 * Math.tan(27.5 * Math.PI / 180) / swf; // 55 deg
+      bits.push('At ' + dispDist(seat) + ', the reference sizes are ' + fmt(sSMPTE, 0) + '&Prime; (SMPTE 30&deg;), ' +
+        fmt(sTHX, 0) + '&Prime; (THX 40&deg;), ' + fmt(sIMAX, 0) + '&Prime; (IMAX 55&deg;) ' + stdAspect + '.');
     }
     // Brightness: lumens over the lit image area, in foot-lamberts,
     // minus the ambient light the room throws back onto the screen.

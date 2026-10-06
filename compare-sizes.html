@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TV vs Projector Screen Size Comparison — Budget Projectors</title>
+  <meta name="description" content="See how much bigger a projector screen really is than your TV: true picture area, viewing angles, and a to-scale diagram.">
+  <link rel="stylesheet" href="css/style.css?v=20260929b">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="wordmark" href="index.html">Budget Projectors</a>
+    <div><button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button></div>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="buying-guides.html">Buying Guides</a>
+      <a href="current-deals.html">Current Deals</a>
+      <a href="recommended-setups.html">Recommended Setups</a>
+      <a href="distance-guide.html">Calculator</a>
+      <a href="book-a-consultation.html">Book a Consultation</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+    <p class="label">Tools</p>
+    <h1>TV vs Projector Screen: How Much Bigger?</h1>
+    <p class="lede">Diagonal inches lie. A 120-inch screen sounds "a bit bigger" than an 85-inch TV — until you see it's twice the picture. Compare true area and viewing angles, drawn to scale.</p>
+
+    <div class="bright-panel">
+      <div>
+        <div class="calc__step">1 &middot; Your TV</div>
+        <label for="cs-tv"><span class="calc__q">TV diagonal</span> <span class="calc__val" id="cs-tv-val"></span></label>
+        <div class="calc__slider-row">
+          <input type="range" id="cs-tv" min="32" max="115" step="1" value="65">
+        </div>
+        <div class="calc__slider-ends"><span>32&Prime;</span><span>115&Prime;</span></div>
+      </div>
+
+      <div style="margin-top: 28px;">
+        <div class="calc__step">2 &middot; The screen you're eyeing</div>
+        <label for="cs-screen"><span class="calc__q">Screen diagonal</span> <span class="calc__val" id="cs-screen-val"></span></label>
+        <div class="calc__slider-row">
+          <input type="range" id="cs-screen" min="60" max="200" step="1" value="120">
+        </div>
+        <div class="calc__slider-ends"><span>60&Prime;</span><span>200&Prime;</span></div>
+        <div class="calc__chips" id="cs-ar" style="margin-top: 12px;">
+          <button type="button" class="calc__chip chosen" data-ar="16:9">16:9</button>
+          <button type="button" class="calc__chip" data-ar="2.39">2.39:1 CinemaScope</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 28px;">
+        <div class="calc__step">3 &middot; Your seat</div>
+        <label for="cs-seat"><span class="calc__q">Seat distance from the screen</span> <span class="calc__val" id="cs-seat-val"></span></label>
+        <div class="calc__slider-row">
+          <input type="range" id="cs-seat" min="4" max="30" step="0.5" value="12">
+        </div>
+        <div class="calc__slider-ends"><span>4 ft</span><span>30 ft</span></div>
+      </div>
+
+      <div class="calc__payoff" style="margin-top: 32px;" id="cs-result">
+      </div>
+
+      <figure class="calc__fig" style="margin-top: 24px;">
+        <svg id="cs-svg" viewBox="0 0 660 340" role="img" aria-label="TV and projector screen drawn to scale with a six-foot person for reference"></svg>
+        <figcaption>Drawn to scale, with a 6-ft person for reference</figcaption>
+      </figure>
+    </div>
+
+    <div class="prose" style="margin-top: 48px;">
+      <h2>Why area matters more than diagonal</h2>
+      <p>Picture area grows with the <em>square</em> of the diagonal. Going from a 65-inch TV to a 120-inch screen isn't "almost double" — it's more than three times the picture. That's why projectors feel so different from even the biggest TVs: your field of view fills up.</p>
+      <h2>Check the rest of the plan</h2>
+      <p>Size is step one. Next, confirm a projector can actually fill that screen from your room with the <a href="distance-guide.html">throw distance calculator</a>, and that it's bright enough with the <a href="brightness.html">brightness calculator</a>.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="index.html">Home</a>
+      <a href="buying-guides.html">Buying Guides</a>
+      <a href="current-deals.html">Current Deals</a>
+      <a href="recommended-setups.html">Recommended Setups</a>
+      <a href="distance-guide.html">Calculator</a>
+      <a href="book-a-consultation.html">Book a Consultation</a>
+      <a href="about.html">About</a>
+      <a href="glossary.html">Glossary</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+    <p><strong>Disclosure:</strong> As an Amazon Associate, I earn from qualifying purchases. I also earn affiliate commissions on qualifying purchases made through links to AliExpress, B&amp;H Photo Video, BenQ, eBay, JMGO, Nothing Projector, UGREEN, and XGIMI. Links open in a new tab.</p>
+    <p>&copy; 2026 BudgetProjectors</p>
+    <p>All trademarks are the property of their respective owners.</p>
+  </div>
+</footer>
+
+<script src="js/main.js?v=20260927h"></script>
+<script src="js/compare-sizes.js?v=20261005a"></script>
+</body>
+</html>
