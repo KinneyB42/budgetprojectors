@@ -1216,3 +1216,12 @@ html { scroll-behavior: smooth; }
 }
 .conv-field input:focus { outline: 2px solid var(--navy); outline-offset: -2px; }
 .conv-note { font-size: 14px; color: var(--muted); margin-top: 10px; }
+
+/* ===== Footer legal row: glossary + privacy at the very bottom ===== */
+.footer-legal { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.14); display: flex; gap: 10px; flex-wrap: wrap; }
+.footer-legal a {
+  color: var(--white); font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; text-decoration: none; padding: 8px 16px;
+  border: 1px solid rgba(255,255,255,.35); border-radius: 999px; opacity: 0.9;
+}
+.footer-legal a:hover { opacity: 1; background: rgba(255,255,255,.1); }
