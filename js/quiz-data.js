@@ -1,6 +1,6 @@
 /* Quiz recommendation data.
    band: 0 = under $500, 1 = $500-1,000, 2 = $1,000-2,000, 3 = $2,000+
-   NOTE (Brandon: verify): price bands assigned from memory 2026-09-29 — please correct any that are off.
+   NOTE (Brandon: verify): price bands assigned from memory 2026-09-29, please correct any that are off.
    light: room lightings the model suits: dark / ambient / bright
    uses: movies / sports / gaming / everything
 */
@@ -8,19 +8,19 @@ window.QUIZ_MODELS = [
   {
     brand: "XGIMI", model: "MoGo 3 Pro", band: 0,
     light: ["dark", "ambient"], uses: ["movies", "everything"], portable: true,
-    why: ["Compact and portable — move it room to room or take it outside.", "Sharp 1080p image that punches above its size in dimmer rooms."],
+    why: ["Compact and portable, move it room to room or take it outside.", "Sharp 1080p image that punches above its size in dimmer rooms."],
     brandUrl: null
   },
   {
     brand: "BenQ", model: "TH575", band: 1,
     light: ["ambient", "bright"], uses: ["sports", "gaming", "everything"], portable: false,
-    why: ["Very bright 1080p lamp projector — holds up with lights on.", "Low input lag makes it a genuine budget gaming option."],
+    why: ["Very bright 1080p lamp projector, holds up with lights on.", "Low input lag makes it a genuine budget gaming option."],
     brandUrl: null
   },
   {
     brand: "BenQ", model: "TK700STi", band: 2,
     light: ["dark", "ambient"], uses: ["gaming", "sports", "everything"], portable: false,
-    why: ["4K short throw built for gaming — big image from close up.", "Low lag plus high refresh options for fast games."],
+    why: ["4K short throw built for gaming, big image from close up.", "Low lag plus high refresh options for fast games."],
     brandUrl: null
   },
   {
@@ -32,7 +32,7 @@ window.QUIZ_MODELS = [
   {
     brand: "XGIMI", model: "HORIZON 20", band: 2,
     light: ["dark", "ambient"], uses: ["movies", "sports", "everything"], portable: false,
-    why: ["Smart 4K lifestyle projector with strong built-in audio.", "Bright, sharp, and simple — no receiver required to enjoy it."],
+    why: ["Smart 4K lifestyle projector with strong built-in audio.", "Bright, sharp, and simple, no receiver required to enjoy it."],
     brandUrl: "https://xgimi.sjv.io/R0dbmb"
   },
   {
@@ -50,19 +50,19 @@ window.QUIZ_MODELS = [
   {
     brand: "JMGO", model: "IRIS Ultra", band: 3,
     light: ["dark", "ambient", "bright"], uses: ["movies", "sports", "everything"], portable: false,
-    why: ["Extremely bright triple-laser 4K — handles ambient light like few others.", "Gimbal design makes placement unusually flexible."],
+    why: ["Extremely bright triple-laser 4K, handles ambient light like few others.", "Gimbal design makes placement unusually flexible."],
     brandUrl: "https://affiliate.jmgo.com/OYv0dG"
   },
   {
     brand: "JMGO", model: "IRIS Ultra Max", band: 3,
     light: ["dark", "ambient", "bright"], uses: ["movies", "sports", "everything"], portable: false,
-    why: ["The brightest of the bunch — built for big screens in real rooms.", "Reference-level triple-laser color."],
+    why: ["The brightest of the bunch, built for big screens in real rooms.", "Reference-level triple-laser color."],
     brandUrl: "https://affiliate.jmgo.com/JkvXAN"
   },
   {
     brand: "XGIMI", model: "HORIZON 20 Max", band: 3,
     light: ["ambient", "bright"], uses: ["movies", "sports", "everything"], portable: false,
-    why: ["XGIMI's brightest 4K — made for large screens with lights on.", "Premium build and sound to match the picture."],
+    why: ["XGIMI's brightest 4K, made for large screens with lights on.", "Premium build and sound to match the picture."],
     brandUrl: "https://xgimi.sjv.io/qW6yZL"
   },
   {

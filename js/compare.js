@@ -27,7 +27,7 @@
 
   var DATA = window.SPEC_DATA || [];
   if (!DATA.length) {
-    emptyEl.textContent = 'Comparison data is loading — please refresh in a moment.';
+    emptyEl.textContent = 'Comparison data is loading, please refresh in a moment.';
     return;
   }
 

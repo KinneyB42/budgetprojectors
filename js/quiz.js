@@ -23,7 +23,7 @@
       options: [
         { v: 0, t: 'Under 100"', d: 'Cozy room or first setup' },
         { v: 1, t: '100" to 120"', d: 'The sweet spot for most rooms' },
-        { v: 2, t: 'Over 120"', d: 'Go big — dedicated space' }
+        { v: 2, t: 'Over 120"', d: 'Go big, dedicated space' }
       ]
     },
     {
@@ -177,12 +177,12 @@
     bodyEl.innerHTML = '';
     var h = document.createElement('h2');
     h.className = 'quiz-q';
-    h.textContent = ranked.length ? 'Your top 3 picks' : 'Hmm — tough combination';
+    h.textContent = ranked.length ? 'Your top 3 picks' : 'Hmm, tough combination';
     bodyEl.appendChild(h);
 
     if (!ranked.length) {
       var p = document.createElement('p');
-      p.textContent = 'Nothing in the current lineup fits that budget and room together. The used market is your friend here — great projectors go for half of retail.';
+      p.textContent = 'Nothing in the current lineup fits that budget and room together. The used market is your friend here, great projectors go for half of retail.';
       bodyEl.appendChild(p);
       var a = document.createElement('a');
       a.className = 'btn';
@@ -220,13 +220,13 @@
       if (ranked[0].s < 5) {
         var note = document.createElement('p');
         note.className = 'calc__hint';
-        note.innerHTML = 'Honest take: your budget and room are fighting each other a little. These are the best fits available new — but the <a href="used-checklist.html">used market</a> would stretch your dollar much further here.';
+        note.innerHTML = 'Honest take: your budget and room are fighting each other a little. These are the best fits available new, but the <a href="used-checklist.html">used market</a> would stretch your dollar much further here.';
         bodyEl.appendChild(note);
       }
 
       var cta = document.createElement('p');
       cta.style.marginTop = '28px';
-      cta.innerHTML = 'Want a human to double-check this for your exact room? <a href="book-a-consultation.html">Book a consultation</a> — I will confirm the pick or find you a better one.';
+      cta.innerHTML = 'Want a human to double-check this for your exact room? <a href="book-a-consultation.html">Book a consultation</a>, I will confirm the pick or find you a better one.';
       bodyEl.appendChild(cta);
     }
 

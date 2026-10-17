@@ -1,4 +1,4 @@
-/* Budget Projectors — mobile nav + throw-distance room planner (vanilla JS) */
+/* Budget Projectors, mobile nav + throw-distance room planner (vanilla JS) */
 (function () {
   'use strict';
 
@@ -12,7 +12,7 @@
     });
   }
 
-  /* Throw-distance room planner — per-model ratios from js/throw-data.js.
+  /* Throw-distance room planner, per-model ratios from js/throw-data.js.
      16:9: width = diagonal * 0.8716, height = diagonal * 0.4903. */
   var ASPECTS = { '16:9': [16, 9], '16:10': [16, 10], '2.35:1': [2.35, 1], '4:3': [4, 3], '1:1': [1, 1] };
   var stdAspect = '16:9';
@@ -407,7 +407,7 @@
   var imageLockBtn = document.getElementById('calc-image-lock');
   var lockMode = 'off'; // 'off' | 'projector' | 'image'
   var lockedD = 0;      // throw distance held fixed while projector-locked, ft
-  var lastMoved = null; // 'size' | 'zoom' — which slider the user just dragged
+  var lastMoved = null; // 'size' | 'zoom', which slider the user just dragged
   var needLockCapture = false;
 
   function widthFactor() {
@@ -555,7 +555,7 @@
   // Room types carry no measurements: the user enters their own room size.
   var ROOMS = {
     indoors: { label: 'Indoors',
-      tip: 'Set the lights and sunlight toggles to match your room — ambient light decides how much brightness you actually need. Dark walls and ceiling boost perceived contrast.' },
+      tip: 'Set the lights and sunlight toggles to match your room, ambient light decides how much brightness you actually need. Dark walls and ceiling boost perceived contrast.' },
     outdoors: { label: 'Outdoors',
       tip: 'Outside there are no walls to bounce light, so lumens matter most. Plan for after dark and keep the projector dry.' }
   };
@@ -1603,7 +1603,7 @@
     try { localStorage.setItem('calc-export-name', exportNameInput.value); } catch (e) {}
   });
   // The PDF goes through the browser print dialog, which suggests the document
-  // title as the file name — swap it for the export name while printing.
+  // title as the file name, swap it for the export name while printing.
   var savedDocTitle = null;
   function useExportDocTitle(base) {
     savedDocTitle = document.title;
@@ -2054,7 +2054,7 @@
     });
     if (intentChoice === 'space') {
       // Beginner path: room first, picture second, then the fit list below.
-      // No forced Advanced mode and no reverse/throw mode — those stay expert tools.
+      // No forced Advanced mode and no reverse/throw mode, those stay expert tools.
       setDirection('screen');
       if (!opts.noScroll) {
         var roomSec = document.querySelector('.calc__room');
@@ -2203,7 +2203,7 @@
           (intentChoice === 'space' ? 'What fits your room?' : 'Which projector do you have?') + '</div>' +
           '<p class="calc__hint">' +
           (intentChoice === 'space'
-            ? 'Your top matches are listed below &mdash; each one links straight to a store.'
+            ? 'Your top matches are listed below, each one links straight to a store.'
             : 'Pick your model above and your yes-or-no verdict will appear here.') +
           '</p></div>';
       } else {
@@ -2327,7 +2327,7 @@
       else bits.push('Your seating (' + dispDist(seat) + ') lands inside the reference range.');
       // Viewing angle from the seat, with comfort bands.
       var angDeg = 2 * Math.atan((imgWIn / 2) / (seat * 12)) * 180 / Math.PI;
-      bits.push('Viewing angle: about ' + fmt(angDeg, 0) + '&deg; from your seat &mdash; ' + viewingBand(angDeg) + '.');
+      bits.push('Viewing angle: about ' + fmt(angDeg, 0) + '&deg; from your seat, ' + viewingBand(angDeg) + '.');
       // Snap-to-standard screen sizes at this seating distance.
       var swf = stdWidthFactor();
       var sSMPTE = 2 * seat * 12 * Math.tan(15 * Math.PI / 180) / swf; // 30 deg
@@ -2388,7 +2388,7 @@
       }
       if (isRear && throwD > 0) {
         bits.push('Rear projection: leave about ' + fmt(throwD + 2, 0) +
-          ' ft behind the screen for the projector and its throw. You will need a dedicated rear-projection screen — standard white and ALR screens do not work from behind.');
+          ' ft behind the screen for the projector and its throw. You will need a dedicated rear-projection screen, standard white and ALR screens do not work from behind.');
       }
     } else {
       bits.push('No walls to worry about outdoors, just keep the throw path clear.');
@@ -2396,9 +2396,9 @@
     // Obstacle warnings from the 3D / side view geometry.
     var ob = drawO.obst;
     if (ob) {
-      if (ob.blocked) bits.push('Heads up: the projector sits in your sightline and will block part of the screen from your seat — move it behind the seating or shift it aside.');
-      if (ob.fanMount) bits.push('Heads up: the ceiling mount lands within 2 ft of the ceiling fan — they will collide.');
-      if (ob.fanBeam) bits.push('Heads up: the ceiling fan crosses the throw beam — the blades will cast shadows on the image. Lower the projector with lens shift or move the mount.');
+      if (ob.blocked) bits.push('Heads up: the projector sits in your sightline and will block part of the screen from your seat, move it behind the seating or shift it aside.');
+      if (ob.fanMount) bits.push('Heads up: the ceiling mount lands within 2 ft of the ceiling fan, they will collide.');
+      if (ob.fanBeam) bits.push('Heads up: the ceiling fan crosses the throw beam, the blades will cast shadows on the image. Lower the projector with lens shift or move the mount.');
     }
     // Projector locked and the lens ran out of zoom: name what it can actually fill from here.
     if (lockMode === 'projector' && lockPegged && r && r[1] > r[0] && lockedD > 0) {
@@ -2525,7 +2525,7 @@
       // Beginner payoff: the verdict and the buy links lead. No spec soup.
       var bigCls = fitsRoom ? 'v-ok' : 'v-bad';
       var bigTxt = outdoor ? 'Outdoor setup: keep the throw path clear.' :
-        (fitsRoom ? 'Yes, it fits your room.' : 'No &mdash; too big for this room.');
+        (fitsRoom ? 'Yes, it fits your room.' : 'No, too big for this room.');
       var brightLine = '';
       if (fl > 0) {
         var bbc = brightChip(fl, flMode);
@@ -3723,7 +3723,7 @@
        screenDeg <= 40 ? ' · right in the cinematic sweet spot' : ' · bigger than the 36° immersive target') + shiftNote;
     var verdictLines = wrapText(verdictStr, '12px Arial,sans-serif', 620, 2);
     var noteStr = isRearV ? 'Rear projection needs a dedicated rear-projection screen' :
-      (sunOn && !alr) ? 'sunlight washes out a matte white screen — consider ALR' :
+      (sunOn && !alr) ? 'sunlight washes out a matte white screen, consider ALR' :
       (sunOn && alr) ? 'ALR holds up in sunlight, though blacks still lift' :
       (!night && !alr) ? 'matte white washes out with the lights on' :
       (!night && alr) ? 'ALR holds contrast with the lights on' : '';
@@ -3735,7 +3735,7 @@
     capY -= (verdictLines.length - 1) * 16 + 18;
     tx3(VW / 2, capY, 'From your seat · ' + dispDist(seat) + ' away · ' + styleName, 14, 'middle', night ? '#dbe2f0' : NAVY);
     capY -= 18;
-    if (sunOn) tx3(VW / 2, capY, 'Simulated sunlight — actual brightness varies by room', 11, 'middle',
+    if (sunOn) tx3(VW / 2, capY, 'Simulated sunlight, actual brightness varies by room', 11, 'middle',
       night ? '#dbe2f0' : '#8a6a2a');
     // legend at the top-left: color key for the projectors (A, and B when comparing)
     drawLegend(el3, compareLegendItems(o, { a: projBodyC, b: '#2e7d5b' }, false), 16, 26, 400, mut, false);
@@ -3769,7 +3769,7 @@
     }
     var L = o.L || 0, W = o.W || 0, H = o.H || 0, sw = o.swFt || 0;
     if (o.outdoor) {
-      tx6(VW / 2, VH / 2 - 8, 'No ceiling outdoors — the ceiling view needs a room.', 15, 'middle', mut);
+      tx6(VW / 2, VH / 2 - 8, 'No ceiling outdoors, the ceiling view needs a room.', 15, 'middle', mut);
       watermark6(); return;
     }
     if (!(L > 0 && W > 0)) {
@@ -3780,7 +3780,7 @@
       tx6(VW / 2, VH / 2 - 8, 'Pick a screen size above to see the ceiling view.', 15, 'middle', mut);
       watermark6(); return;
     }
-    tx6(VW / 2, 24, 'Looking up at the ceiling — where each projector mounts', 14, 'middle', ink);
+    tx6(VW / 2, 24, 'Looking up at the ceiling, where each projector mounts', 14, 'middle', ink);
     // legend under the caption: color key for the projector labels
     drawLegend(el6, compareLegendItems(o, { a: night ? '#8fb0e8' : NAVY, b: night ? '#57b586' : '#2e7d5b' }), 0, 46, VW - 40, mut, true);
     // plan scale: x = distance from the screen wall, y = across the room
@@ -3971,8 +3971,8 @@
     var centerIn = placeable ? eyeClamped : scrHIn / 2; // too tall: bottom sits on the floor
     var topGapIn = ceilFt * 12 - (centerIn + scrHIn / 2);
     var warn = '';
-    if (!placeable) warn = 'too tall for eye-level mounting: the bottom edge would sit ' + dispIn(-botGapIn) + ' below the floor — use a smaller screen';
-    else if (botGapIn < 12) warn = 'bottom edge only ' + dispIn(botGapIn) + ' off the floor — tight for furniture';
+    if (!placeable) warn = 'too tall for eye-level mounting: the bottom edge would sit ' + dispIn(-botGapIn) + ' below the floor, use a smaller screen';
+    else if (botGapIn < 12) warn = 'bottom edge only ' + dispIn(botGapIn) + ' off the floor, tight for furniture';
     else if (topGapIn < 6) warn = 'top edge nearly touches the ceiling';
     return { scrHIn: scrHIn, ceilFt: ceilFt, ceilKnown: ceilKnown, eyeIn: eyeClamped,
       botGapIn: placeable ? botGapIn : 0, topGapIn: topGapIn, centerIn: centerIn,
@@ -3989,8 +3989,8 @@
       var needIn = ceilIn - zcIn;
       var ok = Math.abs(pipeIn - needIn) <= 1;
       return { vHas: false, noModel: false, needIn: needIn, ok: ok,
-        text: ok ? 'Your ' + (isFlush ? 'flush mount' : dispIn(pipeIn) + ' pipe') + ' works — no lens shift, so the lens must sit level with the screen center.' :
-          'No lens shift on this model: the lens must sit level with the screen center, so you need about ' + dispIn(needIn) + ' of drop — ' +
+        text: ok ? 'Your ' + (isFlush ? 'flush mount' : dispIn(pipeIn) + ' pipe') + ' works, no lens shift, so the lens must sit level with the screen center.' :
+          'No lens shift on this model: the lens must sit level with the screen center, so you need about ' + dispIn(needIn) + ' of drop, ' +
           (isFlush ? 'switch to a pole mount with about ' + dispIn(needIn) + ' of pipe.'
                    : (pipeIn < needIn ? 'add an extension tube.' : 'shorten the pipe.')) +
           ' Check the manufacture sheet for this model\u2019s fixed image offset.' };
@@ -4003,8 +4003,8 @@
     var span = Math.max(Math.abs(sv[0]), Math.abs(sv[1]));
     var ok2 = pipeIn >= dMinIn - 0.5 && pipeIn <= dMaxIn + 0.5;
     var text;
-    if (!ok2 && pipeIn < dMinIn) text = 'Too short — with this screen position the lens needs at least ' + dispIn(dMinIn) + ' of drop (' + dispIn(dMinIn - pipeIn) + ' more than ' + haveTxt + '). ' + (isFlush ? 'Switch to a pole mount.' : 'Add an extension tube.');
-    else if (!ok2) text = 'Too long — the most drop this shift range allows here is ' + dispIn(dMaxIn) + '. ' + (isFlush ? 'A flush mount hangs too low here — lower the screen and re-check.' : 'Shorten the pipe.');
+    if (!ok2 && pipeIn < dMinIn) text = 'Too short, with this screen position the lens needs at least ' + dispIn(dMinIn) + ' of drop (' + dispIn(dMinIn - pipeIn) + ' more than ' + haveTxt + '). ' + (isFlush ? 'Switch to a pole mount.' : 'Add an extension tube.');
+    else if (!ok2) text = 'Too long, the most drop this shift range allows here is ' + dispIn(dMaxIn) + '. ' + (isFlush ? 'A flush mount hangs too low here, lower the screen and re-check.' : 'Shorten the pipe.');
     else {
       text = 'Your ' + (isFlush ? 'flush mount' : dispIn(pipeIn) + ' pipe') + ' works \u2014 it needs ' + fmt(Math.abs(sNeed), 0) + '% shift (range \u00B1' + fmt(span, 0) + '%).';
       if (Math.abs(sNeed) > 0.85 * span) text += ' That is near the shift limit \u2014 ' + (isFlush ? 'a pole mount would give you more headroom.' : 'a longer pipe would give you more headroom.');
@@ -4137,7 +4137,7 @@
       fill: scrFill, stroke: ink, 'stroke-width': 2 });
     tx(scrX - 6, Y(topIn) - 8, 'Screen', 11, 'end', mut);
     if (da.noModel) {
-      tx(330, 24, 'Ceiling-mount drop simulator — ' + da.text, 13, 'middle', mut);
+      tx(330, 24, 'Ceiling-mount drop simulator: ' + da.text, 13, 'middle', mut);
       return;
     }
     var zlIn = da.vHas ? da.zlIn : ceilIn - da.needIn;

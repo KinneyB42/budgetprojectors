@@ -1,4 +1,4 @@
-/* BudgetProjectors Room Finder — "find projectors for my room".
+/* BudgetProjectors Room Finder, "find projectors for my room".
    Rank every catalog model by throw fit for the user's room + screen,
    then by published brightness on that screen.
    Affiliate links: plain retailer search URLs until Brandon supplies his tags.
@@ -144,7 +144,7 @@
       hits.push({ e: e, tmin: tmin, tmax: tmax, isUst: isUst, placeLo: placeLo, placeHi: placeHi, ftL: ftL });
     });
 
-    /* Rank: brightness suitability for the lighting (not raw brightness — a
+    /* Rank: brightness suitability for the lighting (not raw brightness, a
        3,000 ftL light cannon is a bad pick for a bedroom) plus zoom flexibility. */
     function brightnessScore(ftL) {
       var lo = lightsOn ? 35 : 16, hi = lightsOn ? 80 : 50;
@@ -174,14 +174,14 @@
     if (!total) {
       var tip = document.createElement('p');
       tip.className = 'finder-tip';
-      tip.textContent = 'Tight room? Try a smaller screen, or look at ultra short throw models — they sit inches from the wall instead of across the room.';
+      tip.textContent = 'Tight room? Try a smaller screen, or look at ultra short throw models, they sit inches from the wall instead of across the room.';
       out.appendChild(tip);
       return;
     }
     if (total < 10) {
       var tip2 = document.createElement('p');
       tip2.className = 'finder-tip';
-      tip2.textContent = 'Tight fit — most of these need the projector near the back wall. Ultra short throw rows below sit inches from the wall.';
+      tip2.textContent = 'Tight fit, most of these need the projector near the back wall. Ultra short throw rows below sit inches from the wall.';
       out.appendChild(tip2);
     }
 
@@ -205,7 +205,7 @@
       stats.className = 'finder-stats';
       var bits = [];
       bits.push(h.isUst ? 'Sits inches from the wall' : 'Place ' + fmtD(h.placeLo) + '–' + fmtD(h.placeHi) + ' from screen');
-      if (h.ftL != null) bits.push('~' + Math.round(h.ftL) + ' ftL — ' + brightnessVerdict(h.ftL));
+      if (h.ftL != null) bits.push('~' + Math.round(h.ftL) + ' ftL, ' + brightnessVerdict(h.ftL));
       else bits.push('brightness not published');
       if (e.l && e.l.length) bits.push(e.l.length + ' lens options');
       stats.textContent = bits.join(' · ');

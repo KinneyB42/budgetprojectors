@@ -5,14 +5,14 @@
   // Target lumens per square foot of 16:9 screen, by room lighting.
   var TARGETS = {
     dark:    { lo: 15, hi: 25, label: 'Dark theater',
-               verdict: 'In a dark room, contrast beats brightness. You need enough light to fill the screen — after that, deeper blacks matter far more than extra lumens.',
+               verdict: 'In a dark room, contrast beats brightness. You need enough light to fill the screen, after that, deeper blacks matter far more than extra lumens.',
                note: 'Tip: spend the budget on contrast and black levels, not a light cannon you will run in eco mode.' },
     ambient: { lo: 35, hi: 55, label: 'Some ambient light',
                verdict: 'Some light in the room means you need real brightness to hold the image. Pair this with a gray or ALR screen and the picture stays punchy.',
                note: 'Tip: an ALR screen can matter as much as the lumen number here.' },
     bright:  { lo: 65, hi: 90, label: 'Bright living room',
                verdict: 'This is a bright room, so brightness is everything. Hit this target or plan on watching after sunset.',
-               note: 'Tip: lumens alone cannot save a washed-out image — a gray or ALR screen plus light control helps enormously.' }
+               note: 'Tip: lumens alone cannot save a washed-out image, a gray or ALR screen plus light control helps enormously.' }
   };
 
   var sizeEl = document.getElementById('bright-size');
