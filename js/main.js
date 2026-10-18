@@ -2412,6 +2412,13 @@
         dispDist(H) + ', so it will nearly touch the floor and ceiling. Consider a smaller screen.');
     }
     if (ust) bits.push('Ultra-short-throw: measure from the wall, not the lens.');
+    if (ust && stdAspect === '16:9' && window.ustOffsetAt && selectedModel) {
+      var uo = window.ustOffsetAt(selectedModel.b + ' ' + selectedModel.m, diag);
+      if (uo) bits.push('Image height is fixed by this projector: the bottom of the picture lands about ' +
+        dispIn(uo.bot) + ' above the surface it sits on, and the top edge about ' + dispIn(uo.bot + scrHIn) +
+        ' above that surface. Hang or place the screen to match those heights.' +
+        (uo.est ? ' (Height estimated past the published table.)' : ''));
+    }
     bits.push(ROOMS[roomType].tip);
 
     var imgRef = 'a ' + fmt(diag, 0) + '&Prime; screen';
