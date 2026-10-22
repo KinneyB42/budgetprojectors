@@ -694,7 +694,8 @@ html { scroll-behavior: smooth; }
 [id] { scroll-margin-top: 120px; }
 
 /* ---------- Desktop nav: never wrap awkwardly ---------- */
-.site-nav { white-space: nowrap; }
+.site-nav { white-space: normal; }
+@media (min-width: 1241px) { .site-nav { white-space: nowrap; } }
 @media (max-width: 900px) {
   .site-nav a { padding: 10px 9px; letter-spacing: 0.12em; font-size: 12px; }
 }
@@ -722,6 +723,15 @@ html { scroll-behavior: smooth; }
 /* ---------- Wordmark: never overflow at 390px ---------- */
 @media (max-width: 400px) {
   .wordmark { letter-spacing: 0.08em; font-size: 24px; }
+}
+
+/* ---------- Mobile fixes 2026-10-22: hero crop + sideways scroll ---------- */
+/* Nothing may widen the page past the screen (clip keeps sticky working). */
+html, body { overflow-x: clip; }
+/* Hero photos carry baked-in text, so on phones show the whole image at its
+   natural ratio instead of filling the fixed-height box and cropping sides. */
+@media (max-width: 768px) {
+  .hero img, .hero--slim img { height: auto; }
 }
 
 
