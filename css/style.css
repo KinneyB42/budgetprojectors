@@ -1333,3 +1333,6 @@ html.a11y-motion *, html.a11y-motion *::before, html.a11y-motion *::after {
   transition-duration: 0.01ms !important; animation-duration: 0.01ms !important;
 }
 html.a11y-motion { scroll-behavior: auto !important; }
+
+/* Sticky header offset so keyboard focus is never hidden under the header */
+html { scroll-padding-top: 120px; }
