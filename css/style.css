@@ -1081,7 +1081,8 @@ html, body { overflow-x: clip; }
   gap: 16px;
   margin-bottom: 8px;
 }
-.compare-picker select {
+.compare-picker select,
+.compare-picker input {
   width: 100%;
   padding: 10px 12px;
   font-size: var(--fs-body);
