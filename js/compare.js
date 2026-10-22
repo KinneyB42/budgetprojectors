@@ -82,8 +82,14 @@
     return;
   }
 
+  // Present the list grouped by brand, brand A-Z and model A-Z within brand.
+  DATA.sort(function (a, b) {
+    var ka = (a.brand + ' ' + a.model).toUpperCase();
+    var kb = (b.brand + ' ' + b.model).toUpperCase();
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+
   var SLOTS = 3;
-  var picks = [0, 3, 6].map(function (i) { return DATA[i] ? i : -1; });
 
   function amazonUrl(q) {
     return AMAZON_SEARCH + encodeURIComponent(q) + '&tag=' + AMAZON_TAG;
@@ -96,27 +102,37 @@
   function modelKey(d) { return d.brand + '|' + d.model; }
   function modelName(d) { return d.brand + ' ' + d.model; }
 
-  // Name lookup for the search pickers (first entry wins on duplicate names).
+  // Name lookup for the default picks (first entry wins on duplicate names).
   var NAME2IDX = {};
   DATA.forEach(function (d, i) {
     var k = modelName(d).toUpperCase();
     if (!(k in NAME2IDX)) NAME2IDX[k] = i;
   });
 
+  // Brand list (A-Z) and each brand's model indexes (A-Z, DATA is sorted).
+  var BRANDS = [];
+  var MODELS_BY_BRAND = {};
+  DATA.forEach(function (d, i) {
+    if (!MODELS_BY_BRAND[d.brand]) {
+      MODELS_BY_BRAND[d.brand] = [];
+      BRANDS.push(d.brand);
+    }
+    MODELS_BY_BRAND[d.brand].push(i);
+  });
+  BRANDS.sort(function (a, b) {
+    var ka = a.toUpperCase(), kb = b.toUpperCase();
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+
+  var DEFAULT_PICKS = ['JMGO IRIS Ultra', 'XGIMI HORIZON 20', 'BenQ X3100i'];
+  var picks = DEFAULT_PICKS.map(function (name) {
+    var idx = NAME2IDX[name.toUpperCase()];
+    return idx != null ? idx : -1;
+  });
+  while (picks.length < SLOTS) picks.push(-1);
+
   function renderPickers() {
     pickersEl.innerHTML = '';
-    // One shared suggestion list for all three pickers.
-    var dl = document.createElement('datalist');
-    dl.id = 'compare-models';
-    var frag = document.createDocumentFragment();
-    DATA.forEach(function (d) {
-      var o = document.createElement('option');
-      o.value = modelName(d);
-      frag.appendChild(o);
-    });
-    dl.appendChild(frag);
-    pickersEl.appendChild(dl);
-
     for (var s = 0; s < SLOTS; s++) {
       (function (slot) {
         var wrap = document.createElement('div');
@@ -124,29 +140,57 @@
         var label = document.createElement('span');
         label.className = 'calc__label';
         label.textContent = 'Projector ' + (slot + 1);
-        var input = document.createElement('input');
-        input.type = 'text';
-        input.setAttribute('list', 'compare-models');
-        input.setAttribute('aria-label', 'Projector ' + (slot + 1));
-        input.setAttribute('autocomplete', 'off');
-        input.placeholder = slot === 0 ? 'Start typing a brand or model…' : 'None';
-        input.value = picks[slot] >= 0 && DATA[picks[slot]] ? modelName(DATA[picks[slot]]) : '';
-        function resolve() {
-          var v = input.value.trim();
-          if (!v) {
-            if (picks[slot] !== -1) { picks[slot] = -1; renderTable(); }
-            return;
-          }
-          var idx = NAME2IDX[v.toUpperCase()];
-          if (idx != null && idx !== picks[slot]) {
-            picks[slot] = idx;
-            renderTable();
-          }
-        }
-        input.addEventListener('input', resolve);
-        input.addEventListener('change', resolve);
         wrap.appendChild(label);
-        wrap.appendChild(input);
+
+        var brandSel = document.createElement('select');
+        brandSel.setAttribute('aria-label', 'Projector ' + (slot + 1) + ' brand');
+        var b0 = document.createElement('option');
+        b0.value = '';
+        b0.textContent = 'Select a brand…';
+        brandSel.appendChild(b0);
+        BRANDS.forEach(function (b) {
+          var o = document.createElement('option');
+          o.value = b;
+          o.textContent = b;
+          brandSel.appendChild(o);
+        });
+
+        var modelSel = document.createElement('select');
+        modelSel.setAttribute('aria-label', 'Projector ' + (slot + 1) + ' model');
+
+        function fillModels(brand, selectedIdx) {
+          modelSel.innerHTML = '';
+          var m0 = document.createElement('option');
+          m0.value = '';
+          m0.textContent = brand ? 'Select a model…' : 'Pick a brand first';
+          modelSel.appendChild(m0);
+          (MODELS_BY_BRAND[brand] || []).forEach(function (idx) {
+            var o = document.createElement('option');
+            o.value = String(idx);
+            o.textContent = DATA[idx].model;
+            modelSel.appendChild(o);
+          });
+          modelSel.disabled = !brand;
+          modelSel.value = selectedIdx >= 0 ? String(selectedIdx) : '';
+        }
+
+        brandSel.addEventListener('change', function () {
+          picks[slot] = -1;
+          fillModels(brandSel.value, -1);
+          renderTable();
+        });
+        modelSel.addEventListener('change', function () {
+          picks[slot] = modelSel.value === '' ? -1 : parseInt(modelSel.value, 10);
+          renderTable();
+        });
+
+        // Initial state from the current pick.
+        var cur = picks[slot] >= 0 && DATA[picks[slot]] ? DATA[picks[slot]] : null;
+        brandSel.value = cur ? cur.brand : '';
+        fillModels(cur ? cur.brand : '', picks[slot]);
+
+        wrap.appendChild(brandSel);
+        wrap.appendChild(modelSel);
         pickersEl.appendChild(wrap);
       })(s);
     }

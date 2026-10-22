@@ -1091,6 +1091,9 @@ html, body { overflow-x: clip; }
   background: #fff;
   color: var(--ink);
 }
+.compare-picker select + select {
+  margin-top: 8px;
+}
 .compare-table-wrap { overflow-x: auto; margin-top: 16px; }
 .compare-table {
   width: 100%;
