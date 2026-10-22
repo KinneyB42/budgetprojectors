@@ -1237,8 +1237,8 @@ html { scroll-behavior: smooth; }
 }
 .a11y-skip:focus { top: 12px; color: #fff; }
 .a11y-btn {
-  position: fixed; right: 18px; bottom: 18px; z-index: 9998;
-  width: 54px; height: 54px; border-radius: 50%; border: 2px solid #fff;
+  position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 9998;
+  width: 56px; height: 56px; border-radius: 50%; border: 2px solid #fff;
   background: var(--navy); color: #fff; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 4px 16px rgba(5, 15, 34, 0.35);
@@ -1246,7 +1246,7 @@ html { scroll-behavior: smooth; }
 .a11y-btn:hover { background: var(--navy-deep); }
 .a11y-btn:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
 .a11y-panel {
-  position: fixed; right: 18px; bottom: 84px; z-index: 9999;
+  position: fixed; right: 18px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 9999;
   width: min(350px, calc(100vw - 36px)); max-height: min(72vh, 640px); overflow-y: auto;
   background: #fff; color: var(--ink); border: 1px solid var(--line, #ddd);
   border-radius: 16px; box-shadow: 0 12px 40px rgba(5, 15, 34, 0.28); padding: 18px;
