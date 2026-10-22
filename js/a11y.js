@@ -65,7 +65,7 @@
   btn.setAttribute('aria-label', 'Accessibility adjustments');
   btn.setAttribute('aria-haspopup', 'dialog');
   btn.setAttribute('aria-expanded', 'false');
-  btn.innerHTML = '<svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor" aria-hidden="true"><path d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z"/></svg>';
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="50" height="50" aria-hidden="true"><circle cx="12" cy="12" r="10.3" fill="none" stroke="#ffffff" stroke-width="1.2"/><circle cx="12" cy="7.3" r="1.85" fill="#ffffff"/><path d="M5.3 10.5 L12 12.2 L18.7 10.5" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 12.2 V16.3" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round"/><path d="M12 16.1 L9.6 20.3 M12 16.1 L14.4 20.3" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round"/></svg>';
   document.body.appendChild(btn);
 
   /* Panel */
