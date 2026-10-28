@@ -40,6 +40,16 @@
     <h1>Win a 100" Nothing Projector Matte White Fixed Frame Screen</h1>
     <p class="lede">Nothing Projector is giving one member of our community a 100 inch Matte White Fixed Frame Projector Screen. The giveaway runs on r/BudgetProjectors, and entry is a comment on the giveaway post. No purchase necessary.</p>
     <p class="lede" style="margin-top: 16px;">Entries run Wednesday, October 28 through Tuesday, November 3, 2026. The winner is announced Wednesday, November 4, 2026.</p>
+    <div id="giveaway-countdown" style="max-width: 760px; margin: 28px auto 0; padding: 20px 16px; background: #0c2244; color: #fff; border-radius: 12px;">
+      <p style="margin: 0; font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase;">Entries close in</p>
+      <div style="display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin-top: 12px;">
+        <div><span id="cd-days" style="display: block; font-size: 2.2rem; font-weight: 700; line-height: 1;">--</span><span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;">Days</span></div>
+        <div><span id="cd-hours" style="display: block; font-size: 2.2rem; font-weight: 700; line-height: 1;">--</span><span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;">Hours</span></div>
+        <div><span id="cd-mins" style="display: block; font-size: 2.2rem; font-weight: 700; line-height: 1;">--</span><span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;">Minutes</span></div>
+        <div><span id="cd-secs" style="display: block; font-size: 2.2rem; font-weight: 700; line-height: 1;">--</span><span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;">Seconds</span></div>
+      </div>
+      <p id="cd-note" style="margin: 12px 0 0; font-size: 0.95rem;">Closes Tuesday, November 3, 2026 at 11:59:59 PM Central.</p>
+    </div>
     <p style="margin-top: 28px;"><a class="btn" href="https://www.reddit.com/r/budgetprojectors/s/SVtwMep4We" target="_blank" rel="noopener">Enter on Reddit</a></p>
   </div>
 </section>
@@ -87,5 +97,40 @@
 
 <script src="js/main.js?v=20261018a"></script>
 <script src="js/a11y.js?v=20261022c"></script>
+<script>
+(function () {
+  var box = document.getElementById('giveaway-countdown');
+  if (!box) return;
+  var target = new Date('2026-11-03T23:59:59-06:00').getTime();
+  var el = {
+    days: document.getElementById('cd-days'),
+    hours: document.getElementById('cd-hours'),
+    mins: document.getElementById('cd-mins'),
+    secs: document.getElementById('cd-secs'),
+    note: document.getElementById('cd-note')
+  };
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  var timer = null;
+  function tick() {
+    var diff = target - Date.now();
+    if (diff <= 0) {
+      el.days.textContent = '00';
+      el.hours.textContent = '00';
+      el.mins.textContent = '00';
+      el.secs.textContent = '00';
+      el.note.textContent = 'Entries are now closed. The winner is announced Wednesday, November 4, 2026.';
+      if (timer) clearInterval(timer);
+      return;
+    }
+    var s = Math.floor(diff / 1000);
+    el.days.textContent = pad(Math.floor(s / 86400));
+    el.hours.textContent = pad(Math.floor(s % 86400 / 3600));
+    el.mins.textContent = pad(Math.floor(s % 3600 / 60));
+    el.secs.textContent = pad(s % 60);
+  }
+  tick();
+  timer = setInterval(tick, 1000);
+})();
+</script>
 </body>
 </html>
