@@ -168,6 +168,8 @@
     'Horizon 20': 'https://xgimi.sjv.io/R0dbmb',
     'HORIZON 20 Pro': 'https://xgimi.sjv.io/MKdbyo',
     'HORIZON 20 Max': 'https://xgimi.sjv.io/qW6yZL',
+    'HORIZON 30 Pro': 'https://xgimi.sjv.io/yZ5K4B', /* same tracked link as the Current Deals page button */
+    'HORIZON 30 Ultra Max': 'https://xgimi.sjv.io/KBA6yv', /* same tracked link as the Current Deals page button */
     'HORIZON Ultra': 'https://xgimi.sjv.io/QYdb43',
     'Horizon Ultra': 'https://xgimi.sjv.io/QYdb43', /* duplicate calculator record, same product */
     'MoGo 4': 'https://xgimi.sjv.io/5k0nYN',
