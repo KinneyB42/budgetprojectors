@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projector Placement Calculator | Budget Projectors</title>
+  <meta name="description" content="See where a projector's image actually lands from next to the couch, behind the couch, the ceiling, or a corner, and whether lens shift or keystone can square it.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/style.css?v=20261022d">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="wordmark" href="index.html">Budget Projectors</a>
+    <div><button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button></div>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="buying-guides.html">Buying Guides</a>
+      <a href="reviews.html">Reviews</a>
+      <a href="current-deals.html">Current Deals</a>
+      <a href="classifieds.html">Classifieds</a>
+      <a href="recommended-setups.html">Recommended Setups</a>
+      <a href="distance-guide.html">Calculator</a>
+      <a href="book-a-consultation.html">Book a Consultation</a>
+      <a href="about.html">About</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="section page-intro">
+  <div class="wrap">
+    <p class="label">Tools</p>
+    <h1>Projector Placement Calculator</h1>
+    <p class="lede">Most projectors never get to sit dead center. They end up next to the couch, behind it, in a corner, or up on the ceiling, and the image lands wherever the lens happens to point. Pick your model, set where it will actually sit, and this calculator shows where the picture lands, whether lens shift can square it, and whether keystone has to get involved.</p>
+  </div>
+</section>
+
+<section class="section" id="placement">
+  <div class="wrap">
+    <h2>Placement Calculator</h2>
+
+    <style>
+      #placement .place-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+      @media (max-width: 560px) { #placement .place-grid2 { grid-template-columns: 1fr; } }
+      #placement .place-views { display: grid; grid-template-columns: 1fr; gap: 24px; margin-top: 16px; }
+      @media (min-width: 900px) { #placement .place-views { grid-template-columns: 1fr 1fr; } }
+      #placement figure.place-fig { margin: 0; }
+      #placement .place-cap { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin-bottom: 8px; }
+      #placement svg.place-svg { width: 100%; height: auto; display: block; border: 1px solid var(--line); background: var(--white); }
+      #placement .place-slider-block { margin-top: 18px; }
+      #placement #place-details { margin-top: 16px; font-size: 15.5px; line-height: 1.6; }
+      #placement #place-details ul { margin: 0 0 0 1.2em; padding: 0; }
+      #placement #place-details li { margin-bottom: 0.4em; }
+    </style>
+
+    <div class="calc" id="place-tool">
+      <div class="calc__model">
+        <div class="calc__step">1 &middot; Your projector</div>
+        <label for="place-model"><span class="calc__q">Which projector are you placing?</span></label>
+        <input type="text" id="place-model" placeholder="Start typing your model&hellip;" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="place-suggest">
+        <div class="calc__suggest" id="place-suggest" role="listbox" hidden></div>
+        <p class="calc__selected" id="place-selected" hidden></p>
+        <p class="calc__hint">Search <span id="place-model-count"></span> models in the database.</p>
+      </div>
+
+      <div style="margin-top: 28px;">
+        <div class="calc__step">2 &middot; Your placement</div>
+        <div class="place-grid2">
+          <div>
+            <label for="place-preset">Placement preset</label>
+            <select id="place-preset">
+              <option value="centered">Centered (ideal)</option>
+              <option value="couch_side" selected>Next to the couch</option>
+              <option value="couch_behind">Behind the couch</option>
+              <option value="ceiling">Ceiling mounted</option>
+              <option value="corner">In the corner</option>
+              <option value="floor">On the floor</option>
+              <option value="coffee">Coffee table</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div>
+            <label for="place-aim">Projector is</label>
+            <select id="place-aim">
+              <option value="straight" selected>Pointing straight ahead</option>
+              <option value="turned">Turned toward the screen</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="place-slider-block">
+          <label for="place-dist"><span class="calc__q">How far is the projector from the screen?</span> <span class="calc__val" id="place-dist-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="place-dist" min="3" max="25" step="0.5" value="10.5">
+          </div>
+          <div class="calc__slider-ends"><span>3 ft</span><span>25 ft</span></div>
+          <p class="calc__hint">Measure from the projector&rsquo;s lens to the screen or wall.</p>
+        </div>
+
+        <div class="place-slider-block">
+          <label for="place-size"><span class="calc__q">How big is the picture, corner to corner?</span> <span class="calc__val" id="place-size-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="place-size" min="40" max="200" step="1" value="100">
+          </div>
+          <div class="calc__slider-ends"><span>40&Prime;</span><span>200&Prime;</span></div>
+        </div>
+
+        <div class="place-slider-block">
+          <label for="place-offset"><span class="calc__q">How far is the projector to the side of screen center?</span> <span class="calc__val" id="place-offset-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="place-offset" min="0" max="72" step="1" value="30">
+          </div>
+          <div class="calc__slider-ends"><span>0 in</span><span>72 in</span></div>
+          <p class="calc__hint">Zero means the lens lines up with the middle of the screen. A projector beside the couch is usually 24 to 40 inches off.</p>
+        </div>
+
+        <div class="place-slider-block">
+          <label for="place-height"><span class="calc__q">How high is the lens?</span> <span class="calc__val" id="place-height-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="place-height" min="4" max="108" step="1" value="24">
+          </div>
+          <div class="calc__slider-ends"><span>4 in</span><span>108 in</span></div>
+          <p class="calc__hint">Floor to the middle of the lens: a side table is around 24 inches, a ceiling mount in an 8 foot room is around 90.</p>
+        </div>
+
+        <div class="place-slider-block">
+          <label for="place-screenbottom"><span class="calc__q">How high is the bottom of the screen?</span> <span class="calc__val" id="place-screenbottom-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="place-screenbottom" min="0" max="60" step="1" value="24">
+          </div>
+          <div class="calc__slider-ends"><span>0 in</span><span>60 in</span></div>
+          <p class="calc__hint">Floor to the bottom edge of the screen or the picture on the wall. 24 inches is typical in a living room.</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 32px;">
+        <div class="calc__step">3 &middot; Where the image lands</div>
+        <div class="place-views">
+          <figure class="place-fig">
+            <figcaption class="place-cap">Top view (room from above)</figcaption>
+            <svg class="place-svg" id="place-top" viewBox="0 0 320 170" role="img" aria-label="Top view of the room: projector position and beam"></svg>
+          </figure>
+          <figure class="place-fig">
+            <figcaption class="place-cap">Front view (facing the screen wall)</figcaption>
+            <svg class="place-svg" id="place-front" viewBox="0 0 320 190" role="img" aria-label="Front view: where the image lands on the screen wall"></svg>
+          </figure>
+        </div>
+        <p class="calc__hint">Illustrations, not to scale. The landing spot assumes the image comes out centered on the lens axis. Some projectors have a built-in offset that lands the image above or below the lens line; where a manufacturer publishes one, check it against the numbers below. Screen position comes from the screen bottom height you set above.</p>
+
+        <div class="calc__result show" id="place-result" aria-live="polite" style="margin-top: 20px;"></div>
+        <div id="place-details"></div>
+      </div>
+    </div>
+
+    <p class="calc__disclaimer">This calculator is an estimation tool. Image position, lens shift, and keystone figures are based on published manufacturer specifications and standard screen math, and actual results vary with zoom position, mounting, and each model&rsquo;s correction limits. Measure your room before buying or mounting, and refer to the manufacturer&rsquo;s specifications for further information.</p>
+
+    <div class="prose" style="margin-top: 56px;">
+      <h2>How to read this</h2>
+
+      <h3>Lens shift moves the image with glass</h3>
+      <p>Lens shift physically repositions the lens, so the whole image moves without changing shape. If your placement fits inside the model&rsquo;s published shift range, the picture stays square at full resolution. It is the only correction that costs you nothing, which is why this calculator checks it first.</p>
+
+      <h3>Keystone moves it with software</h3>
+      <p>Keystone correction reshapes the image digitally to undo a trapezoid. It works, but the corrected picture is smaller than the one the projector threw, and the compressed side gives up sharpness and resolution. A few degrees is a fair trade for a couch-side setup. A lot of degrees is a sign the projector is in the wrong spot, or is the wrong model for the room.</p>
+
+      <h3>Pointing straight vs. turned</h3>
+      <p>A projector throws its image where the lens points. Leave it pointing straight ahead from an off-center spot and the image lands off center with it; lens shift is what can pull it back. Turn the projector to face the screen and the image centers, but the beam arrives at an angle and the rectangle becomes a trapezoid. Most real rooms end up using one approach or the other, and the verdict above tells you which one your placement needs.</p>
+
+      <p>Odd room shape, or a placement this calculator flags red? <a href="book-a-consultation.html">Book a consultation</a> and we&rsquo;ll map your room properly.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p><strong>Disclosure:</strong> As an Amazon Associate, I earn from qualifying purchases. I also earn affiliate commissions on qualifying purchases made through links to AV Access, Abt Electronics, AliExpress, B&amp;H Photo Video, BenQ, BLUETTI, eBay, EcoFlow, JMGO, Nothing Projector, UGREEN, Valerion, and XGIMI. Links open in a new tab.</p>
+    <p>&copy; 2026 BudgetProjectors</p>
+    <p>All trademarks are the property of their respective owners.</p>
+    <div class="footer-legal">
+      <a href="glossary.html">Glossary</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+<script src="js/throw-data.js?v=20260921n"></script>
+<script src="js/main.js?v=20261018a"></script>
+<script src="js/a11y.js?v=20261022c"></script>
+<script src="js/placement.js?v=20261119a"></script>
+</body>
+</html>
