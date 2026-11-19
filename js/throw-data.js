@@ -472,7 +472,6 @@ window.THROW_DATA = [
   {b: "Sony", m: "VPL-XW7000ES", t: [1.35, 2.84], lm: 3200},
   {b: "Sony", m: "VPL-XW8100ES", t: [1.35, 2.84], lm: 3400},
   {b: "Valerion", m: "VisionMaster Max", t: [0.9, 1.5], lm: 3500, sv: [-55.0, 55.0], sh: [0, 0]},
-  {b: "Valerion", m: "VisionMaster Pro2", t: [0.9, 1.5], lm: 3000, sv: [0.0, 0.0], sh: [0, 0]},
   {b: "ViewSonic", m: "LS560WH", t: [0.49, 0.49], lm: 2000},
   {b: "ViewSonic", m: "LS740-4K", t: [1.4, 2.24], lm: 5000},
   {b: "ViewSonic", m: "LS740W", t: [1.18, 1.54], lm: 5000},
