@@ -3,6 +3,9 @@
    NOTE (Brandon: verify): price bands assigned from memory 2026-09-29, please correct any that are off.
    Entries added 2026-11-19 (MoGo 4, EF-72, HORIZON 30 Pro, LS6000, HORIZON 30 Ultra Max,
    TITAN Noir, VisionMaster Pro 2) have bands set from prices verified that day.
+   Update 2026-11-21: TK700STi replaced by TK705i and TK705STi (CJ brand links added),
+   HORIZON 20, 20 Pro and 20 Max removed, HORIZON 30 Max added, VisionMaster Max
+   given its Valerion deep link.
    light: room lightings the model suits: dark / ambient / bright
    uses: movies / sports / gaming / everything
 */
@@ -26,28 +29,22 @@ window.QUIZ_MODELS = [
     brandUrl: null
   },
   {
-    brand: "BenQ", model: "TK700STi", band: 2,
+    brand: "BenQ", model: "TK705i", band: 2,
+    light: ["dark", "ambient"], uses: ["gaming", "movies", "everything"], portable: false,
+    why: ["4K LED with 3,000 ANSI lumens and a 1.0 to 1.3 zoom for flexible placement.", "5 ms input lag at 4K 60Hz, so it games as well as it shows movies."],
+    brandUrl: "https://www.tkqlhce.com/click-101708134-17107164?url=https%3A%2F%2Fwww.benq.com%2Fen-us%2Fprojector%2Fhome-projectors%2Ftk705i.html"
+  },
+  {
+    brand: "BenQ", model: "TK705STi", band: 2,
     light: ["dark", "ambient"], uses: ["gaming", "sports", "everything"], portable: false,
-    why: ["4K short throw built for gaming, big image from close up.", "Low lag plus high refresh options for fast games."],
-    brandUrl: null
+    why: ["Short throw 4K, a big image from just a few feet away.", "3,000 ANSI lumens and 5 ms lag at 4K 60Hz, built for gaming rooms."],
+    brandUrl: "https://www.tkqlhce.com/click-101708134-17107164?url=https%3A%2F%2Fwww.benq.com%2Fen-us%2Fprojector%2Fhome-projectors%2Ftk705sti.html"
   },
   {
     brand: "BenQ", model: "X3100i", band: 2,
     light: ["dark", "ambient"], uses: ["gaming", "movies", "everything"], portable: false,
     why: ["4K with some of the lowest input lag in its class.", "Bright enough for a living room, refined enough for a theater."],
     brandUrl: null
-  },
-  {
-    brand: "XGIMI", model: "HORIZON 20", band: 2,
-    light: ["dark", "ambient"], uses: ["movies", "sports", "everything"], portable: false,
-    why: ["Smart 4K lifestyle projector with strong built-in audio.", "Bright, sharp, and simple, no receiver required to enjoy it."],
-    brandUrl: "https://xgimi.sjv.io/R0dbmb"
-  },
-  {
-    brand: "XGIMI", model: "HORIZON 20 Pro", band: 2,
-    light: ["ambient", "bright"], uses: ["movies", "sports", "everything"], portable: false,
-    why: ["A meaningful brightness step up for rooms with real ambient light.", "Flagship image quality without flagship complexity."],
-    brandUrl: "https://xgimi.sjv.io/MKdbyo"
   },
   {
     brand: "XGIMI", model: "HORIZON 30 Pro", band: 2,
@@ -80,10 +77,10 @@ window.QUIZ_MODELS = [
     brandUrl: "https://affiliate.jmgo.com/JkvXAN"
   },
   {
-    brand: "XGIMI", model: "HORIZON 20 Max", band: 3,
-    light: ["ambient", "bright"], uses: ["movies", "sports", "everything"], portable: false,
-    why: ["XGIMI's brightest 4K, made for large screens with lights on.", "Premium build and sound to match the picture."],
-    brandUrl: "https://xgimi.sjv.io/qW6yZL"
+    brand: "XGIMI", model: "HORIZON 30 Max", band: 3,
+    light: ["dark", "ambient", "bright"], uses: ["movies", "sports", "everything"], portable: false,
+    why: ["5,300 ISO lumens of RGB triple laser brightness for big screens.", "Real lens shift and 4K 120Hz, the step up from the 30 Pro."],
+    brandUrl: "https://xgimi.sjv.io/MK1qRY"
   },
   {
     brand: "XGIMI", model: "HORIZON 30 Ultra Max", band: 3,
@@ -107,6 +104,6 @@ window.QUIZ_MODELS = [
     brand: "Valerion", model: "VisionMaster Max", band: 3,
     light: ["dark", "ambient"], uses: ["movies", "gaming", "everything"], portable: false,
     why: ["RGB triple-laser 4K aimed squarely at enthusiasts.", "Deep blacks and low lag in one package."],
-    brandUrl: null
+    brandUrl: "https://valerionus.pxf.io/zzd0qM?u=https%3A%2F%2Fwww.valerion.com%2Fproduct%2Fvalerion-visionmaster-4k-rgb-triple-laser-projector"
   }
 ];
