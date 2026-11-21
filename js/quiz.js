@@ -192,7 +192,7 @@
     } else {
       var disc = document.createElement('p');
       disc.className = 'calc__hint';
-      disc.textContent = 'Disclosure: As an Amazon Associate, I earn from qualifying purchases. I also earn from qualifying eBay, JMGO, and XGIMI purchases made through these links.';
+      disc.textContent = 'Disclosure: As an Amazon Associate, I earn from qualifying purchases. I also earn from qualifying purchases made through these links to AV Access, Abt Electronics, AliExpress, B&H Photo Video, BenQ, BLUETTI, eBay, EcoFlow, JMGO, Nothing Projector, UGREEN, Valerion, and XGIMI.';
       bodyEl.appendChild(disc);
 
       ranked.forEach(function (r, i) {
