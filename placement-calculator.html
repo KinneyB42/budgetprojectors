@@ -51,6 +51,10 @@
       #placement .place-cap { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); margin-bottom: 8px; }
       #placement svg.place-svg { width: 100%; height: auto; display: block; border: 1px solid var(--line); background: var(--white); }
       #placement .place-slider-block { margin-top: 18px; }
+      #placement .place-fig--wide { grid-column: 1 / -1; }
+      #placement button.btn { font: inherit; cursor: pointer; border: 0; }
+      #placement button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      #placement input[type="range"]:disabled { opacity: 0.4; }
       #placement #place-details { margin-top: 16px; font-size: 15.5px; line-height: 1.6; }
       #placement #place-details ul { margin: 0 0 0 1.2em; padding: 0; }
       #placement #place-details li { margin-bottom: 0.4em; }
@@ -137,8 +141,45 @@
       </div>
 
       <div style="margin-top: 32px;">
-        <div class="calc__step">3 &middot; Where the image lands</div>
+        <div class="calc__step">3 &middot; Try the zoom and lens shift</div>
+        <p class="calc__hint" style="margin-top: 6px;">Drag these the way you would adjust the projector itself. The zoom slider stops at the ends of this model&rsquo;s throw range, and the lens shift sliders stop at its published limits. Watch the picture move in the room views below.</p>
+
+        <div class="place-slider-block">
+          <label for="place-zoom"><span class="calc__q">Optical zoom</span> <span class="calc__val" id="place-zoom-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="place-zoom" min="40" max="200" step="1" value="100">
+          </div>
+          <p class="calc__hint" id="place-zoom-note"></p>
+        </div>
+
+        <div class="place-slider-block">
+          <label for="place-shiftv"><span class="calc__q">Lens shift, up and down</span> <span class="calc__val" id="place-shiftv-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="place-shiftv" min="-50" max="50" step="1" value="0">
+          </div>
+          <div class="calc__slider-ends"><span id="place-shiftv-min"></span><span id="place-shiftv-max"></span></div>
+        </div>
+
+        <div class="place-slider-block">
+          <label for="place-shifth"><span class="calc__q">Lens shift, side to side</span> <span class="calc__val" id="place-shifth-val"></span></label>
+          <div class="calc__slider-row">
+            <input type="range" id="place-shifth" min="-50" max="50" step="1" value="0">
+          </div>
+          <div class="calc__slider-ends"><span id="place-shifth-min"></span><span id="place-shifth-max"></span></div>
+          <p class="calc__hint" id="place-shift-note"></p>
+        </div>
+
+        <p style="margin-top: 16px;"><button type="button" class="btn" id="place-center">Center the image with lens shift</button></p>
+        <p class="calc__hint" id="place-tune-readout" aria-live="polite"></p>
+      </div>
+
+      <div style="margin-top: 32px;">
+        <div class="calc__step">4 &middot; Where the image lands</div>
         <div class="place-views">
+          <figure class="place-fig place-fig--wide">
+            <figcaption class="place-cap">Side view (the room from the side)</figcaption>
+            <svg class="place-svg" id="place-side" viewBox="0 0 640 300" role="img" aria-label="Side view of the room: screen wall, projector placement, furniture and beam"></svg>
+          </figure>
           <figure class="place-fig">
             <figcaption class="place-cap">Top view (room from above)</figcaption>
             <svg class="place-svg" id="place-top" viewBox="0 0 320 170" role="img" aria-label="Top view of the room: projector position and beam"></svg>
@@ -148,7 +189,7 @@
             <svg class="place-svg" id="place-front" viewBox="0 0 320 190" role="img" aria-label="Front view: where the image lands on the screen wall"></svg>
           </figure>
         </div>
-        <p class="calc__hint">Illustrations, not to scale. The landing spot assumes the image comes out centered on the lens axis. Some projectors have a built-in offset that lands the image above or below the lens line; where a manufacturer publishes one, check it against the numbers below. Screen position comes from the screen bottom height you set above.</p>
+        <p class="calc__hint">Illustrations, not to scale. Blue is where the picture lands; the dashed outline is the picture after correction. The landing spot assumes the image comes out centered on the lens axis. Some projectors have a built-in offset that lands the image above or below the lens line; where a manufacturer publishes one, check it against the numbers below. Screen position comes from the screen bottom height you set above.</p>
 
         <div class="calc__result show" id="place-result" aria-live="polite" style="margin-top: 20px;"></div>
         <div id="place-details"></div>
@@ -191,6 +232,6 @@
 <script src="js/throw-data.js?v=20260921n"></script>
 <script src="js/main.js?v=20261018a"></script>
 <script src="js/a11y.js?v=20261022c"></script>
-<script src="js/placement.js?v=20261119a"></script>
+<script src="js/placement.js?v=20261121a"></script>
 </body>
 </html>

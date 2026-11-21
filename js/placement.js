@@ -19,6 +19,21 @@
   var detailsEl = document.getElementById('place-details');
   var topSvg = document.getElementById('place-top');
   var frontSvg = document.getElementById('place-front');
+  var sideSvg = document.getElementById('place-side');
+  var zoomSlider = document.getElementById('place-zoom');
+  var zoomVal = document.getElementById('place-zoom-val');
+  var zoomNote = document.getElementById('place-zoom-note');
+  var shiftHSlider = document.getElementById('place-shifth');
+  var shiftVSlider = document.getElementById('place-shiftv');
+  var shiftHVal = document.getElementById('place-shifth-val');
+  var shiftVVal = document.getElementById('place-shiftv-val');
+  var shiftHMin = document.getElementById('place-shifth-min');
+  var shiftHMax = document.getElementById('place-shifth-max');
+  var shiftVMin = document.getElementById('place-shiftv-min');
+  var shiftVMax = document.getElementById('place-shiftv-max');
+  var shiftNote = document.getElementById('place-shift-note');
+  var centerBtn = document.getElementById('place-center');
+  var tuneReadout = document.getElementById('place-tune-readout');
 
   var SLIDERS = {
     dist: document.getElementById('place-dist'),
@@ -52,7 +67,9 @@
     size: 100,
     offset: 30,
     height: 24,
-    screenBottom: 24
+    screenBottom: 24,
+    shiftH: 0,
+    shiftV: 0
   };
 
   /* ---------- Formatting helpers ---------- */
@@ -118,6 +135,8 @@
     suggest.hidden = true;
     suggest.innerHTML = '';
     modelInput.setAttribute('aria-expanded', 'false');
+    state.shiftH = 0;
+    state.shiftV = 0;
     refreshSelectedLine();
     recalc();
   }
@@ -205,11 +224,140 @@
     recalc();
   });
 
+  /* ---------- Zoom and lens shift controls (step 3) ---------- */
+  zoomSlider.addEventListener('input', function () {
+    state.size = parseFloat(this.value);
+    SLIDERS.size.value = state.size;
+    syncVals();
+    recalc();
+  });
+  shiftHSlider.addEventListener('input', function () {
+    state.shiftH = parseFloat(this.value);
+    syncShiftVals();
+    recalc();
+  });
+  shiftVSlider.addEventListener('input', function () {
+    state.shiftV = parseFloat(this.value);
+    syncShiftVals();
+    recalc();
+  });
+  centerBtn.addEventListener('click', function () {
+    var e = state.entry;
+    if (!e) return;
+    var W = state.size * 0.8716, H = state.size * 0.4903;
+    var dv = state.height - (state.screenBottom + H / 2);
+    state.shiftH = e.sh ? clamp(-state.offset / W * 100, e.sh[0], e.sh[1]) : 0;
+    state.shiftV = e.sv ? clamp(-dv / H * 100, e.sv[0], e.sv[1]) : 0;
+    syncShiftVals();
+    recalc();
+  });
+
   /* ---------- Views ---------- */
   var NAVY = '#0c2244', MUTED = '#5c5c5c', PANEL = '#f6f3ec';
   var BEAM_FILL = 'rgba(37,99,235,0.16)', BEAM_STROKE = 'rgba(37,99,235,0.55)';
   var IMG_FILL = 'rgba(37,99,235,0.20)', IMG_STROKE = 'rgba(37,99,235,0.6)';
   var TIER_COLORS = { ok: '#2e7d5b', warn: '#b8860b', bad: '#c0392b' };
+
+  /* ---------- Step 3 control sync ---------- */
+  function signedPct(v) { return (v > 0 ? '+' : '') + f0(v) + '%'; }
+
+  function syncShiftVals() {
+    var e = state.entry;
+    shiftHVal.textContent = !e ? '' : (e.sh ? signedPct(state.shiftH) : 'none');
+    shiftVVal.textContent = !e ? '' : (e.sv ? signedPct(state.shiftV) : 'none');
+  }
+
+  function setupAxis(slider, minEl, maxEl, range, cur) {
+    if (!range) {
+      slider.disabled = true;
+      slider.min = -50; slider.max = 50; slider.value = 0;
+      minEl.textContent = ''; maxEl.textContent = '';
+      return;
+    }
+    slider.disabled = false;
+    slider.min = range[0]; slider.max = range[1];
+    slider.value = clamp(cur, range[0], range[1]);
+    minEl.textContent = pct(range[0]);
+    maxEl.textContent = pct(range[1]);
+  }
+
+  function syncTune(sizeMin, sizeMax, r) {
+    var e = state.entry;
+    if (!e) {
+      zoomSlider.disabled = true; zoomVal.textContent = '';
+      zoomNote.textContent = 'Pick a model above and this slider uses its real zoom range.';
+      shiftHSlider.disabled = true; shiftVSlider.disabled = true;
+      shiftHVal.textContent = ''; shiftVVal.textContent = '';
+      shiftHMin.textContent = ''; shiftHMax.textContent = '';
+      shiftVMin.textContent = ''; shiftVMax.textContent = '';
+      shiftNote.textContent = 'Pick a model above and these sliders use its published lens shift range.';
+      centerBtn.disabled = true;
+      return;
+    }
+    var lo = Math.floor(sizeMin), hi = Math.ceil(sizeMax);
+    if (hi <= lo) hi = lo + 1;
+    zoomSlider.min = lo; zoomSlider.max = hi;
+    zoomSlider.value = clamp(state.size, lo, hi);
+    zoomVal.textContent = f0(parseFloat(zoomSlider.value)) + ' in picture';
+    if (r.tmax - r.tmin < 1e-9) {
+      zoomSlider.disabled = true;
+      zoomVal.textContent = f0(sizeMin) + ' in picture';
+      zoomNote.textContent = 'Fixed lens: this model has no optical zoom. From here it throws a ' + f0(sizeMin) + ' inch picture; move it closer or farther to change the size.';
+    } else {
+      zoomSlider.disabled = false;
+      zoomNote.textContent = 'From ' + f1(state.dist) + ' ft, this model throws a ' + f0(sizeMin) + ' to ' + f0(sizeMax) + ' inch picture.';
+    }
+    if (e.sh) state.shiftH = clamp(state.shiftH, e.sh[0], e.sh[1]); else state.shiftH = 0;
+    if (e.sv) state.shiftV = clamp(state.shiftV, e.sv[0], e.sv[1]); else state.shiftV = 0;
+    setupAxis(shiftHSlider, shiftHMin, shiftHMax, e.sh, state.shiftH);
+    setupAxis(shiftVSlider, shiftVMin, shiftVMax, e.sv, state.shiftV);
+    syncShiftVals();
+    var parts = [];
+    if (e.sv) parts.push('vertical ' + pctRange(e.sv));
+    if (e.sh) parts.push('horizontal ' + pctRange(e.sh));
+    centerBtn.disabled = !parts.length;
+    shiftNote.textContent = parts.length
+      ? 'Published lens shift for this model: ' + parts.join(', ') + '. The sliders stop at those limits.'
+      : 'No lens shift data published for this model, so these sliders are off and the check below assumes no lens shift.';
+  }
+
+  /* ---------- Room views ---------- */
+  function drawSide(g) {
+    if (!sideSvg) return;
+    var wallX = 56, floorY = 252, ceilY = 36;
+    var sx = 514 / 300, syv = (floorY - ceilY) / 108;
+    function Y(h) { return floorY - h * syv; }
+    var distIn = state.dist * 12;
+    var px = wallX + distIn * sx;
+    var lensY = Y(state.height);
+    var imgHpx = g.H * syv;
+    var centerIn = state.aim === 'turned'
+      ? state.screenBottom + g.H / 2 + state.shiftV / 100 * g.H
+      : state.height + state.shiftV / 100 * g.H;
+    var imgCY = Y(centerIn);
+    var imgTop = imgCY - imgHpx / 2, imgBot = imgCY + imgHpx / 2;
+    var scrTop = Y(state.screenBottom + g.H), scrBot = Y(state.screenBottom);
+    var out = '';
+    out += '<rect x="' + wallX + '" y="' + ceilY + '" width="' + (640 - wallX - 8) + '" height="' + (floorY - ceilY) + '" fill="#fbf9f4" stroke="' + MUTED + '" stroke-width="1"/>';
+    out += '<polygon points="' + f1(px - 18) + ',' + f1(lensY) + ' ' + wallX + ',' + f1(imgTop) + ' ' + wallX + ',' + f1(imgBot) + '" fill="' + BEAM_FILL + '" stroke="' + BEAM_STROKE + '" stroke-width="1"/>';
+    out += '<rect x="' + (wallX - 7) + '" y="' + f1(scrTop) + '" width="7" height="' + f1(scrBot - scrTop) + '" fill="' + NAVY + '"/>';
+    out += '<rect x="' + (wallX - 14) + '" y="' + f1(imgTop) + '" width="5" height="' + f1(imgHpx) + '" fill="' + IMG_STROKE + '"/>';
+    if (distIn >= 96) {
+      var cxp = wallX + distIn * 0.45 * sx;
+      out += '<rect x="' + f1(cxp - 26) + '" y="' + (floorY - 26) + '" width="52" height="26" rx="4" fill="#ddd5c2" stroke="' + MUTED + '" stroke-width="1"/>' +
+             '<rect x="' + f1(cxp + 12) + '" y="' + (floorY - 50) + '" width="14" height="50" rx="4" fill="#ddd5c2" stroke="' + MUTED + '" stroke-width="1"/>';
+    }
+    if (state.height >= 84) {
+      out += '<line x1="' + f1(px) + '" y1="' + ceilY + '" x2="' + f1(px) + '" y2="' + f1(lensY - 10) + '" stroke="' + NAVY + '" stroke-width="3"/>';
+    } else if (state.height > 12) {
+      out += '<rect x="' + f1(px - 22) + '" y="' + f1(lensY + 9) + '" width="44" height="' + f1(floorY - lensY - 9) + '" fill="#e7e2d6" stroke="' + MUTED + '" stroke-width="1"/>';
+    }
+    out += '<rect x="' + f1(px - 18) + '" y="' + f1(lensY - 9) + '" width="36" height="18" rx="3" fill="' + NAVY + '"/>' +
+           '<circle cx="' + f1(px - 18) + '" cy="' + f1(lensY) + '" r="4.5" fill="#ffffff" stroke="' + NAVY + '" stroke-width="1.5"/>';
+    out += '<text x="' + wallX + '" y="' + (floorY + 24) + '" font-size="11" fill="' + MUTED + '">SCREEN WALL</text>';
+    out += '<text x="' + f1(px) + '" y="' + (floorY + 24) + '" font-size="11" fill="' + MUTED + '" text-anchor="middle">PROJECTOR · ' + f1(state.dist) + ' ft back · lens ' + f0(state.height) + ' in high</text>';
+    sideSvg.innerHTML = out;
+  }
 
   function drawViews(g, correctedMode, tier) {
     var W = g.W, H = g.H;
@@ -226,27 +374,31 @@
       '<line x1="160" y1="14" x2="160" y2="160" stroke="' + MUTED + '" stroke-dasharray="4 4" stroke-width="1"/>' +
       beam +
       '<line x1="62" y1="22" x2="258" y2="22" stroke="' + NAVY + '" stroke-width="4"/>' +
-      '<rect x="' + (px - 7) + '" y="' + (py - 5) + '" width="14" height="10" rx="2" fill="' + NAVY + '"/>' +
+      '<rect x="102" y="112" width="116" height="24" rx="4" fill="#ddd5c2" stroke="' + MUTED + '" stroke-width="1"/>' +
+      '<rect x="' + (px - 8) + '" y="' + (py - 6) + '" width="16" height="12" rx="2" fill="' + NAVY + '"/>' +
+      '<circle cx="' + px + '" cy="' + (py - 7) + '" r="2.6" fill="#ffffff" stroke="' + NAVY + '" stroke-width="1"/>' +
       '<text x="160" y="10" font-size="10" fill="' + MUTED + '" text-anchor="middle">SCREEN WALL</text>' +
+      '<text x="160" y="128" font-size="9" fill="' + MUTED + '" text-anchor="middle">COUCH</text>' +
       '<text x="' + px + '" y="166" font-size="10" fill="' + MUTED + '" text-anchor="middle">PROJECTOR</text>';
 
     /* Front view */
     var sx = 70, sy = 28, sw = 180, sh = 124, cx = 160, cy = 90;
     var landed = '', corrected = '';
     if (state.aim === 'straight') {
-      var dxpx = clamp(state.offset * (sw / W), -150, 150);
-      var dypx = clamp(-g.dv * (sh / H), -64, 64);
+      var dxpx = clamp((state.offset + state.shiftH / 100 * W) * (sw / W), -170, 170);
+      var dypx = clamp(-(g.dv + state.shiftV / 100 * H) * (sh / H), -70, 70);
       landed = '<rect x="' + (sx + dxpx) + '" y="' + (sy + dypx) + '" width="' + sw + '" height="' + sh + '" fill="' + IMG_FILL + '" stroke="' + IMG_STROKE + '" stroke-width="1.5"/>';
     } else {
       var sk = clamp(g.yaw * 0.6, 0, 18);
       var pk = clamp(g.pitch * 0.5, 0, 14);
       var topW = sw * (1 + (g.dv < 0 ? pk : -pk) / 100);
       var botW = sw * (1 + (g.dv < 0 ? -pk : pk) / 100);
+      var tx = state.shiftH / 100 * sw, ty = -state.shiftV / 100 * sh;
       landed = '<polygon points="' +
-        (cx - topW / 2) + ',' + (sy - sk / 2) + ' ' +
-        (cx + topW / 2) + ',' + (sy + sk / 2) + ' ' +
-        (cx + botW / 2) + ',' + (sy + sh + sk / 2) + ' ' +
-        (cx - botW / 2) + ',' + (sy + sh - sk / 2) +
+        (cx - topW / 2 + tx) + ',' + (sy - sk / 2 + ty) + ' ' +
+        (cx + topW / 2 + tx) + ',' + (sy + sk / 2 + ty) + ' ' +
+        (cx + botW / 2 + tx) + ',' + (sy + sh + sk / 2 + ty) + ' ' +
+        (cx - botW / 2 + tx) + ',' + (sy + sh - sk / 2 + ty) +
         '" fill="' + IMG_FILL + '" stroke="' + IMG_STROKE + '" stroke-width="1.5"/>';
     }
     if (correctedMode === 'screen') {
@@ -256,11 +408,16 @@
       corrected = '<rect x="' + (cx - cw / 2) + '" y="' + (cy - ch / 2) + '" width="' + cw + '" height="' + ch + '" fill="none" stroke="' + TIER_COLORS[tier] + '" stroke-width="2" stroke-dasharray="6 4"/>';
     }
     frontSvg.innerHTML =
+      '<rect x="0" y="0" width="320" height="152" fill="#fbf9f4"/>' +
       '<rect x="' + sx + '" y="' + sy + '" width="' + sw + '" height="' + sh + '" fill="' + PANEL + '" stroke="' + NAVY + '" stroke-width="2"/>' +
       landed + corrected +
-      '<text x="160" y="170" font-size="10" fill="' + MUTED + '" text-anchor="middle">' +
-        (state.aim === 'straight' ? 'blue = where the image lands pointing straight' : 'blue = image as it lands, turned in') + '</text>' +
-      '<text x="160" y="183" font-size="10" fill="' + MUTED + '" text-anchor="middle">dashed = after correction · solid outline = your screen</text>';
+      '<rect x="0" y="152" width="320" height="38" fill="#e9e4d8"/>' +
+      '<line x1="0" y1="152" x2="320" y2="152" stroke="' + MUTED + '" stroke-width="1"/>' +
+      '<rect x="104" y="160" width="112" height="26" rx="6" fill="#ddd5c2" stroke="' + MUTED + '" stroke-width="1"/>' +
+      '<rect x="96" y="156" width="14" height="30" rx="4" fill="#ddd5c2" stroke="' + MUTED + '" stroke-width="1"/>' +
+      '<rect x="210" y="156" width="14" height="30" rx="4" fill="#ddd5c2" stroke="' + MUTED + '" stroke-width="1"/>';
+
+    drawSide(g);
   }
 
   /* ---------- Engine ---------- */
@@ -277,6 +434,8 @@
       resultEl.innerHTML = '<strong>Pick your projector to see where the image lands.</strong>' +
         '<span>Search the database above, then set the placement. The verdict updates as you drag.</span>';
       detailsEl.innerHTML = '';
+      syncTune(0, 0, null);
+      tuneReadout.textContent = '';
       drawViews(g, null, 'ok');
       return;
     }
@@ -419,6 +578,22 @@
     }
     d.push('Keystone size loss is an estimate: real correction varies by model. Maxing out lens shift on one axis can limit how much is left on the other.');
     detailsEl.innerHTML = '<ul>' + d.map(function (item) { return '<li>' + item + '</li>'; }).join('') + '</ul>';
+
+    /* ---------- Step 3 readout ---------- */
+    syncTune(sizeMin, sizeMax, r);
+    if (state.aim === 'straight') {
+      var remH = state.offset + state.shiftH / 100 * W;
+      var remV = dv + state.shiftV / 100 * H;
+      if (Math.abs(remH) < 1 && Math.abs(remV) < 1) {
+        tuneReadout.textContent = 'With the shift set like this, the image sits dead center on the screen.';
+      } else {
+        tuneReadout.textContent = 'With the shift set like this, the image center sits ' +
+          f0(Math.abs(remH)) + ' in ' + (remH >= 0 ? 'to the right of' : 'to the left of') + ' screen center, ' +
+          f0(Math.abs(remV)) + ' in ' + (remV >= 0 ? 'above' : 'below') + ' it.';
+      }
+    } else {
+      tuneReadout.textContent = 'Turned toward the screen, lens shift only fine tunes where the image sits. Keystone does the squaring.';
+    }
 
     drawViews(g, correctedMode, tier);
   }
