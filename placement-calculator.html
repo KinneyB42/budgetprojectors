@@ -58,6 +58,11 @@
       #placement #place-details { margin-top: 16px; font-size: 15.5px; line-height: 1.6; }
       #placement #place-details ul { margin: 0 0 0 1.2em; padding: 0; }
       #placement #place-details li { margin-bottom: 0.4em; }
+      #placement .place-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      #placement .place-chip { font: inherit; font-size: 14.5px; line-height: 1.2; padding: 9px 14px; border-radius: 999px; border: 1.5px solid var(--navy); background: var(--white); color: var(--navy); cursor: pointer; }
+      #placement .place-chip.active { background: var(--navy); color: var(--white); }
+      #placement details.place-details-wrap { margin-top: 18px; }
+      #placement details.place-details-wrap summary { cursor: pointer; font-weight: 600; color: var(--navy); font-size: 15.5px; }
     </style>
 
     <div class="calc" id="place-tool">
@@ -74,24 +79,25 @@
         <div class="calc__step">2 &middot; Your placement</div>
         <div class="place-grid2">
           <div>
-            <label for="place-preset">Placement preset</label>
-            <select id="place-preset">
-              <option value="centered">Centered (ideal)</option>
-              <option value="couch_side" selected>Next to the couch</option>
-              <option value="couch_behind">Behind the couch</option>
-              <option value="ceiling">Ceiling mounted</option>
-              <option value="corner">In the corner</option>
-              <option value="floor">On the floor</option>
-              <option value="coffee">Coffee table</option>
-              <option value="custom">Custom</option>
-            </select>
+            <span class="calc__q">Where will it sit?</span>
+            <div class="place-chips" id="place-presets">
+              <button type="button" class="place-chip" data-preset="centered">Centered</button>
+              <button type="button" class="place-chip active" data-preset="couch_side">Next to the couch</button>
+              <button type="button" class="place-chip" data-preset="couch_behind">Behind the couch</button>
+              <button type="button" class="place-chip" data-preset="ceiling">Ceiling mounted</button>
+              <button type="button" class="place-chip" data-preset="corner">In the corner</button>
+              <button type="button" class="place-chip" data-preset="floor">On the floor</button>
+              <button type="button" class="place-chip" data-preset="coffee">Coffee table</button>
+            </div>
+            <p class="calc__hint">Tap a spot and the sliders below fill themselves in. Drag any slider to fine tune it.</p>
           </div>
           <div>
-            <label for="place-aim">Projector is</label>
-            <select id="place-aim">
-              <option value="straight" selected>Pointing straight ahead</option>
-              <option value="turned">Turned toward the screen</option>
-            </select>
+            <span class="calc__q">Which way does it point?</span>
+            <div class="place-chips" id="place-aims">
+              <button type="button" class="place-chip active" data-aim="straight">Straight ahead</button>
+              <button type="button" class="place-chip" data-aim="turned">Turned toward the screen</button>
+            </div>
+            <p class="calc__hint">Straight ahead is how a projector on a side table usually sits. Turned is when you angle it to face the screen.</p>
           </div>
         </div>
 
@@ -171,10 +177,17 @@
 
         <p style="margin-top: 16px;"><button type="button" class="btn" id="place-center">Center the image with lens shift</button></p>
         <p class="calc__hint" id="place-tune-readout" aria-live="polite"></p>
+        <figure class="place-fig" style="margin: 16px 0 0; max-width: 520px;">
+          <figcaption class="place-cap">Front view (facing the screen wall)</figcaption>
+          <svg class="place-svg" id="place-front" viewBox="0 0 320 190" role="img" aria-label="Front view: where the image lands on the screen wall"></svg>
+        </figure>
+        <p class="calc__hint" style="margin-top: 8px;">Blue is where the picture lands. The dashed outline is the picture after correction.</p>
       </div>
 
+      <div class="calc__result show" id="place-result" aria-live="polite" style="margin-top: 24px;"></div>
+
       <div style="margin-top: 32px;">
-        <div class="calc__step">4 &middot; Where the image lands</div>
+        <div class="calc__step">4 &middot; The room from the side and above</div>
         <div class="place-views">
           <figure class="place-fig place-fig--wide">
             <figcaption class="place-cap">Side view (the room from the side)</figcaption>
@@ -184,15 +197,13 @@
             <figcaption class="place-cap">Top view (room from above)</figcaption>
             <svg class="place-svg" id="place-top" viewBox="0 0 320 170" role="img" aria-label="Top view of the room: projector position and beam"></svg>
           </figure>
-          <figure class="place-fig">
-            <figcaption class="place-cap">Front view (facing the screen wall)</figcaption>
-            <svg class="place-svg" id="place-front" viewBox="0 0 320 190" role="img" aria-label="Front view: where the image lands on the screen wall"></svg>
-          </figure>
         </div>
-        <p class="calc__hint">Illustrations, not to scale. Blue is where the picture lands; the dashed outline is the picture after correction. The landing spot assumes the image comes out centered on the lens axis. Some projectors have a built-in offset that lands the image above or below the lens line; where a manufacturer publishes one, check it against the numbers below. Screen position comes from the screen bottom height you set above.</p>
+        <p class="calc__hint">Illustrations, not to scale. The landing spot assumes the image comes out centered on the lens axis. Some projectors have a built-in offset that lands the image above or below the lens line; where a manufacturer publishes one, check it against the numbers below. Screen position comes from the screen bottom height you set above.</p>
 
-        <div class="calc__result show" id="place-result" aria-live="polite" style="margin-top: 20px;"></div>
-        <div id="place-details"></div>
+        <details class="place-details-wrap">
+          <summary>Show the numbers behind this</summary>
+          <div id="place-details"></div>
+        </details>
       </div>
     </div>
 

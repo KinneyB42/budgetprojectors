@@ -13,8 +13,8 @@
   var suggest = document.getElementById('place-suggest');
   var selectedLine = document.getElementById('place-selected');
   var countEl = document.getElementById('place-model-count');
-  var presetSel = document.getElementById('place-preset');
-  var aimSel = document.getElementById('place-aim');
+  var presetChips = document.querySelectorAll('#place-presets .place-chip');
+  var aimChips = document.querySelectorAll('#place-aims .place-chip');
   var resultEl = document.getElementById('place-result');
   var detailsEl = document.getElementById('place-details');
   var topSvg = document.getElementById('place-top');
@@ -198,30 +198,40 @@
     SLIDERS.screenBottom.value = state.screenBottom;
   }
 
+  function clearPresetChips() {
+    presetChips.forEach(function (b) { b.classList.remove('active'); });
+  }
+
   Object.keys(SLIDERS).forEach(function (key) {
     SLIDERS[key].addEventListener('input', function () {
       state[key] = parseFloat(this.value);
-      presetSel.value = 'custom';
+      clearPresetChips();
       syncVals();
       recalc();
     });
   });
 
-  presetSel.addEventListener('change', function () {
-    var p = PRESETS[this.value];
-    if (p) {
-      state.dist = p.dist;
-      state.offset = p.offset;
-      state.height = p.height;
-      syncSliders();
-      syncVals();
-    }
-    recalc();
+  presetChips.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      presetChips.forEach(function (b) { b.classList.toggle('active', b === btn); });
+      var p = PRESETS[btn.getAttribute('data-preset')];
+      if (p) {
+        state.dist = p.dist;
+        state.offset = p.offset;
+        state.height = p.height;
+        syncSliders();
+        syncVals();
+      }
+      recalc();
+    });
   });
 
-  aimSel.addEventListener('change', function () {
-    state.aim = this.value;
-    recalc();
+  aimChips.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      aimChips.forEach(function (b) { b.classList.toggle('active', b === btn); });
+      state.aim = btn.getAttribute('data-aim');
+      recalc();
+    });
   });
 
   /* ---------- Zoom and lens shift controls (step 3) ---------- */
